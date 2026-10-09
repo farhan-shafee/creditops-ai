@@ -229,6 +229,7 @@ async def run(args):
         "transport": "mcp_stdio",
         "source_commit": source_commit(),
         "retries": 0,
+        "stop_on_tool_error": True,
     }
     receipt = {"execution": "NOT RUN", "quality": "UNVERIFIED", "configuration": plan, "results": []}
     if not args.execute_paid and not args.preflight:
@@ -330,7 +331,13 @@ async def run(args):
             async with asyncio.timeout(min(args.timeout_seconds, remaining)):
                 await store.activate_case(session_id, incident_id)
                 result = await collect_adaptive_investigation(
-                    store, session_id, incident_id, provider, on_progress=progress, limits=configuration
+                    store,
+                    session_id,
+                    incident_id,
+                    provider,
+                    on_progress=progress,
+                    limits=configuration,
+                    stop_on_tool_error=True,
                 )
                 await progress(result)
             if (

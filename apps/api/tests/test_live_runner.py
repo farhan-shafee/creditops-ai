@@ -51,6 +51,14 @@ async def test_dry_run_never_creates_provider_store_or_ledger(monkeypatch, tmp_p
     assert list(tmp_path.iterdir()) == []
 
 
+async def test_dry_run_always_advertises_strict_diagnostic_stopping(monkeypatch, tmp_path):
+    """This runner owns the policy; an environment value cannot disable it."""
+    monkeypatch.setenv("STOP_ON_TOOL_ERROR", "false")
+    receipt = await runner.run(arguments("--output-directory", str(tmp_path)))
+    assert receipt["configuration"]["stop_on_tool_error"] is True
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize(
     "url",
     [

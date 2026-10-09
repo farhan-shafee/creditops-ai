@@ -21,6 +21,31 @@ from mcp.client.stdio import StdioServerParameters
 
 ROOT = Path(__file__).resolve().parents[3]
 
+# Install the offline boundary before importing the API in its fresh interpreter.
+# Parent pytest fixtures cannot protect a subprocess's dotenv or HTTP transports.
+API_BOOTSTRAP = """
+from creditops.settings import Settings
+Settings.model_config['env_file'] = None
+import httpx, httpx2, sys, uvicorn
+def protect(library):
+    sync = library.HTTPTransport.handle_request
+    asynchronous = library.AsyncHTTPTransport.handle_async_request
+    def allowed(request):
+        if request.url.host not in {'127.0.0.1', 'localhost', '::1'}:
+            raise AssertionError('Offline MCP tests forbid external HTTP')
+    def guarded_sync(self, request):
+        allowed(request)
+        return sync(self, request)
+    async def guarded_async(self, request):
+        allowed(request)
+        return await asynchronous(self, request)
+    library.HTTPTransport.handle_request = guarded_sync
+    library.AsyncHTTPTransport.handle_async_request = guarded_async
+protect(httpx)
+protect(httpx2)
+uvicorn.run('creditops.main:app', host='127.0.0.1', port=int(sys.argv[1]))
+"""
+
 
 @pytest.fixture
 async def real_api(tmp_path):
@@ -35,7 +60,11 @@ async def real_api(tmp_path):
     for index in range(1, 4):
         await store.activate_case(session_id, f"INC-DEMO-{index:03d}")
     env = {
-        **os.environ,
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() not in {"OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ADMIN_API_KEY", "MCP_HTTP_TOKEN"}
+    }
+    env.update({
         "DATABASE_URL": database_url,
         "MCP_API_URL": url,
         "TELEMETRY_MODE": "persisted",
@@ -43,10 +72,10 @@ async def real_api(tmp_path):
         "PUBLIC_DEMO": "true",
         "INVESTIGATION_TIMEOUT_SECONDS": "60",
         "PYTHONPATH": os.pathsep.join([str(ROOT / "apps/api"), str(ROOT / "apps/mcp")]),
-    }
+    })
     log = (tmp_path / "api.log").open("w", encoding="utf-8")
     process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "creditops.main:app", "--host", "127.0.0.1", "--port", str(port)],
+        [sys.executable, "-c", API_BOOTSTRAP, str(port)],
         cwd=ROOT,
         env=env,
         stdout=log,

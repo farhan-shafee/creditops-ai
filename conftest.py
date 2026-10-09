@@ -5,6 +5,9 @@ import httpx2
 import pytest
 from creditops.settings import Settings
 
+# API modules initialize settings during collection, before autouse fixtures.
+Settings.model_config["env_file"] = None
+
 
 @pytest.fixture(autouse=True)
 def offline_provider_boundary(monkeypatch):

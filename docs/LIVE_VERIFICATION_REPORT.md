@@ -177,3 +177,68 @@ The model selects diagnostic actions and proposes an assessment. MCP provides
 controlled access to evidence. A separate conservative rule layer checks and may
 normalize the output. Model proposals and final system outputs are evaluated
 separately. **LIVE RETRY NOT RUN — OWNER APPROVAL REQUIRED.**
+
+## Strict verification stopping correction
+
+Normal recovery records ordinary diagnostic failures as unknown and allows another
+check. Controlled verification must stop immediately. `collect_adaptive_investigation`
+now accepts application-owned `stop_on_tool_error=False`; `verify_live.run` always
+passes `True` and records it in configuration/provenance. The model, environment
+and omitted CLI options cannot disable it.
+
+In strict mode the ordinary-error boundary records the failed tool, error/timeout
+category and sanitized stop reason, then raises before returning to the loop.
+Existing callbacks retain duration, evidence, provider receipts and reservations;
+MCP unwinds and the runner persists STOPPED and closes resources. Persistence
+failure remains fatal. No later decision, assessment, tool, retry or fallback runs.
+Assessment absence is explicitly `not_validated` / `not_requested_due_to_diagnostic_failure`,
+not validator rejection. Existing fatal argument/scope/transport/cancellation guards
+and default recovery remain unchanged. Successful empty results can still broaden.
+
+`test_strict_failure_stops_before_the_next_provider_decision_or_assessment` first
+failed with two decisions and one assessment, then passed. Actual scripted counts:
+
+| Case | Decisions / assessments / diagnostics |
+|---|---|
+| Initial context failure | 0 / 0 / 1 |
+| Error, timeout, invalid result, final-slot or callback-write failure | 1 / 0 / 2 |
+| Successful empty result then broader query, or default recovery | 3 / 1 / 3 |
+
+The actual runner/stdio-MCP/isolated API test dispatches only `get_incident` and a
+scripted failing `query_metrics`. It preserves STOPPED receipt/ledger/Store state,
+context and numeric ceiling; its labeled offline reservation is unchanged and
+usage unknown. MCP child, provider, Store, lock and owned API/log teardown pass.
+These are integration checks, not live-model quality. Test dotenv suppression now
+precedes collection/child API imports; external HTTP guards remain active.
+
+Final local `pnpm test`: 251 Python passed (no skips, 74.24 s), 13 frontend and two
+dependency checks. Lint/types/build, dependency audits and Bandit passed. Linux
+lifecycle skips locally on Windows and is required in CI. Separate-output evaluation
+remains 11/15; developer-authored robustness 13/13. Hosted CI for this strict-stop
+source is pending publication; the verified SHA/run will follow in a docs-only receipt.
+
+All 13 protected artifacts, the historical linkage note and `.env` match their
+before/after checksums. Original ledger: STOPPED, USD 0.12633525 retained. Allocated
+ID `7d557a47-f018-4f8c-bcd1-be0a24a5f9eb` remains unused, with no real execution
+receipt/ledger or replacement ID. Its unchanged historical note does not authorize
+revised source. Cross-ledger aggregation remains a local review requirement.
+
+Credential-free dry-run: strict policy enabled; no provider/Store/live ledger.
+No execution preflight or live request ran. The earlier retry proposal above is
+historical; the next proposal is USD 2 additional with 330 s total and the unchanged
+model/call/context/output limits below. Fresh schema ceiling: 147,611 input tokens,
+USD 0.13320825/call, USD 1.598499/12 calls, USD 1.72483425 including retained
+reservation. This corrects the earlier pre-finalization count by eight schema bytes;
+it is not usage/billing. Prior reservation + allocation: USD 2.12633525 < USD 5.
+Prior time + deadline: 341.376 s < 900 s. Local dry-run/calculation files are under
+`artifacts/test-results/strict-tool-stop-{dry-run,reservations}.json`.
+
+Proposed only, after fresh owner approval bound to repaired CI-verified source and
+`stop_on_tool_error=True`, credential presence check, fresh project API/MCP processes
+and existing local-only identity preflight:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\verify_live.py --provider openai --model gpt-5.4-mini-2026-03-17 --case-count 1 --max-tool-calls 12 --max-provider-turns 12 --max-spend-usd 2 --timeout-seconds 300 --provider-timeout-seconds 90 --diagnostic-timeout-seconds 15 --total-timeout-seconds 330 --input-price-ceiling 0.75 --output-price-ceiling 4.50 --experiment-id 7d557a47-f018-4f8c-bcd1-be0a24a5f9eb --stage first --execute-paid
+```
+
+**LIVE RETRY NOT RUN — REVISED SOURCE REQUIRES OWNER APPROVAL.**

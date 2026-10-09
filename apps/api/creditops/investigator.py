@@ -112,7 +112,11 @@ def _snapshot_provider_calls(
         result["provenance"]["model_called"] = any(call.get("request_started") for call in calls)
         result["usage"] = merge_usage([call.get("usage") or {} for call in calls])
         outcome = result.get("validation_outcome")
-        if outcome and outcome["status"] == "not_validated":
+        if (
+            outcome
+            and outcome["status"] == "not_validated"
+            and outcome.get("provider_response") != "not_requested_due_to_diagnostic_failure"
+        ):
             outcome["provider_response"] = calls[-1]["status"]
     else:
         result["usage"] = merge_usage(usages)
@@ -142,11 +146,13 @@ async def collect_adaptive_investigation(
     *,
     diagnostic_client: DiagnosticClient | None = None,
     limits: Settings | None = None,
+    stop_on_tool_error: bool = False,
 ) -> dict[str, Any]:
     """Bounded observe/choose loop, with real MCP as the application default.
 
     Direct diagnostics require an explicit adapter. Provider plan-only support is
     deliberately insufficient: this path must observe actual results between turns.
+    Controlled verification enables immediate stopping; normal callers may recover.
     """
     configuration = limits or Settings()
     initial_receipt_index = len(getattr(provider, "execution_receipts", []))
@@ -190,6 +196,7 @@ async def collect_adaptive_investigation(
             "snapshot_kind": "frozen_current",
             "recorded": False,
             "action_rejections": [],
+            "stop_on_tool_error": stop_on_tool_error,
         },
     }
     seen: set[str] = set()
@@ -270,9 +277,20 @@ async def collect_adaptive_investigation(
             step["status"] = "failed"
             step["error"] = "Diagnostic cancelled; no completed result was returned"
             raise
-        except (DiagnosticClientError, TimeoutError, ValueError, RuntimeError):
+        except (DiagnosticClientError, TimeoutError, ValueError, RuntimeError) as error:
             step["status"] = "failed"
             step["error"] = "Diagnostic unavailable or invalid; no healthy observation was returned"
+            if stop_on_tool_error:
+                category = "timeout" if isinstance(error, TimeoutError) else "error"
+                result["provenance"].update(
+                    stop_reason=f"Strict verification stopped after diagnostic {category}; no assessment was requested.",
+                    diagnostic_failure={
+                        "tool": name,
+                        "category": category,
+                        "error_category": type(error).__name__,
+                    },
+                )
+                raise DiagnosticClientError("Strict verification stopped after diagnostic failure") from error
         finally:
             step["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
             observations.append(
@@ -391,7 +409,11 @@ async def collect_adaptive_investigation(
             result["validation_outcome"] = {
                 "status": "not_validated",
                 "structurally_parsed": False,
-                "provider_response": "missing_or_interrupted",
+                "provider_response": (
+                    "not_requested_due_to_diagnostic_failure"
+                    if result["provenance"].get("diagnostic_failure")
+                    else "missing_or_interrupted"
+                ),
                 "assessment_source": _assessment_source(provider),
                 "original_claims_independently_verified": False,
                 "changed_fields": [],
