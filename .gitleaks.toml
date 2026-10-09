@@ -1,0 +1,19 @@
+title = "CreditOps AI secret scan"
+
+[extend]
+useDefault = true
+
+# Generated dependency/build/cache directories are outside the source boundary.
+# No source fixture, telemetry content or credential pattern is suppressed.
+[[allowlists]]
+description = "Generated dependencies, build output and local verification caches"
+paths = [
+  '''(^|/)(node_modules|\.venv|\.next|__pycache__|\.pytest_cache|\.ruff_cache)/''',
+  '''(^|/)artifacts/(runtime|local-validation|test-tmp)/''',
+  '''(^|/)(test-results|playwright-report)/'''
+]
+
+[[allowlists]]
+description = "One intentional synthetic API-key fixture used to prove redaction"
+regexTarget = "secret"
+regexes = ['''^sk-syntheticfixture123456789$''']

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: creditops-ai-api
+    runtime: docker
+    dockerfilePath: ./infra/docker/api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: TELEMETRY_MODE
+        value: persisted
+      - key: PUBLIC_DEMO
+        value: "true"
+      - key: AI_PROVIDER
+        value: openai
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false

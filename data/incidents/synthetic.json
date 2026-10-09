@@ -1,0 +1,1043 @@
+[
+  {
+    "id": "INC-DEMO-001",
+    "scenario": "kafka-pricing-lag",
+    "title": "Credit RFQ response latency rising",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service",
+      "pricing-service",
+      "rfq-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-001 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: credit rfq response latency rising. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-DEMO-001",
+          "LOG-001-001",
+          "METRIC-001-BASE-0",
+          "METRIC-001-BASE-1",
+          "METRIC-001-BASE-2",
+          "METRIC-001-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-CPU_PERCENT-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-MEMORY_MB-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+          "METRIC-001-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-001-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-001-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-001-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-001-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-001-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-001-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "KAFKA-001-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-001-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-001-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": true
+  },
+  {
+    "id": "INC-DEMO-002",
+    "scenario": "fix-connectivity",
+    "title": "Execution acknowledgements delayed",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "execution-service",
+      "fix-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-002 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: execution acknowledgements delayed. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-DEMO-002",
+          "LOG-002-001",
+          "METRIC-002-BASE-0",
+          "METRIC-002-BASE-1",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-0",
+          "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-002-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-002-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-002-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-002-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "FIX-002-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-002-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-002-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": true
+  },
+  {
+    "id": "INC-DEMO-003",
+    "scenario": "db-pool-exhaustion",
+    "title": "RFQ requests timing out after change",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service",
+      "rfq-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-003 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: rfq requests timing out after change. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-DEMO-003",
+          "LOG-003-001",
+          "METRIC-003-BASE-0",
+          "METRIC-003-BASE-1",
+          "DEPLOY-003-001",
+          "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+          "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+          "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "DB-003-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-003-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-003-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": true
+  },
+  {
+    "id": "INC-EVAL-004",
+    "scenario": "eval-pricing-burst",
+    "title": "Price consumption slower than ingress",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "pricing-service",
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-004 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: price consumption slower than ingress. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-004",
+          "LOG-004-001",
+          "METRIC-004-BASE-0",
+          "METRIC-004-BASE-1",
+          "METRIC-004-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-CPU_PERCENT-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-MEMORY_MB-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-004-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-004-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-004-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-004-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-004-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-004-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "KAFKA-004-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-004-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-004-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-005",
+    "scenario": "eval-fix-heartbeat",
+    "title": "Synthetic order acknowledgements missing",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "execution-service",
+      "fix-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-005 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: synthetic order acknowledgements missing. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-005",
+          "LOG-005-001",
+          "METRIC-005-BASE-0",
+          "METRIC-005-BASE-1",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-CPU_PERCENT-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-MEMORY_MB-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-CPU_PERCENT-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-MEMORY_MB-0",
+          "METRIC-005-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-005-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-005-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-005-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-005-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-005-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-005-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-005-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-005-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "FIX-005-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-005-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-005-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-006",
+    "scenario": "eval-pool-wait",
+    "title": "Quote request queue growing",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-006 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: quote request queue growing. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-006",
+          "LOG-006-001",
+          "METRIC-006-BASE-0",
+          "DEPLOY-006-001",
+          "METRIC-006-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-006-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-006-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-006-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-006-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-006-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-006-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-006-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "DB-006-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-006-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-006-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-007",
+    "scenario": "eval-hot-partition",
+    "title": "Delayed curve updates for synthetic sector",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "pricing-service",
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-007 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: delayed curve updates for synthetic sector. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-007",
+          "LOG-007-001",
+          "METRIC-007-BASE-0",
+          "METRIC-007-BASE-1",
+          "METRIC-007-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-CPU_PERCENT-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-MEMORY_MB-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-007-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-007-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-007-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-007-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-007-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-007-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "KAFKA-007-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-007-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-007-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-008",
+    "scenario": "eval-fix-reconnect",
+    "title": "Reconnect storm in fictional FIX session B",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "fix-gateway",
+      "execution-service"
+    ],
+    "client_impact": "CLIENT-DEMO-008 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: reconnect storm in fictional fix session b. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-008",
+          "LOG-008-001",
+          "METRIC-008-BASE-0",
+          "METRIC-008-BASE-1",
+          "METRIC-008-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-CPU_PERCENT-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-MEMORY_MB-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-CPU_PERCENT-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-MEMORY_MB-0",
+          "METRIC-008-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-008-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-008-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-008-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-008-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-008-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-008-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-008-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-008-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "FIX-008-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-008-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-008-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-009",
+    "scenario": "eval-db-leak",
+    "title": "Connection wait and pool timeouts increasing",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service",
+      "rfq-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-009 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: connection wait and pool timeouts increasing. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-009",
+          "LOG-009-001",
+          "METRIC-009-BASE-0",
+          "METRIC-009-BASE-1",
+          "DEPLOY-009-001",
+          "METRIC-009-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+          "METRIC-009-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+          "METRIC-009-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-009-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-009-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-009-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-009-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-009-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-009-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:00Z",
+        "label": "Dependency health samples available",
+        "evidence_ids": [
+          "DB-009-001"
+        ],
+        "reveal_seconds": 5
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-009-002"
+        ],
+        "reveal_seconds": 7
+      },
+      {
+        "timestamp": "2026-10-09T14:02:12Z",
+        "label": "Upstream impact observed",
+        "evidence_ids": [
+          "LOG-009-003"
+        ],
+        "reveal_seconds": 11
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-010",
+    "scenario": "eval-stale-marketdata",
+    "title": "Quote ages increasing with stale feed",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "market-data-service",
+      "pricing-service"
+    ],
+    "client_impact": "CLIENT-DEMO-010 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: quote ages increasing with stale feed. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-010",
+          "LOG-010-001",
+          "METRIC-010-BASE-0",
+          "METRIC-010-BASE-1",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-CPU_PERCENT-0",
+          "METRIC-010-SERIES-MARKET-DATA-SERVICE-MEMORY_MB-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-CPU_PERCENT-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-MEMORY_MB-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-010-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-010-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-010-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-010-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-010-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-010-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-010-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-010-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-010-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-010-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-010-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-011",
+    "scenario": "eval-risk-timeout",
+    "title": "Pre-trade checks missing RFQ deadlines",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "risk-service",
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-011 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: pre-trade checks missing rfq deadlines. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-011",
+          "LOG-011-001",
+          "METRIC-011-BASE-0",
+          "METRIC-011-BASE-1",
+          "METRIC-011-SERIES-RISK-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-011-SERIES-RISK-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-011-SERIES-RISK-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-011-SERIES-RISK-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-011-SERIES-RISK-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-011-SERIES-RISK-SERVICE-CPU_PERCENT-0",
+          "METRIC-011-SERIES-RISK-SERVICE-MEMORY_MB-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-011-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-011-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-011-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-011-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-011-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-011-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-011-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-011-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-012",
+    "scenario": "eval-quote-cpu",
+    "title": "Quote processing capacity reduced",
+    "severity": "SEV2",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-012 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: quote processing capacity reduced. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-012",
+          "LOG-012-001",
+          "METRIC-012-BASE-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-012-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-012-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-012-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-012-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-012-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-012-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-012-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-012-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-013",
+    "scenario": "eval-transient-unknown",
+    "title": "Transient RFQ timeout alert",
+    "severity": "SEV3",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "rfq-gateway"
+    ],
+    "client_impact": "CLIENT-DEMO-013 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: transient rfq timeout alert. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-013",
+          "LOG-013-001",
+          "METRIC-013-BASE-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+          "METRIC-013-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+          "METRIC-013-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-013-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-013-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-013-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-013-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-013-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-013-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-013-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-013-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-013-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-013-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-013-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-014",
+    "scenario": "eval-latency-unknown",
+    "title": "Quote latency warning without telemetry coverage",
+    "severity": "SEV3",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "quote-service"
+    ],
+    "client_impact": "CLIENT-DEMO-014 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: quote latency warning without telemetry coverage. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-014",
+          "LOG-014-001",
+          "METRIC-014-BASE-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+          "METRIC-014-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-014-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-014-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-014-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-014-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-014-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-014-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-014-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  },
+  {
+    "id": "INC-EVAL-015",
+    "scenario": "eval-ack-unknown",
+    "title": "Isolated acknowledgement deadline miss",
+    "severity": "SEV3",
+    "status": "detected",
+    "started_at": "2026-10-09T14:00:00Z",
+    "affected_services": [
+      "execution-service"
+    ],
+    "client_impact": "CLIENT-DEMO-015 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+    "summary": "Synthetic alert: isolated acknowledgement deadline miss. Correlate independent telemetry before assigning a failure domain.",
+    "timeline": [
+      {
+        "timestamp": "2026-10-09T14:00:00Z",
+        "label": "Alert threshold crossed",
+        "evidence_ids": [
+          "INC-EVAL-015",
+          "LOG-015-001",
+          "METRIC-015-BASE-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-CPU_PERCENT-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-MEMORY_MB-0",
+          "METRIC-015-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+          "METRIC-015-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+          "METRIC-015-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+          "METRIC-015-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+          "METRIC-015-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+          "METRIC-015-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+          "METRIC-015-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+          "METRIC-015-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+          "METRIC-015-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+          "METRIC-015-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+          "METRIC-015-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+        ],
+        "reveal_seconds": 0
+      },
+      {
+        "timestamp": "2026-10-09T14:01:24Z",
+        "label": "Correlated warning and error logs captured",
+        "evidence_ids": [
+          "LOG-015-002"
+        ],
+        "reveal_seconds": 7
+      }
+    ],
+    "simulated_elapsed_seconds": 0,
+    "interactive": false
+  }
+]

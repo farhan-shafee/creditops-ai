@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "TimelineEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "timestamp",
+        "label",
+        "evidence_ids"
+      ],
+      "title": "TimelineEvent",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "affected_services": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Affected Services",
+      "type": "array"
+    },
+    "client_impact": {
+      "title": "Client Impact",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "scenario": {
+      "title": "Scenario",
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "SEV1",
+        "SEV2",
+        "SEV3"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "simulated_elapsed_seconds": {
+      "default": 0,
+      "title": "Simulated Elapsed Seconds",
+      "type": "integer"
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "detected",
+        "investigating",
+        "monitoring",
+        "resolved"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "timeline": {
+      "items": {
+        "$ref": "#/$defs/TimelineEvent"
+      },
+      "title": "Timeline",
+      "type": "array"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "scenario",
+    "title",
+    "severity",
+    "status",
+    "started_at",
+    "affected_services",
+    "client_impact",
+    "summary",
+    "timeline"
+  ],
+  "title": "Incident",
+  "type": "object"
+}

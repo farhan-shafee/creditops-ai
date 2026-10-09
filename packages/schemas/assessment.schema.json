@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "AlternativeHypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "domain",
+        "reason",
+        "evidence_ids"
+      ],
+      "title": "AlternativeHypothesis",
+      "type": "object"
+    },
+    "RCA": {
+      "additionalProperties": false,
+      "properties": {
+        "contributing_factors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contributing Factors",
+          "type": "array"
+        },
+        "executive_summary": {
+          "title": "Executive Summary",
+          "type": "string"
+        },
+        "follow_up_work": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Follow Up Work",
+          "type": "array"
+        },
+        "immediate_next_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Immediate Next Steps",
+          "type": "array"
+        },
+        "impact": {
+          "title": "Impact",
+          "type": "string"
+        },
+        "observed_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Observed Evidence",
+          "type": "array"
+        },
+        "probable_root_cause": {
+          "title": "Probable Root Cause",
+          "type": "string"
+        },
+        "timeline": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Timeline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "executive_summary",
+        "impact",
+        "timeline",
+        "observed_evidence",
+        "probable_root_cause",
+        "contributing_factors",
+        "immediate_next_steps",
+        "follow_up_work"
+      ],
+      "title": "RCA",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alternative_hypotheses": {
+      "items": {
+        "$ref": "#/$defs/AlternativeHypothesis"
+      },
+      "title": "Alternative Hypotheses",
+      "type": "array"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "incident_summary": {
+      "title": "Incident Summary",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "probable_failure_domain": {
+      "title": "Probable Failure Domain",
+      "type": "string"
+    },
+    "rca": {
+      "$ref": "#/$defs/RCA"
+    },
+    "recommended_next_steps": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recommended Next Steps",
+      "type": "array"
+    },
+    "relevant_runbooks": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relevant Runbooks",
+      "type": "array"
+    },
+    "requires_human_review": {
+      "title": "Requires Human Review",
+      "type": "boolean"
+    },
+    "similar_incidents": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Similar Incidents",
+      "type": "array"
+    },
+    "supporting_evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supporting Evidence Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "incident_summary",
+    "probable_failure_domain",
+    "confidence",
+    "supporting_evidence_ids",
+    "alternative_hypotheses",
+    "recommended_next_steps",
+    "relevant_runbooks",
+    "similar_incidents",
+    "requires_human_review",
+    "limitations",
+    "rca"
+  ],
+  "title": "Assessment",
+  "type": "object"
+}

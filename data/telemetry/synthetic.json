@@ -1,0 +1,1273 @@
+[
+  {
+    "id": "KAFKA-001-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-001",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-001-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-001",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-001-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-DEMO-001",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-001-001",
+    "kind": "kafka",
+    "service": "pricing-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Pricing consumer backlog exceeds alert threshold",
+    "data": {
+      "topic": "pricing.updates",
+      "consumer_group": "pricing-credit-demo",
+      "consumer_lag": 18923,
+      "partitions": 6,
+      "slow_partition": 2,
+      "ingress_per_second": 2600,
+      "throughput_per_second": 650,
+      "status": "degraded"
+    },
+    "incident_id": "INC-DEMO-001",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-002-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-002",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-002-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-002",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-002-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-DEMO-002",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-002-001",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "FIX session disconnected after missed heartbeats",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": false,
+      "reconnect_count": 11,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12090,
+      "target_seq_num": 12083,
+      "heartbeat_age_seconds": 96,
+      "ack_latency_ms": 4650,
+      "tags": {
+        "35": "0",
+        "34": "12090",
+        "49": "DEMO-SENDER",
+        "56": "DEMO-TARGET"
+      }
+    },
+    "incident_id": "INC-DEMO-002",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "FIX-002-002",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:48Z",
+    "summary": "Session reconnect increased with unresolved sequence gap",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 14,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12102,
+      "target_seq_num": 12095,
+      "heartbeat_age_seconds": 12,
+      "ack_latency_ms": 4900
+    },
+    "incident_id": "INC-DEMO-002",
+    "reveal_seconds": 9
+  },
+  {
+    "id": "KAFKA-003-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-003",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-003-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-DEMO-003",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-003-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-DEMO-003",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DEPLOY-003-001",
+    "kind": "deployment",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T13:57:00Z",
+    "summary": "Synthetic quote-service release precedes pool wait symptoms",
+    "data": {
+      "version": "demo-1.3.0",
+      "commit": "demo0003",
+      "change": "expanded reference-data lookup per RFQ",
+      "environment": "synthetic",
+      "deployed_at": "2026-10-09T13:57:00Z",
+      "rollback_considerations": "Human approval and impact review required"
+    },
+    "incident_id": "INC-DEMO-003",
+    "reveal_seconds": 0
+  },
+  {
+    "id": "DB-003-001",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Connection pool saturated with waiters; CPU remains normal",
+    "data": {
+      "pool_utilization": 1.0,
+      "query_latency_ms": 870,
+      "wait_ms": 2400,
+      "active_connections": 40,
+      "max_connections": 40,
+      "waiting_requests": 83,
+      "cpu_percent": 32,
+      "status": "critical"
+    },
+    "incident_id": "INC-DEMO-003",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-004-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-004",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-004-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-004",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-004-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-004",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-004-001",
+    "kind": "kafka",
+    "service": "pricing-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Pricing consumer backlog exceeds alert threshold",
+    "data": {
+      "topic": "pricing.updates",
+      "consumer_group": "pricing-credit-demo",
+      "consumer_lag": 19442,
+      "partitions": 6,
+      "slow_partition": 2,
+      "ingress_per_second": 2600,
+      "throughput_per_second": 650,
+      "status": "degraded"
+    },
+    "incident_id": "INC-EVAL-004",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-005-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-005",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-005-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-005",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-005-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-005",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-005-001",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "FIX session disconnected after missed heartbeats",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": false,
+      "reconnect_count": 14,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12090,
+      "target_seq_num": 12083,
+      "heartbeat_age_seconds": 96,
+      "ack_latency_ms": 4650,
+      "tags": {
+        "35": "0",
+        "34": "12090",
+        "49": "DEMO-SENDER",
+        "56": "DEMO-TARGET"
+      }
+    },
+    "incident_id": "INC-EVAL-005",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "FIX-005-002",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:48Z",
+    "summary": "Session reconnect increased with unresolved sequence gap",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 17,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12102,
+      "target_seq_num": 12095,
+      "heartbeat_age_seconds": 12,
+      "ack_latency_ms": 4900
+    },
+    "incident_id": "INC-EVAL-005",
+    "reveal_seconds": 9
+  },
+  {
+    "id": "KAFKA-006-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-006",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-006-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-006",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-006-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-006",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DEPLOY-006-001",
+    "kind": "deployment",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T13:57:00Z",
+    "summary": "Synthetic quote-service release precedes pool wait symptoms",
+    "data": {
+      "version": "demo-1.6.0",
+      "commit": "demo0006",
+      "change": "expanded reference-data lookup per RFQ",
+      "environment": "synthetic",
+      "deployed_at": "2026-10-09T13:57:00Z",
+      "rollback_considerations": "Human approval and impact review required"
+    },
+    "incident_id": "INC-EVAL-006",
+    "reveal_seconds": 0
+  },
+  {
+    "id": "DB-006-001",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Connection pool saturated with waiters; CPU remains normal",
+    "data": {
+      "pool_utilization": 1.0,
+      "query_latency_ms": 870,
+      "wait_ms": 2400,
+      "active_connections": 40,
+      "max_connections": 40,
+      "waiting_requests": 83,
+      "cpu_percent": 32,
+      "status": "critical"
+    },
+    "incident_id": "INC-EVAL-006",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-007-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-007",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-007-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-007",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-007-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-007",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-007-001",
+    "kind": "kafka",
+    "service": "pricing-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Pricing consumer backlog exceeds alert threshold",
+    "data": {
+      "topic": "pricing.updates",
+      "consumer_group": "pricing-credit-demo",
+      "consumer_lag": 19961,
+      "partitions": 6,
+      "slow_partition": 2,
+      "ingress_per_second": 2600,
+      "throughput_per_second": 650,
+      "status": "degraded"
+    },
+    "incident_id": "INC-EVAL-007",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-008-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-008",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-008-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-008",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-008-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-008",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-008-001",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "FIX session disconnected after missed heartbeats",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-B",
+      "connected": false,
+      "reconnect_count": 17,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12090,
+      "target_seq_num": 12083,
+      "heartbeat_age_seconds": 96,
+      "ack_latency_ms": 4650,
+      "tags": {
+        "35": "0",
+        "34": "12090",
+        "49": "DEMO-SENDER",
+        "56": "DEMO-TARGET"
+      }
+    },
+    "incident_id": "INC-EVAL-008",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "FIX-008-002",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:01:48Z",
+    "summary": "Session reconnect increased with unresolved sequence gap",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 20,
+      "sequence_gaps": 7,
+      "sender_seq_num": 12102,
+      "target_seq_num": 12095,
+      "heartbeat_age_seconds": 12,
+      "ack_latency_ms": 4900
+    },
+    "incident_id": "INC-EVAL-008",
+    "reveal_seconds": 9
+  },
+  {
+    "id": "KAFKA-009-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-009",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-009-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-009",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-009-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-009",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DEPLOY-009-001",
+    "kind": "deployment",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T13:57:00Z",
+    "summary": "Synthetic quote-service release precedes pool wait symptoms",
+    "data": {
+      "version": "demo-1.9.0",
+      "commit": "demo0009",
+      "change": "expanded reference-data lookup per RFQ",
+      "environment": "synthetic",
+      "deployed_at": "2026-10-09T13:57:00Z",
+      "rollback_considerations": "Human approval and impact review required"
+    },
+    "incident_id": "INC-EVAL-009",
+    "reveal_seconds": 0
+  },
+  {
+    "id": "DB-009-001",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:01:00Z",
+    "summary": "Connection pool saturated with waiters; CPU remains normal",
+    "data": {
+      "pool_utilization": 1.0,
+      "query_latency_ms": 870,
+      "wait_ms": 2400,
+      "active_connections": 40,
+      "max_connections": 40,
+      "waiting_requests": 83,
+      "cpu_percent": 32,
+      "status": "critical"
+    },
+    "incident_id": "INC-EVAL-009",
+    "reveal_seconds": 5
+  },
+  {
+    "id": "KAFKA-010-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-010",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-010-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-010",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-010-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-010",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-011-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-011",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-011-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-011",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-011-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-011",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-012-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-012",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-012-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-012",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-012-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-012",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-013-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-013",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-013-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-013",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-013-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-013",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-014-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-014",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-014-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-014",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-014-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-014",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "KAFKA-015-HEALTH",
+    "kind": "kafka",
+    "service": "audit-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Audit and RFQ topics consuming normally",
+    "data": {
+      "topic": "audit.events",
+      "consumer_group": "audit-writer-demo",
+      "consumer_lag": 3,
+      "partitions": 3,
+      "throughput_per_second": 420,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-015",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "DB-015-CPU",
+    "kind": "database",
+    "service": "quote-service",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Database CPU remains within normal range",
+    "data": {
+      "pool_utilization": 0.35,
+      "query_latency_ms": 12,
+      "wait_ms": 0,
+      "cpu_percent": 31,
+      "active_connections": 14,
+      "max_connections": 40,
+      "status": "healthy"
+    },
+    "incident_id": "INC-EVAL-015",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "FIX-015-HEALTH",
+    "kind": "fix",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-09T14:00:48Z",
+    "summary": "Synthetic FIX baseline session heartbeat observed",
+    "data": {
+      "session_id": "FIX-DEMO-SESSION-A",
+      "connected": true,
+      "reconnect_count": 0,
+      "sequence_gaps": 0,
+      "sender_seq_num": 12040,
+      "target_seq_num": 12040,
+      "heartbeat_age_seconds": 4,
+      "ack_latency_ms": 80
+    },
+    "incident_id": "INC-EVAL-015",
+    "reveal_seconds": 4
+  },
+  {
+    "id": "INC-HIST-001",
+    "kind": "history",
+    "service": "pricing-service",
+    "timestamp": "2026-10-08T14:00:00Z",
+    "summary": "Synthetic pricing consumer imbalance",
+    "data": {
+      "title": "Synthetic pricing consumer imbalance",
+      "symptoms": "consumer backlog stale pricing quote age",
+      "resolution": "Human review found partition skew and a slow consumer; capacity change reviewed separately",
+      "affected_services": [
+        "pricing-service"
+      ],
+      "duration_minutes": 19,
+      "root_cause": "Human review found partition skew and a slow consumer; capacity change reviewed separately",
+      "tags": [
+        "consumer",
+        "backlog",
+        "stale",
+        "pricing",
+        "quote",
+        "age"
+      ],
+      "timeline": [
+        "Synthetic alert detected",
+        "Independent telemetry compared",
+        "Human operator reviewed failure domain",
+        "Follow-up monitoring verified"
+      ],
+      "environment": "synthetic"
+    },
+    "incident_id": null,
+    "reveal_seconds": 0
+  },
+  {
+    "id": "INC-HIST-002",
+    "kind": "history",
+    "service": "fix-gateway",
+    "timestamp": "2026-10-07T14:00:00Z",
+    "summary": "Synthetic heartbeat instability",
+    "data": {
+      "title": "Synthetic heartbeat instability",
+      "symptoms": "fix reconnect sequence gap acknowledgement",
+      "resolution": "Human session review and network diagnosis restored synthetic acknowledgements",
+      "affected_services": [
+        "fix-gateway"
+      ],
+      "duration_minutes": 20,
+      "root_cause": "Human session review and network diagnosis restored synthetic acknowledgements",
+      "tags": [
+        "fix",
+        "reconnect",
+        "sequence",
+        "gap",
+        "acknowledgement"
+      ],
+      "timeline": [
+        "Synthetic alert detected",
+        "Independent telemetry compared",
+        "Human operator reviewed failure domain",
+        "Follow-up monitoring verified"
+      ],
+      "environment": "synthetic"
+    },
+    "incident_id": null,
+    "reveal_seconds": 0
+  },
+  {
+    "id": "INC-HIST-003",
+    "kind": "history",
+    "service": "quote-service",
+    "timestamp": "2026-10-06T14:00:00Z",
+    "summary": "Synthetic quote pool regression",
+    "data": {
+      "title": "Synthetic quote pool regression",
+      "symptoms": "database connection pool timeout deployment",
+      "resolution": "Application query pattern reviewed and release rollback considered by operator",
+      "affected_services": [
+        "quote-service"
+      ],
+      "duration_minutes": 21,
+      "root_cause": "Application query pattern reviewed and release rollback considered by operator",
+      "tags": [
+        "database",
+        "connection",
+        "pool",
+        "timeout",
+        "deployment"
+      ],
+      "timeline": [
+        "Synthetic alert detected",
+        "Independent telemetry compared",
+        "Human operator reviewed failure domain",
+        "Follow-up monitoring verified"
+      ],
+      "environment": "synthetic"
+    },
+    "incident_id": null,
+    "reveal_seconds": 0
+  },
+  {
+    "id": "INC-HIST-004",
+    "kind": "history",
+    "service": "market-data-service",
+    "timestamp": "2026-10-05T14:00:00Z",
+    "summary": "Synthetic stale feed publication",
+    "data": {
+      "title": "Synthetic stale feed publication",
+      "symptoms": "market data stale heartbeat",
+      "resolution": "Publisher heartbeat monitoring and source quality checks added",
+      "affected_services": [
+        "market-data-service"
+      ],
+      "duration_minutes": 22,
+      "root_cause": "Publisher heartbeat monitoring and source quality checks added",
+      "tags": [
+        "market",
+        "data",
+        "stale",
+        "heartbeat"
+      ],
+      "timeline": [
+        "Synthetic alert detected",
+        "Independent telemetry compared",
+        "Human operator reviewed failure domain",
+        "Follow-up monitoring verified"
+      ],
+      "environment": "synthetic"
+    },
+    "incident_id": null,
+    "reveal_seconds": 0
+  },
+  {
+    "id": "INC-HIST-005",
+    "kind": "history",
+    "service": "risk-service",
+    "timestamp": "2026-10-04T14:00:00Z",
+    "summary": "Synthetic risk dependency degradation",
+    "data": {
+      "title": "Synthetic risk dependency degradation",
+      "symptoms": "risk dependency timeout upstream",
+      "resolution": "Dependency SLO and trace coverage reviewed",
+      "affected_services": [
+        "risk-service"
+      ],
+      "duration_minutes": 23,
+      "root_cause": "Dependency SLO and trace coverage reviewed",
+      "tags": [
+        "risk",
+        "dependency",
+        "timeout",
+        "upstream"
+      ],
+      "timeline": [
+        "Synthetic alert detected",
+        "Independent telemetry compared",
+        "Human operator reviewed failure domain",
+        "Follow-up monitoring verified"
+      ],
+      "environment": "synthetic"
+    },
+    "incident_id": null,
+    "reveal_seconds": 0
+  }
+]

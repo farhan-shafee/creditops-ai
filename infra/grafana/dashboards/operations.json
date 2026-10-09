@@ -1,0 +1,230 @@
+{
+  "uid": "creditops-synthetic-operations",
+  "title": "CreditOps AI \u2014 synthetic operations",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "tags": [
+    "synthetic",
+    "creditops"
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Independent synthetic environment",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "CreditOps AI uses entirely synthetic data. This dashboard records local application and broker measurements. It does not connect to a trading venue or production infrastructure."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "API / broker scrape health",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"creditops-api|redpanda\"}",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "API request rate",
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 16,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(creditops_http_requests_total[1m])) by (method)",
+          "legendFormat": "{{method}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Completed investigation runs",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(creditops_investigations_total) by (mode, status)",
+          "legendFormat": "{{mode}} {{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Redpanda Kafka request rate",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(redpanda_kafka_request_bytes_total[1m])) by (redpanda_request)",
+          "legendFormat": "{{redpanda_request}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Synthetic service latency (simulated clock)",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "creditops_service_latency_ms",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Synthetic Kafka consumer lag",
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "creditops_kafka_consumer_lag",
+          "legendFormat": "{{group}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Synthetic FIX connectivity (1=connected)",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "creditops_fix_connected",
+          "legendFormat": "{{session}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Synthetic DB pool utilization",
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "creditops-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "creditops_db_pool_utilization",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      }
+    }
+  ]
+}

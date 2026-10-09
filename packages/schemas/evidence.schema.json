@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+    },
+    "id": {
+      "maxLength": 96,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Kind",
+      "type": "string"
+    },
+    "service": {
+      "maxLength": 96,
+      "title": "Service",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 8000,
+      "title": "Summary",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "service",
+    "timestamp",
+    "summary",
+    "data"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

@@ -1,0 +1,1213 @@
+{
+  "sha256": "69b1982fee67b2d9763d8345f95956fa49b73f29f708b3f7f120879986c36a58",
+  "payload": {
+    "schema_version": 1,
+    "generated_at": "2026-10-09T16:17:42.192131+00:00",
+    "provenance": {
+      "pipeline": "creditops.investigator.collect_investigation",
+      "provider": "deterministic",
+      "model_called": false,
+      "telemetry_window": "complete synthetic scenario snapshot"
+    },
+    "investigation": {
+      "id": "0fbabfa8-45cc-49f8-98c2-2430f90cfd9e",
+      "incident_id": "INC-DEMO-002",
+      "mode": "PIPELINE",
+      "status": "complete",
+      "provider": "deterministic",
+      "created_at": "2026-10-09T16:17:42.145429+00:00",
+      "steps": [
+        {
+          "id": "STEP-001",
+          "action": "Retrieved incident context",
+          "tool": "get_incident",
+          "status": "complete",
+          "evidence_ids": [
+            "INC-DEMO-002"
+          ],
+          "timestamp": "2026-10-09T16:17:42.145453+00:00",
+          "duration_ms": 6.481
+        },
+        {
+          "id": "STEP-002",
+          "action": "Queried service latency and freshness",
+          "tool": "query_metrics",
+          "status": "complete",
+          "evidence_ids": [
+            "METRIC-002-ACK",
+            "METRIC-002-LATENCY",
+            "METRIC-002-BASE-0",
+            "METRIC-002-BASE-1",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-5",
+            "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+            "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+            "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+            "METRIC-002-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+            "METRIC-002-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+            "METRIC-002-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-5",
+            "METRIC-002-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-4",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-4",
+            "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-4",
+            "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+            "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+            "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4"
+          ],
+          "timestamp": "2026-10-09T16:17:42.151973+00:00",
+          "duration_ms": 6.612
+        },
+        {
+          "id": "STEP-003",
+          "action": "Inspected Kafka consumer lag",
+          "tool": "inspect_kafka_lag",
+          "status": "complete",
+          "evidence_ids": [
+            "KAFKA-002-HEALTH"
+          ],
+          "timestamp": "2026-10-09T16:17:42.158613+00:00",
+          "duration_ms": 3.61
+        },
+        {
+          "id": "STEP-004",
+          "action": "Inspected FIX sessions and heartbeats",
+          "tool": "inspect_fix_session",
+          "status": "complete",
+          "evidence_ids": [
+            "FIX-002-HEALTH",
+            "FIX-002-001",
+            "FIX-002-002"
+          ],
+          "timestamp": "2026-10-09T16:17:42.162237+00:00",
+          "duration_ms": 3.959
+        },
+        {
+          "id": "STEP-005",
+          "action": "Inspected database pool and wait times",
+          "tool": "inspect_database_health",
+          "status": "complete",
+          "evidence_ids": [
+            "DB-002-CPU"
+          ],
+          "timestamp": "2026-10-09T16:17:42.166206+00:00",
+          "duration_ms": 3.54
+        },
+        {
+          "id": "STEP-006",
+          "action": "Searched bounded service logs",
+          "tool": "search_logs",
+          "status": "complete",
+          "evidence_ids": [
+            "LOG-002-001",
+            "LOG-002-002",
+            "LOG-002-003"
+          ],
+          "timestamp": "2026-10-09T16:17:42.169761+00:00",
+          "duration_ms": 4.239
+        },
+        {
+          "id": "STEP-007",
+          "action": "Compared deployment timestamps",
+          "tool": "get_recent_deployments",
+          "status": "complete",
+          "evidence_ids": [],
+          "timestamp": "2026-10-09T16:17:42.174010+00:00",
+          "duration_ms": 3.065
+        },
+        {
+          "id": "STEP-008",
+          "action": "Mapped service dependencies",
+          "tool": "get_service_topology",
+          "status": "complete",
+          "evidence_ids": [
+            "TOPOLOGY-001"
+          ],
+          "timestamp": "2026-10-09T16:17:42.177085+00:00",
+          "duration_ms": 3.539
+        },
+        {
+          "id": "STEP-009",
+          "action": "Retrieved similar historical incidents",
+          "tool": "find_similar_incidents",
+          "status": "complete",
+          "evidence_ids": [
+            "INC-HIST-002"
+          ],
+          "timestamp": "2026-10-09T16:17:42.180975+00:00",
+          "duration_ms": 4.752
+        },
+        {
+          "id": "STEP-010",
+          "action": "Retrieved relevant diagnostic runbooks",
+          "tool": "search_runbooks",
+          "status": "complete",
+          "evidence_ids": [
+            "RUNBOOK-002"
+          ],
+          "timestamp": "2026-10-09T16:17:42.186066+00:00",
+          "duration_ms": 5.033
+        },
+        {
+          "id": "STEP-011",
+          "action": "Generated and validated evidence-backed assessment",
+          "tool": "assessment_validation",
+          "status": "complete",
+          "evidence_ids": [
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+            "FIX-002-001",
+            "FIX-002-002",
+            "LOG-002-002",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+            "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+            "FIX-002-HEALTH",
+            "METRIC-002-ACK",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4"
+          ],
+          "timestamp": "2026-10-09T16:17:42.191741+00:00",
+          "duration_ms": 0.65
+        }
+      ],
+      "evidence": [
+        {
+          "id": "INC-DEMO-002",
+          "kind": "incident",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Synthetic alert: execution acknowledgements delayed. Correlate independent telemetry before assigning a failure domain.",
+          "data": {
+            "title": "Execution acknowledgements delayed",
+            "severity": "SEV2",
+            "affected_services": [
+              "execution-service",
+              "fix-gateway"
+            ],
+            "client_impact": "CLIENT-DEMO-002 faces delayed synthetic RFQ or order responses; no real trading occurs."
+          }
+        },
+        {
+          "id": "METRIC-002-ACK",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "Execution acknowledgement latency breached deadline",
+          "data": {
+            "metric": "execution_ack_latency_ms",
+            "value": 4650.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-002-LATENCY",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Request latency budget breached",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 1450.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-002-BASE-0",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T13:59:00Z",
+          "summary": "Baseline request latency within budget",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 85.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-002-BASE-1",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T13:59:00Z",
+          "summary": "Baseline request latency within budget",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 95.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 47.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 7.8,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic execution_ack_latency_ms sample",
+          "data": {
+            "metric": "execution_ack_latency_ms",
+            "unit": "ms",
+            "value": 4900.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 650.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 700.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1450.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 2400.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 240.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 47.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 7.8,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_connection_status sample",
+          "data": {
+            "metric": "fix_connection_status",
+            "unit": "connected",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_reconnect_count sample",
+          "data": {
+            "metric": "fix_reconnect_count",
+            "unit": "count",
+            "value": 14.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_sequence_gaps sample",
+          "data": {
+            "metric": "fix_sequence_gaps",
+            "unit": "count",
+            "value": 7.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 650.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 700.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1450.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 2400.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 240.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic kafka_consumer_lag sample",
+          "data": {
+            "metric": "kafka_consumer_lag",
+            "unit": "messages",
+            "value": 3.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic kafka_throughput_per_second sample",
+          "data": {
+            "metric": "kafka_throughput_per_second",
+            "unit": "messages/s",
+            "value": 2600.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_pool_utilization sample",
+          "data": {
+            "metric": "db_pool_utilization",
+            "unit": "%",
+            "value": 35.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_query_latency_ms sample",
+          "data": {
+            "metric": "db_query_latency_ms",
+            "unit": "ms",
+            "value": 12.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_wait_ms sample",
+          "data": {
+            "metric": "db_wait_ms",
+            "unit": "ms",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic quote_age_ms sample",
+          "data": {
+            "metric": "quote_age_ms",
+            "unit": "ms",
+            "value": 95.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic stale_price_count sample",
+          "data": {
+            "metric": "stale_price_count",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 42.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 6.26,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic execution_ack_latency_ms sample",
+          "data": {
+            "metric": "execution_ack_latency_ms",
+            "unit": "ms",
+            "value": 3936.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 602.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 568.4,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1177.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 1948.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 256.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 42.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 6.26,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_connection_status sample",
+          "data": {
+            "metric": "fix_connection_status",
+            "unit": "connected",
+            "value": 0.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_reconnect_count sample",
+          "data": {
+            "metric": "fix_reconnect_count",
+            "unit": "count",
+            "value": 11.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_sequence_gaps sample",
+          "data": {
+            "metric": "fix_sequence_gaps",
+            "unit": "count",
+            "value": 5.6,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 602.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 568.4,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1177.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 1948.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 256.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic kafka_consumer_lag sample",
+          "data": {
+            "metric": "kafka_consumer_lag",
+            "unit": "messages",
+            "value": 3.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic kafka_throughput_per_second sample",
+          "data": {
+            "metric": "kafka_throughput_per_second",
+            "unit": "messages/s",
+            "value": 2600.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic db_pool_utilization sample",
+          "data": {
+            "metric": "db_pool_utilization",
+            "unit": "%",
+            "value": 35.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "KAFKA-002-HEALTH",
+          "kind": "kafka",
+          "service": "audit-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Audit and RFQ topics consuming normally",
+          "data": {
+            "topic": "audit.events",
+            "consumer_group": "audit-writer-demo",
+            "consumer_lag": 3,
+            "partitions": 3,
+            "throughput_per_second": 420,
+            "status": "healthy"
+          }
+        },
+        {
+          "id": "FIX-002-HEALTH",
+          "kind": "fix",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Synthetic FIX baseline session heartbeat observed",
+          "data": {
+            "session_id": "FIX-DEMO-SESSION-A",
+            "connected": true,
+            "reconnect_count": 0,
+            "sequence_gaps": 0,
+            "sender_seq_num": 12040,
+            "target_seq_num": 12040,
+            "heartbeat_age_seconds": 4,
+            "ack_latency_ms": 80
+          }
+        },
+        {
+          "id": "FIX-002-001",
+          "kind": "fix",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:00Z",
+          "summary": "FIX session disconnected after missed heartbeats",
+          "data": {
+            "session_id": "FIX-DEMO-SESSION-A",
+            "connected": false,
+            "reconnect_count": 11,
+            "sequence_gaps": 7,
+            "sender_seq_num": 12090,
+            "target_seq_num": 12083,
+            "heartbeat_age_seconds": 96,
+            "ack_latency_ms": 4650,
+            "tags": {
+              "35": "0",
+              "34": "12090",
+              "49": "DEMO-SENDER",
+              "56": "DEMO-TARGET"
+            }
+          }
+        },
+        {
+          "id": "FIX-002-002",
+          "kind": "fix",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Session reconnect increased with unresolved sequence gap",
+          "data": {
+            "session_id": "FIX-DEMO-SESSION-A",
+            "connected": true,
+            "reconnect_count": 14,
+            "sequence_gaps": 7,
+            "sender_seq_num": 12102,
+            "target_seq_num": 12095,
+            "heartbeat_age_seconds": 12,
+            "ack_latency_ms": 4900
+          }
+        },
+        {
+          "id": "DB-002-CPU",
+          "kind": "database",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Database CPU remains within normal range",
+          "data": {
+            "pool_utilization": 0.35,
+            "query_latency_ms": 12,
+            "wait_ms": 0,
+            "cpu_percent": 31,
+            "active_connections": 14,
+            "max_connections": 40,
+            "status": "healthy"
+          }
+        },
+        {
+          "id": "LOG-002-001",
+          "kind": "log",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Execution acknowledgements delayed",
+          "data": {
+            "severity": "WARN",
+            "trace_id": "TRACE-DEMO-002",
+            "rfq_id": "RFQ-DEMO-000002",
+            "message": "Execution acknowledgements delayed",
+            "environment": "synthetic"
+          }
+        },
+        {
+          "id": "LOG-002-002",
+          "kind": "log",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:24Z",
+          "summary": "Heartbeat timeout; repeated disconnect and reconnect attempts",
+          "data": {
+            "severity": "ERROR",
+            "trace_id": "TRACE-DEMO-002",
+            "message": "FIX heartbeat timeout disconnect sequence gap expected=12083 received=12090"
+          }
+        },
+        {
+          "id": "LOG-002-003",
+          "kind": "log",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:12Z",
+          "summary": "Order acknowledgement uncertain; retry awaiting session recovery",
+          "data": {
+            "severity": "WARN",
+            "trace_id": "TRACE-DEMO-002",
+            "order_id": "ORDER-DEMO-000002",
+            "message": "Synthetic order uncertain ack; FIX connectivity degraded"
+          }
+        },
+        {
+          "id": "TOPOLOGY-001",
+          "kind": "topology",
+          "service": "platform",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Synthetic service dependency graph",
+          "data": {
+            "services": [
+              "rfq-gateway",
+              "quote-service",
+              "pricing-service",
+              "market-data-service",
+              "reference-data-service",
+              "execution-service",
+              "fix-gateway",
+              "risk-service",
+              "audit-service",
+              "notification-service"
+            ],
+            "dependencies": [
+              {
+                "source": "rfq-gateway",
+                "target": "quote-service"
+              },
+              {
+                "source": "rfq-gateway",
+                "target": "execution-service"
+              },
+              {
+                "source": "quote-service",
+                "target": "pricing-service"
+              },
+              {
+                "source": "quote-service",
+                "target": "risk-service"
+              },
+              {
+                "source": "pricing-service",
+                "target": "market-data-service"
+              },
+              {
+                "source": "pricing-service",
+                "target": "reference-data-service"
+              },
+              {
+                "source": "execution-service",
+                "target": "fix-gateway"
+              },
+              {
+                "source": "execution-service",
+                "target": "audit-service"
+              },
+              {
+                "source": "audit-service",
+                "target": "notification-service"
+              }
+            ]
+          }
+        },
+        {
+          "id": "INC-HIST-002",
+          "kind": "history",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-07T14:00:00Z",
+          "summary": "Synthetic heartbeat instability",
+          "data": {
+            "title": "Synthetic heartbeat instability",
+            "symptoms": "fix reconnect sequence gap acknowledgement",
+            "resolution": "Human session review and network diagnosis restored synthetic acknowledgements",
+            "affected_services": [
+              "fix-gateway"
+            ],
+            "duration_minutes": 20,
+            "root_cause": "Human session review and network diagnosis restored synthetic acknowledgements",
+            "tags": [
+              "fix",
+              "reconnect",
+              "sequence",
+              "gap",
+              "acknowledgement"
+            ],
+            "timeline": [
+              "Synthetic alert detected",
+              "Independent telemetry compared",
+              "Human operator reviewed failure domain",
+              "Follow-up monitoring verified"
+            ],
+            "environment": "synthetic",
+            "retrieval": {
+              "method": "lexical_bm25",
+              "score": 5.7605,
+              "matching_terms": [
+                "fix",
+                "instability",
+                "session"
+              ],
+              "overlapping_services": [],
+              "explanation": "Matched fix, instability, session"
+            }
+          }
+        },
+        {
+          "id": "RUNBOOK-002",
+          "kind": "runbook",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "FIX Session Disconnect and Sequence Gap Investigation",
+          "data": {
+            "title": "FIX Session Disconnect and Sequence Gap Investigation",
+            "tags": "fix heartbeat disconnect reconnect sequence gap",
+            "content": "# FIX Session Disconnect and Sequence Gap Investigation\n\n## Symptoms\nfix heartbeat disconnect reconnect sequence gap.\n\n## Checks\nCompare heartbeat age, reconnect count and sender/target sequence state. Check uncertain acknowledgements with the human operator.\n\n## Safe diagnostic commands\n```text\ncurl -fsS http://localhost:8000/api/telemetry/fix\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
+            "retrieval": {
+              "method": "lexical_bm25",
+              "score": 5.0993,
+              "matching_terms": [
+                "fix",
+                "session"
+              ],
+              "overlapping_services": [],
+              "explanation": "Matched fix, session"
+            }
+          }
+        }
+      ],
+      "assessment": {
+        "incident_summary": "Execution acknowledgements delayed. Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
+        "probable_failure_domain": "FIX connectivity/session instability",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+          "FIX-002-001",
+          "FIX-002-002",
+          "LOG-002-002",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+          "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+          "FIX-002-HEALTH",
+          "METRIC-002-ACK",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+          "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4"
+        ],
+        "alternative_hypotheses": [
+          {
+            "domain": "kafka subsystem",
+            "reason": "Considered separately; returned health snapshot [KAFKA-002-HEALTH] does not establish the primary failure.",
+            "evidence_ids": [
+              "KAFKA-002-HEALTH"
+            ]
+          },
+          {
+            "domain": "database subsystem",
+            "reason": "Considered separately; returned health snapshot [DB-002-CPU] does not establish the primary failure.",
+            "evidence_ids": [
+              "DB-002-CPU"
+            ]
+          }
+        ],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [
+          "RUNBOOK-002"
+        ],
+        "similar_incidents": [],
+        "requires_human_review": false,
+        "limitations": [
+          "Deterministic evidence assessment; no language model was called.",
+          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
+          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
+          "impact": "CLIENT-DEMO-002 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+          "timeline": [
+            "2026-10-09T14:01:36Z: Execution acknowledgement latency breached deadline [METRIC-002-ACK]",
+            "2026-10-09T14:02:24Z: Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
+            "2026-10-09T14:02:24Z: Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
+            "2026-10-09T14:02:24Z: Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
+            "2026-10-09T14:01:48Z: Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]"
+          ],
+          "observed_evidence": [
+            "Execution acknowledgement latency breached deadline [METRIC-002-ACK]",
+            "Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
+            "Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
+            "Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
+            "Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]",
+            "Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4]",
+            "Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4]",
+            "Synthetic FIX baseline session heartbeat observed [FIX-002-HEALTH]",
+            "FIX session disconnected after missed heartbeats [FIX-002-001]",
+            "Session reconnect increased with unresolved sequence gap [FIX-002-002]",
+            "Heartbeat timeout; repeated disconnect and reconnect attempts [LOG-002-002]"
+          ],
+          "probable_root_cause": "Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Review the application change and capacity assumptions with its owner.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        }
+      },
+      "error": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null,
+        "estimated_cost_usd": null
+      }
+    }
+  }
+}

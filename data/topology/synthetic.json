@@ -1,0 +1,102 @@
+{
+  "services": [
+    {
+      "id": "rfq-gateway",
+      "name": "rfq-gateway",
+      "status": "healthy",
+      "description": "Accepts synthetic client RFQs and tracks deadlines"
+    },
+    {
+      "id": "quote-service",
+      "name": "quote-service",
+      "status": "healthy",
+      "description": "Aggregates indicative prices and validates quote freshness"
+    },
+    {
+      "id": "pricing-service",
+      "name": "pricing-service",
+      "status": "healthy",
+      "description": "Consumes fictional pricing.updates and constructs credit curves"
+    },
+    {
+      "id": "market-data-service",
+      "name": "market-data-service",
+      "status": "healthy",
+      "description": "Publishes synthetic prices and market-data heartbeats"
+    },
+    {
+      "id": "reference-data-service",
+      "name": "reference-data-service",
+      "status": "healthy",
+      "description": "Resolves synthetic instrument reference metadata"
+    },
+    {
+      "id": "execution-service",
+      "name": "execution-service",
+      "status": "healthy",
+      "description": "Coordinates synthetic order acknowledgements"
+    },
+    {
+      "id": "fix-gateway",
+      "name": "fix-gateway",
+      "status": "healthy",
+      "description": "Simulates fictional FIX sessions and sequence state"
+    },
+    {
+      "id": "risk-service",
+      "name": "risk-service",
+      "status": "healthy",
+      "description": "Computes synthetic pre-trade limits"
+    },
+    {
+      "id": "audit-service",
+      "name": "audit-service",
+      "status": "healthy",
+      "description": "Records synthetic operational event history"
+    },
+    {
+      "id": "notification-service",
+      "name": "notification-service",
+      "status": "healthy",
+      "description": "Reports fictional client-facing status changes"
+    }
+  ],
+  "dependencies": [
+    {
+      "source": "rfq-gateway",
+      "target": "quote-service"
+    },
+    {
+      "source": "rfq-gateway",
+      "target": "execution-service"
+    },
+    {
+      "source": "quote-service",
+      "target": "pricing-service"
+    },
+    {
+      "source": "quote-service",
+      "target": "risk-service"
+    },
+    {
+      "source": "pricing-service",
+      "target": "market-data-service"
+    },
+    {
+      "source": "pricing-service",
+      "target": "reference-data-service"
+    },
+    {
+      "source": "execution-service",
+      "target": "fix-gateway"
+    },
+    {
+      "source": "execution-service",
+      "target": "audit-service"
+    },
+    {
+      "source": "audit-service",
+      "target": "notification-service"
+    }
+  ]
+}

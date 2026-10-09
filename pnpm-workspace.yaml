@@ -1,0 +1,17 @@
+packages:
+  - apps/web
+
+# Upgrade the test runner to its supported esbuild 0.28 dependency (GHSA-g7r4-m6w7-qqqr).
+# Next's plugin uses only globSync(pattern, { onlyDirectories: true }); tinyglobby
+# preserves that API without the unpatched braces chain (GHSA-vfj7-8cjw-p6xm).
+overrides:
+  'tsx@4.21.0': 4.23.15
+  '@next/eslint-plugin-next@16.4.0>fast-glob': npm:tinyglobby@0.2.17
+
+allowBuilds:
+  sharp: true
+  esbuild: true
+  unrs-resolver: false
+
+patchedDependencies:
+  '@next/eslint-plugin-next@16.4.0': patches/@next__eslint-plugin-next@16.4.0.patch
