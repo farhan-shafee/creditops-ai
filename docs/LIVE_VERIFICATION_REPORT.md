@@ -213,9 +213,13 @@ precedes collection/child API imports; external HTTP guards remain active.
 
 Final local `pnpm test`: 251 Python passed (no skips, 74.24 s), 13 frontend and two
 dependency checks. Lint/types/build, dependency audits and Bandit passed. Linux
-lifecycle skips locally on Windows and is required in CI. Separate-output evaluation
-remains 11/15; developer-authored robustness 13/13. Hosted CI for this strict-stop
-source is pending publication; the verified SHA/run will follow in a docs-only receipt.
+lifecycle skips locally on Windows. [CI 38000374090](https://github.com/farhan-shafee/creditops-ai/actions/runs/38000374090)
+passed all four jobs for source `f82a6a7863a7b441c2b04a194d8753941d979e42`:
+251 Python tests (no skips), 13 frontend tests, two dependency checks, 19 browser
+tests and one Linux lifecycle test, plus lint/types/build, audits, Bandit and full
+Git-history secret scanning. Separate-output and CI evaluation remain 11/15;
+developer-authored robustness remains 13/13. This later documentation receipt
+changes no application, schema or configuration files.
 
 All 13 protected artifacts, the historical linkage note and `.env` match their
 before/after checksums. Original ledger: STOPPED, USD 0.12633525 retained. Allocated
@@ -230,8 +234,10 @@ model/call/context/output limits below. Fresh schema ceiling: 147,611 input toke
 USD 0.13320825/call, USD 1.598499/12 calls, USD 1.72483425 including retained
 reservation. This corrects the earlier pre-finalization count by eight schema bytes;
 it is not usage/billing. Prior reservation + allocation: USD 2.12633525 < USD 5.
-Prior time + deadline: 341.376 s < 900 s. Local dry-run/calculation files are under
-`artifacts/test-results/strict-tool-stop-{dry-run,reservations}.json`.
+Prior time + deadline: 341.376 s < 900 s. The source-bound dry-run is
+`artifacts/test-results/strict-tool-stop-reviewed-source-dry-run.json`; calculation
+is `artifacts/test-results/strict-tool-stop-reservations.json`. Both are local,
+credential-free offline artifacts, not live receipts.
 
 Proposed only, after fresh owner approval bound to repaired CI-verified source and
 `stop_on_tool_error=True`, credential presence check, fresh project API/MCP processes
