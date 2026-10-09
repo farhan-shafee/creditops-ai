@@ -65,10 +65,10 @@ Live-provider execution: **NOT RUN**. Live-model quality: **UNVERIFIED**. No mea
 | Full production Docker Playwright suite |19 passed in 1.2 min on the final API/web stack; all original and new regressions passed |
 | Real Linux Playwright lifecycle in local Docker |1 passed; inherited pipes closed in 60.4 ms and all 4 controlled child processes stopped |
 | Lint dependency compatibility |2 passed |
-| Production builds / local infrastructure |Next optimized Docker build and API build passed; all 6 Compose services healthy, real broker connected |
+| Production builds / local infrastructure |Local `pnpm --filter @creditops/web build`, Next optimized Docker build and API build passed; all 6 Compose services healthy, real broker connected |
 | Ruff / Bandit |Passed; Bandit 0 issues,0 suppressed lines |
 | pip-audit / full pnpm audit |No known vulnerabilities; pip-audit notes the local project itself is not a PyPI package |
-| Gitleaks 8.30.1 |Existing Git history and the complete staged second-pass diff scanned with default rules plus the unchanged exact synthetic-fixture allowlist; no leaks found |
+| Gitleaks 8.30.1 |Complete staged diff and all 4 source-history commits scanned with default rules plus the unchanged exact synthetic-fixture allowlist; no leaks found |
 | Preserved original artifacts/labels |Baseline evaluation JSON/Markdown and original 15-case labels verified byte-identical |
 | Future live verification CLI |Dry run printed NOT RUN / UNVERIFIED; no provider request |
 
@@ -95,7 +95,7 @@ Before institutional use: enterprise identity/entitlements, durable jobs, shared
 
 ## Changed-file summary
 
-Eight genuine captures were produced by `apps/web/scripts/capture-second-pass.mjs` against the local production Docker stack. It operates the normal UI, waits for actual events/results and saves unmodified browser screenshots. The original baseline captures are preserved.
+Eight genuine captures were produced by `apps/web/scripts/capture-second-pass.mjs` against the local production Docker stack, with zero browser errors. It operates the normal UI, waits for actual events/results and saves unmodified browser screenshots. The original baseline captures are preserved.
 
 - [Fresh adaptive MCP trace and assessment](screenshots/second-pass-adaptive-mcp.png): deterministic provider, newly executed stdio calls, original evidence cutoff and schema verification.
 - [Pricing request impact](screenshots/second-pass-impact-kafka-pricing-lag.png), [FIX acknowledgement uncertainty](screenshots/second-pass-impact-fix-connectivity.png), and [DB processing timeouts](screenshots/second-pass-impact-db-pool-exhaustion.png): event-derived states for all three scenarios.
@@ -106,4 +106,8 @@ Backend: new diagnostics/validation/client/lifecycle/robustness modules; increme
 
 ## Publication receipt
 
-Source commit and actual hosted CI outcome will be added after publication. Any later documentation-only receipt is distinguished from the tested application commit.
+The application/test/data source was pushed to private `main` as `4e8cd4ee9809d1d682e3d72d79cdfcd7a3242862` with CI enabled. [Hosted verification run 37971910789](https://github.com/farhan-shafee/creditops-ai/actions/runs/37971910789) completed successfully for that exact source commit: **all four jobs passed** (`python`, `web`, `e2e`, `secrets`).
+
+Hosted logs confirm **159 Python tests passed in 43.05 seconds**, including PostgreSQL and real MCP; **13 frontend tests**, **2 dependency compatibility checks**, **1 Linux lifecycle regression**, and **19 browser tests in 3.2 minutes** passed. There were no failed, skipped or flaky test results. The Linux lifecycle closed inherited pipes in 50.6ms and stopped all four controlled children. The browser job exited and uploaded its artifacts normally. The separate robustness command reported 13/13 passed, 4 abstentions and zero failed substantive checks; dependency audits, Ruff, Bandit and Gitleaks passed.
+
+This later publication receipt is documentation-only and uses `[skip ci]`; no runtime, test, dependency, replay or evaluation source changes follow the tested source commit. The final response identifies its separate commit after verifying push, a clean working tree and repository privacy. The tested local production console remains available at http://127.0.0.1:13000; no cloud deployment was performed.
