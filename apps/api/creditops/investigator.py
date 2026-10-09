@@ -189,6 +189,7 @@ async def collect_adaptive_investigation(
             "snapshot_cutoff": cutoff,
             "snapshot_kind": "frozen_current",
             "recorded": False,
+            "action_rejections": [],
         },
     }
     seen: set[str] = set()
@@ -200,13 +201,31 @@ async def collect_adaptive_investigation(
     stop_reason: str | None = None
 
     async def publish() -> None:
+        result["provenance"].update(provider_turns=provider_turns, tool_calls=len(requested))
         _snapshot_provider_calls(result, provider, usages, initial_receipt_index)
         if on_progress:
             await on_progress(result)
 
+    async def reject_action(stage: str) -> None:
+        # Malformed provider text is not trusted or persisted. SDK receipts retain
+        # safely parsed output separately when available; this records the guard.
+        result["provenance"]["action_rejections"].append(
+            {
+                "stage": stage,
+                "reason": "invalid_tool_contract",
+                "provider_turn": provider_turns,
+                "mcp_dispatched": False,
+            }
+        )
+        await publish()
+
     async def execute(name: str, arguments: dict[str, Any]) -> None:
         nonlocal no_progress
-        arguments = safe_arguments(name, arguments)
+        try:
+            arguments = safe_arguments(name, arguments)
+        except DiagnosticClientError:
+            await reject_action("argument_guard")
+            raise
         key = json.dumps([name, arguments], sort_keys=True)
         if key in requested:
             raise DiagnosticClientError("Duplicate diagnostic request stopped safely")
@@ -274,17 +293,22 @@ async def collect_adaptive_investigation(
                     )
                     break
                 provider_turns += 1
-                async with asyncio.timeout(configuration.provider_timeout_seconds):
-                    decision, usage = await provider.next_action(
-                        context,
-                        client.schemas,
-                        observations,
-                        [item for item in result["evidence"] if item["kind"] != "incident"],
-                    )
+                try:
+                    async with asyncio.timeout(configuration.provider_timeout_seconds):
+                        decision, usage = await provider.next_action(
+                            context,
+                            client.schemas,
+                            observations,
+                            [item for item in result["evidence"] if item["kind"] != "incident"],
+                        )
+                except ValidationError:
+                    await reject_action("provider_structured_output")
+                    raise
                 usages.append(usage)
                 try:
                     decision = AdaptiveDecision.model_validate(as_dict(decision))
                 except ValidationError as error:
+                    await reject_action("parsed_decision")
                     raise ValueError("Provider returned an invalid bounded diagnostic action") from error
                 if decision.action == "assess":
                     break
@@ -292,11 +316,7 @@ async def collect_adaptive_investigation(
                     stop_reason = "Finite diagnostic call budget exhausted; abstained safely."
                     break
                 request = decision.request
-                arguments = {
-                    key: value
-                    for key, value in {"service": request.service, "q": request.q}.items()
-                    if value is not None
-                }
+                arguments = request.model_dump(exclude={"name"}, exclude_none=True)
                 key = json.dumps([request.name, arguments], sort_keys=True)
                 if key in requested:
                     stop_reason = "Duplicate diagnostic request detected; abstained safely."
@@ -473,12 +493,8 @@ async def collect_investigation(
     plan, plan_usage = await provider.plan(incident_context)
     usages.append(plan_usage)
     for request in plan.requests:
-        arguments: dict[str, Any] = {}
-        if request.service:
-            arguments["service"] = request.service[:80]
-        if request.q:
-            arguments["q"] = request.q[:240]
-        if request.name in ("search_runbooks", "find_similar_incidents") and not request.q:
+        arguments = request.model_dump(exclude={"name"}, exclude_none=True)
+        if request.name in ("search_runbooks", "find_similar_incidents") and not arguments.get("q"):
             domain, _, _ = diagnose(result["evidence"])
             arguments["q"] = (
                 domain if domain != ABSTAIN_DOMAIN else as_dict(incident).get("summary", "")[:240]

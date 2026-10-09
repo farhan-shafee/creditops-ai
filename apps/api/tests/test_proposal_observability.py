@@ -63,7 +63,7 @@ class ProposalProvider(DeterministicProvider):
         if evidence:
             return AdaptiveDecision(action="assess", request=None), {}
         return AdaptiveDecision(
-            action="tool", request=DiagnosticRequest(name="query_metrics", service=None, q=None)
+            action="tool", request=DiagnosticRequest(name="query_metrics", service=None)
         ), {}
 
     async def assess(self, incident, evidence):
@@ -125,7 +125,7 @@ async def test_no_progress_fallback_is_not_attributed_to_the_scripted_provider()
     class Repeat(ProposalProvider):
         async def next_action(self, *_):
             return AdaptiveDecision(
-                action="tool", request=DiagnosticRequest(name="query_metrics", service=None, q=None)
+                action="tool", request=DiagnosticRequest(name="query_metrics", service=None)
             ), {}
 
     result = await investigate(Repeat())
@@ -269,7 +269,7 @@ async def test_final_tool_failure_adjustments_are_distinct_from_validator_rewrit
             if observations[-1]["tool"] == "query_metrics":
                 return AdaptiveDecision(
                     action="tool",
-                    request=DiagnosticRequest(name="inspect_database_health", service=None, q=None),
+                    request=DiagnosticRequest(name="inspect_database_health", service=None),
                 ), {}
             return await super().next_action(incident, schemas, observations, evidence)
 

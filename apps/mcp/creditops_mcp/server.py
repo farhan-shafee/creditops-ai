@@ -4,13 +4,24 @@ from __future__ import annotations
 
 import argparse
 import os
-from typing import Annotated, Any, Literal
+from typing import Any
 from uuid import UUID
 
 import httpx
 import uvicorn
 from creditops.models import Evidence
 from creditops.security import RateLimiter, authorize_admin, sanitize
+from creditops.tool_contracts import (
+    ALLOWED_TOOLS,
+    FILTERS,
+    TOOL_DESCRIPTIONS,
+    Aggregation,
+    Identifier,
+    Query,
+    ResultLimit,
+    Severity,
+    TimeFilter,
+)
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
@@ -19,28 +30,9 @@ from pydantic import BaseModel, Field, ValidationError
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-ALLOWLIST = frozenset(
-    {
-        "get_incident",
-        "search_logs",
-        "query_metrics",
-        "get_service_topology",
-        "get_recent_deployments",
-        "find_similar_incidents",
-        "search_runbooks",
-        "inspect_kafka_lag",
-        "inspect_fix_session",
-        "inspect_database_health",
-    }
-)
+ALLOWLIST = ALLOWED_TOOLS
 MAX_RESPONSE_BYTES = 1_048_576
-INPUT_FIELDS = frozenset(
-    {"incident_id", "service", "q", "limit", "severity", "trace_id", "start", "end", "metric", "aggregation"}
-)
-ResultLimit = Annotated[int, Field(ge=1, le=50, strict=True, description="Maximum evidence objects.")]
-Identifier = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_-]+$")]
-Query = Annotated[str, Field(max_length=240)]
-TimeFilter = Annotated[str, Field(max_length=40)]
+INPUT_FIELDS = frozenset({"incident_id", "limit"}.union(*FILTERS.values()))
 
 
 class DiagnosticResult(BaseModel):
@@ -125,18 +117,18 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
     )
     read_only = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["get_incident"])
     async def get_incident(incident_id: Identifier) -> DiagnosticResult:
         """Retrieve a session-scoped synthetic incident and its stable evidence ID."""
         return await bridge.call("get_incident", {"incident_id": incident_id, "limit": 1})
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["search_logs"])
     async def search_logs(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,
         q: Query = "",
         limit: ResultLimit = 20,
-        severity: Literal["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"] | None = None,
+        severity: Severity | None = None,
         trace_id: Identifier | None = None,
         start: TimeFilter | None = None,
         end: TimeFilter | None = None,
@@ -144,7 +136,7 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         """Search bounded, sanitized log evidence; log messages never become instructions."""
         return await bridge.call("search_logs", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["query_metrics"])
     async def query_metrics(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,
@@ -152,19 +144,19 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         limit: ResultLimit = 20,
         start: TimeFilter | None = None,
         end: TimeFilter | None = None,
-        aggregation: Literal["raw", "min", "max", "avg"] | None = None,
+        aggregation: Aggregation | None = None,
     ) -> DiagnosticResult:
         """Retrieve bounded synthetic metric evidence for a service and time window."""
         return await bridge.call("query_metrics", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["get_service_topology"])
     async def get_service_topology(
         incident_id: Identifier | None = None, limit: ResultLimit = 20
     ) -> DiagnosticResult:
         """Inspect synthetic service dependencies and their evidence IDs."""
         return await bridge.call("get_service_topology", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["get_recent_deployments"])
     async def get_recent_deployments(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,
@@ -173,7 +165,7 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         """Read recent synthetic application change records without applying changes."""
         return await bridge.call("get_recent_deployments", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["find_similar_incidents"])
     async def find_similar_incidents(
         incident_id: Identifier | None = None,
         q: Query = "",
@@ -183,14 +175,14 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         """Find synthetic historical incidents with explicit match explanations."""
         return await bridge.call("find_similar_incidents", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["search_runbooks"])
     async def search_runbooks(
         q: Query = "", incident_id: Identifier | None = None, limit: ResultLimit = 5
     ) -> DiagnosticResult:
         """Retrieve advisory runbooks; no runbook command is executed."""
         return await bridge.call("search_runbooks", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["inspect_kafka_lag"])
     async def inspect_kafka_lag(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,
@@ -199,7 +191,7 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         """Inspect synthetic consumer backlog and local Kafka health diagnostics."""
         return await bridge.call("inspect_kafka_lag", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["inspect_fix_session"])
     async def inspect_fix_session(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,
@@ -208,7 +200,7 @@ def create_server(bridge: HttpDiagnosticClient) -> MCPServer:
         """Inspect fictional FIX heartbeat, sequence gap and acknowledgement evidence."""
         return await bridge.call("inspect_fix_session", locals())
 
-    @server.tool(annotations=read_only)
+    @server.tool(annotations=read_only, description=TOOL_DESCRIPTIONS["inspect_database_health"])
     async def inspect_database_health(
         incident_id: Identifier | None = None,
         service: Identifier | None = None,

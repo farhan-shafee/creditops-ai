@@ -33,6 +33,7 @@ from .diagnostics import (
 from .models import Assessment
 from .security import sanitize
 from .settings import Settings
+from .tool_contracts import DiagnosticRequest, DiagnosticRequestType
 
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "investigator.md").read_text(encoding="utf-8")
 
@@ -74,16 +75,9 @@ ToolName = Literal[
 ]
 
 
-class DiagnosticRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    name: ToolName
-    service: str | None = Field(max_length=80)
-    q: str | None = Field(max_length=240)
-
-
 class DiagnosticPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    requests: list[DiagnosticRequest] = Field(max_length=12)
+    requests: list[DiagnosticRequestType] = Field(max_length=12)
 
 
 class AdaptiveDecision(BaseModel):
@@ -91,7 +85,7 @@ class AdaptiveDecision(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     action: Literal["tool", "assess"]
-    request: DiagnosticRequest | None
+    request: DiagnosticRequestType | None
 
     @model_validator(mode="after")
     def coherent_action(self):
@@ -173,9 +167,8 @@ class DeterministicProvider:
                 if name in ("search_runbooks", "find_similar_incidents"):
                     domain, _, _ = diagnose(evidence)
                     query = domain if domain != ABSTAIN_DOMAIN else "latency timeout"
-                return AdaptiveDecision(
-                    action="tool", request=DiagnosticRequest(name=name, service=None, q=query)
-                ), {}
+                arguments = {"q": query} if name in ("search_runbooks", "find_similar_incidents") else {}
+                return AdaptiveDecision(action="tool", request=DiagnosticRequest(name=name, **arguments)), {}
         return AdaptiveDecision(action="assess", request=None), {}
 
     async def plan(self, incident: dict[str, Any]) -> tuple[DiagnosticPlan, dict[str, Any]]:
@@ -190,9 +183,10 @@ class DeterministicProvider:
             "find_similar_incidents",
             "search_runbooks",
         ]
-        return DiagnosticPlan(
-            requests=[DiagnosticRequest(name=name, service=None, q=None) for name in names]
-        ), {"total_tokens": None, "estimated_cost_usd": None}
+        return DiagnosticPlan(requests=[DiagnosticRequest(name=name) for name in names]), {
+            "total_tokens": None,
+            "estimated_cost_usd": None,
+        }
 
     async def assess(
         self, incident: dict[str, Any], evidence: list[dict[str, Any]]
@@ -342,7 +336,9 @@ class AdaptiveProviderMixin:
             raise
         receipt["reserved_cost_usd"] = str(reserve)
         receipt["reserved_spend_usd"] = str(self._reserved_spend)
-        receipt["input_token_ceiling"] = self._last_input_ceiling
+        # A plural count label keeps computed numeric metadata distinct from
+        # credential token keys; the global sanitizer remains unchanged.
+        receipt["input_tokens_ceiling"] = self._last_input_ceiling
 
     def _metadata(self, receipt: dict, payload: dict, request_id: str | None) -> None:
         """Allowlist public response metadata; never retain reasoning or raw text."""
@@ -404,7 +400,7 @@ class AdaptiveProviderMixin:
     ) -> tuple[AdaptiveDecision, dict[str, Any]]:
         return await self._parse(
             AdaptiveDecision,
-            "Choose ONE next read-only diagnostic action from the supplied verified schemas based on actual returned observations and errors. Do not repeat the same request. Null service/q means the bounded incident scope. If evidence is sufficient, contradictory after checks, or exhausted, choose assess with null request. Tool failures are unknown, never healthy evidence. Do not output reasoning, invented results, or change session/incident/time/limits.",
+            "Choose ONE next read-only diagnostic action from the supplied locally reviewed descriptions and verified schemas based on actual returned observations and errors. Use only that tool's typed filters. Supported nullable filters left null retain the bounded application scope. Do not repeat the same request; after no matches, a distinct broader filter may be useful within remaining limits. No matches and tool failures are unknown, never healthy evidence. If evidence is sufficient, contradictory after checks, or exhausted, choose assess with null request. Do not output reasoning, invented results, or change session/incident/snapshot/limits.",
             {
                 "incident": incident,
                 "available_tools": schemas,
@@ -495,7 +491,7 @@ class OpenAIProvider(AdaptiveProviderMixin):
     async def plan(self, incident: dict[str, Any]) -> tuple[DiagnosticPlan, dict[str, Any]]:
         return await self._parse(
             DiagnosticPlan,
-            "Select at most 12 read-only diagnostic queries that test this incident. Use null service/q for full bounded incident scope. Include negative controls (Kafka/FIX/database), topology, deployments, runbooks and historical comparison.",
+            "Select at most 12 read-only diagnostic queries that test this incident. Use only each tool's supported nullable filters; null retains the bounded application scope. Include negative controls (Kafka/FIX/database), topology, deployments, runbooks and historical comparison.",
             {"incident": incident},
         )
 

@@ -100,7 +100,7 @@ async def test_repeated_unproductive_calls_terminate_with_abstention():
 
         async def next_action(self, *args):
             return AdaptiveDecision(
-                action="tool", request=DiagnosticRequest(name="query_metrics", service=None, q=None)
+                action="tool", request=DiagnosticRequest(name="query_metrics", service=None)
             ), {}
 
     adapter = ScriptedClient()

@@ -1,38 +1,10 @@
 """Read-only diagnostic allowlist shared by HTTP, MCP and the investigator."""
 
-from datetime import UTC, datetime
-
 from pydantic import ValidationError
 
 from .models import Evidence, ToolArguments
 from .store import Store
-
-ALLOWED_TOOLS = frozenset(
-    {
-        "get_incident",
-        "search_logs",
-        "query_metrics",
-        "get_service_topology",
-        "get_recent_deployments",
-        "find_similar_incidents",
-        "search_runbooks",
-        "inspect_kafka_lag",
-        "inspect_fix_session",
-        "inspect_database_health",
-    }
-)
-
-
-def canonical_time(value: str | None) -> str | None:
-    if value is None:
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            raise ValueError("Timestamp must include a timezone")
-        return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
-    except (ValueError, TypeError) as error:
-        raise ValueError("Filters require ISO-8601 timestamps with a timezone") from error
+from .tool_contracts import ALLOWED_TOOLS, canonical_time
 
 
 class DiagnosticTools:

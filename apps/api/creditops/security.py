@@ -18,7 +18,7 @@ PATTERNS = (
     re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+"),
     re.compile(r'(?i)\b(?:postgres(?:ql)?|mysql|mongodb)(?:\+[\w]+)?://[^\s<>"\x27]+'),
     re.compile(
-        r'(?i)\b(?:api[_-]?key|password|passwd|secret|access[_-]?token)\s*[=:]\s*["\x27]?[^\s,"\x27}]+'
+        r'(?i)\b(?:api[_-]?key|password|passwd|secret|(?:access|refresh)[_-]?token)\s*[=:]\s*["\x27]?[^\s,"\x27}]+'
     ),
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
     re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),

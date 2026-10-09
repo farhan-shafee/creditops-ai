@@ -12,31 +12,27 @@ import os
 import sys
 from datetime import datetime
 from importlib.metadata import version
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from mcp import Client
 from mcp.client.stdio import StdioServerParameters
 from pydantic import TypeAdapter, ValidationError
 
-from .models import Evidence, ToolArguments
+from .models import Evidence
 from .security import sanitize
 from .settings import PROJECT_ROOT, Settings
+from .tool_contracts import (
+    FILTERS,
+    MCP_ARGUMENTS,
+    MODEL_TOOLS,
+    Aggregation,
+    Severity,
+    model_catalog_entry,
+)
 from .tools import ALLOWED_TOOLS, DiagnosticTools, canonical_time
 
 MAX_RESULT_BYTES = 1_048_576
-FILTERS = {
-    "get_incident": set(),
-    "search_logs": {"service", "q", "severity", "trace_id", "start", "end"},
-    "query_metrics": {"service", "metric", "start", "end", "aggregation"},
-    "get_service_topology": set(),
-    "get_recent_deployments": {"service"},
-    "find_similar_incidents": {"service", "q"},
-    "search_runbooks": {"q"},
-    "inspect_kafka_lag": {"service"},
-    "inspect_fix_session": {"service"},
-    "inspect_database_health": {"service"},
-}
 
 
 def _canonical_schema(value: Any) -> Any:
@@ -61,12 +57,12 @@ def verify_tool_schema(name: str, input_schema: dict, output_schema: dict) -> No
         "service": Identifier | None,
         "q": Query,
         "limit": ResultLimit,
-        "severity": Literal["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"] | None,
+        "severity": Severity | None,
         "trace_id": Identifier | None,
         "start": TimeFilter | None,
         "end": TimeFilter | None,
         "metric": Identifier | None,
-        "aggregation": Literal["raw", "min", "max", "avg"] | None,
+        "aggregation": Aggregation | None,
     }
     fields = FILTERS[name] | {"incident_id"} | (set() if name == "get_incident" else {"limit"})
     expected = {
@@ -105,14 +101,17 @@ def safe_arguments(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name not in ALLOWED_TOOLS or not isinstance(arguments, dict) or set(arguments) - FILTERS[name]:
         raise DiagnosticClientError("Tool or arguments are outside the local diagnostic allowlist")
     try:
-        checked = ToolArguments.model_validate(arguments)
-        if checked.start and checked.end and _time(checked.start) > _time(checked.end):
+        checked = MCP_ARGUMENTS[name].model_validate(arguments)
+        start, end = getattr(checked, "start", None), getattr(checked, "end", None)
+        if start and end and _time(start) > _time(end):
             raise ValueError("Invalid time range")
-        for value in (checked.start, checked.end):
+        for value in (start, end):
             canonical_time(value)
     except (ValidationError, ValueError) as error:
         raise DiagnosticClientError("Invalid bounded diagnostic arguments") from error
-    return sanitize(arguments)
+    # Omitted/null supported fields mean the MCP function's existing default.
+    # This happens only after per-tool validation; unknown fields are not dropped.
+    return sanitize(checked.model_dump(exclude_none=True))
 
 
 def _time(value: str) -> datetime:
@@ -141,18 +140,7 @@ class DirectDiagnosticClient:
     def __init__(self, store: Any, session_id: str, incident_id: str, as_of: str):
         self.tools = DiagnosticTools(store, session_id, as_of=as_of)
         self.incident_id, self.as_of = incident_id, canonical_time(as_of)
-        fields = ToolArguments.model_json_schema()["properties"]
-        self.schemas = [
-            {
-                "name": name,
-                "input_schema": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {key: fields[key] for key in sorted(FILTERS[name])},
-                },
-            }
-            for name in sorted(ALLOWED_TOOLS)
-        ]
+        self.schemas = [model_catalog_entry(name) for name in sorted(MODEL_TOOLS)]
         self.provenance = {
             "transport": self.transport,
             "tool_schema_verified": True,
@@ -252,16 +240,8 @@ class MCPDiagnosticClient:
                     items = output.get("properties", {}).get("items", {})
                     if items.get("type") != "array" or items.get("maxItems") != 50:
                         raise ValueError("Missing structured evidence output")
-                    self.schemas.append(
-                        {
-                            "name": name,
-                            "input_schema": {
-                                "type": "object",
-                                "additionalProperties": False,
-                                "properties": {key: props[key] for key in sorted(FILTERS[name])},
-                            },
-                        }
-                    )
+                    if name in MODEL_TOOLS:
+                        self.schemas.append(model_catalog_entry(name))
             self.provenance["tool_schema_verified"] = True
             self.provenance["verified_tools"] = sorted(ALLOWED_TOOLS)
             self.provenance["protocol_version"] = self.client.protocol_version

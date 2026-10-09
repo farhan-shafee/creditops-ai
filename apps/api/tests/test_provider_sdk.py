@@ -6,7 +6,7 @@ import httpx
 import pytest
 from creditops.providers import AnthropicProvider, DiagnosticPlan, OpenAIProvider, usage_record
 
-PLAN = {"requests": [{"name": "query_metrics", "service": None, "q": None}]}
+PLAN = {"requests": [{"name": "query_metrics", "service": None, "metric": None, "start": None, "end": None}]}
 
 
 async def test_openai_responses_structured_output_and_server_configuration(monkeypatch):
@@ -124,7 +124,7 @@ async def test_offline_adaptive_sdk_receives_actual_prior_result(kind, monkeypat
     from creditops.providers import AdaptiveDecision
 
     captured = []
-    action = {"action": "tool", "request": {"name": "inspect_database_health", "service": None, "q": None}}
+    action = {"action": "tool", "request": {"name": "inspect_database_health", "service": None}}
     for key, value in {
         f"{kind.upper()}_API_KEY": "demo-offline-key",
         f"{kind.upper()}_MODEL": "explicit-offline-model",

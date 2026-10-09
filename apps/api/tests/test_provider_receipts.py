@@ -7,10 +7,13 @@ from decimal import Decimal
 import httpx
 import pytest
 from creditops.providers import OpenAIProvider, ProviderUnavailable, usage_record
+from creditops.security import sanitize
 from openai import APITimeoutError, InternalServerError
 from pydantic import ValidationError
 
-PLAN = {"requests": [{"name": "query_metrics", "service": None, "q": None}]}
+PLAN = {
+    "requests": [{"name": "query_metrics", "service": None, "metric": None, "start": None, "end": None}]
+}
 
 
 def response_payload(*, usage=None, text=None, status="completed"):
@@ -98,6 +101,11 @@ async def test_sdk_receipt_records_public_metadata_and_reserves_before_request(m
         assert receipt["usage"]["reported_total_tokens"] == 140
         assert usage["estimated_cost_usd"] == 0.000255
         assert Decimal(receipt["reserved_cost_usd"]) > Decimal("0.0225")
+        persisted = sanitize(receipt)
+        assert isinstance(persisted["input_tokens_ceiling"], int)
+        assert not isinstance(persisted["input_tokens_ceiling"], bool)
+        assert persisted["input_tokens_ceiling"] > 0
+        assert "input_token_ceiling" not in receipt
         assert "never-store-this-header" not in json.dumps(receipt)
     finally:
         await provider.client.close()

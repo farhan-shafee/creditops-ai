@@ -1,6 +1,7 @@
 """Actual API -> owned stdio MCP -> API callback; no live model is used."""
 
 import asyncio
+import copy
 import json
 import os
 import socket
@@ -13,7 +14,7 @@ import httpx
 import pytest
 from creditops.diagnostic_clients import DiagnosticConnectionError, MCPDiagnosticClient
 from creditops.investigator import collect_adaptive_investigation
-from creditops.providers import DeterministicProvider
+from creditops.providers import AdaptiveDecision, DeterministicProvider
 from creditops.store import Store
 from mcp import Client
 from mcp.client.stdio import StdioServerParameters
@@ -38,6 +39,8 @@ async def real_api(tmp_path):
         "DATABASE_URL": database_url,
         "MCP_API_URL": url,
         "TELEMETRY_MODE": "persisted",
+        "EMBEDDINGS_ENABLED": "false",
+        "PUBLIC_DEMO": "true",
         "INVESTIGATION_TIMEOUT_SECONDS": "60",
         "PYTHONPATH": os.pathsep.join([str(ROOT / "apps/api"), str(ROOT / "apps/mcp")]),
     }
@@ -106,6 +109,133 @@ async def test_api_worker_investigates_through_real_stdio_callback_without_deadl
     assert set(row["assessment"]["supporting_evidence_ids"]) <= returned.keys()
     other = await http.get(f"/api/investigations/{identifier}", headers={"X-Demo-Session": str(uuid4())})
     assert other.status_code == 404
+
+
+async def test_scripted_typed_actions_traverse_real_stdio_and_preserve_filters(real_api):
+    """Actual MCP integration with scripted choices, not live-model verification."""
+    _, store, session_id, url = real_api
+    incident_id = "INC-DEMO-001"
+    cutoff = await store.freeze_snapshot(session_id, incident_id)
+    sample = (
+        await store.evidence(
+            session_id, incident_id=incident_id, kind="metric", service="quote-service", as_of=cutoff
+        )
+    )[0]
+    metric_filters = {
+        "service": sample.service,
+        "metric": sample.data["metric"],
+        "start": sample.timestamp,
+        "end": sample.timestamp,
+    }
+
+    class ScriptedTypedProvider(DeterministicProvider):
+        name = "scripted_stdio_contract_test"
+
+        def __init__(self):
+            self.actions = iter(
+                [
+                    {"name": "search_logs", "q": "rfq response OR timeout"},
+                    {"name": "query_metrics", **metric_filters},
+                ]
+            )
+            self.observations = []
+
+        async def next_action(self, incident, schemas, observations, evidence):
+            self.observations.append(copy.deepcopy({"steps": observations, "evidence": evidence}))
+            request = next(self.actions, None)
+            return AdaptiveDecision.model_validate(
+                {"action": "assess" if request is None else "tool", "request": request}
+            ), {}
+
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "creditops_mcp.server"],
+        cwd=ROOT,
+        env={
+            "PYTHONPATH": os.pathsep.join([str(ROOT / "apps/api"), str(ROOT / "apps/mcp")]),
+            "CREDITOPS_API_URL": url,
+            "MCP_DEMO_SESSION": session_id,
+            "MCP_INCIDENT_ID": incident_id,
+            "MCP_AS_OF": cutoff,
+        },
+    )
+    adapter = MCPDiagnosticClient(session_id, incident_id, cutoff, client=Client(parameters, cache=None))
+    provider = ScriptedTypedProvider()
+    result = await collect_adaptive_investigation(
+        store, session_id, incident_id, provider, diagnostic_client=adapter
+    )
+    tools = [step for step in result["steps"] if step["tool"] != "assessment_validation"]
+    assert [step["tool"] for step in tools] == ["get_incident", "search_logs", "query_metrics"]
+    assert all(step["status"] == "complete" and step["transport"] == "mcp_stdio" for step in tools)
+    assert tools[1]["evidence_ids"] == []
+    assert provider.observations[1]["steps"][-1]["evidence_ids"] == []
+    assert provider.observations[1]["evidence"] == []
+    assert tools[2]["safe_arguments"] == metric_filters
+    expected = await store.evidence(
+        session_id, incident_id=incident_id, kind="metric", as_of=cutoff, **metric_filters
+    )
+    assert expected and set(tools[2]["evidence_ids"]) == {item.id for item in expected}
+    assert provider.observations[2]["evidence"]
+    assert result["provenance"]["tool_calls"] == 3
+    assert result["provenance"]["model_called"] is False
+    assert result["provenance"]["assessment_source"] == {
+        "kind": "scripted_provider",
+        "provider": "scripted_stdio_contract_test",
+    }
+    assert adapter._entered is False
+
+
+async def test_malformed_scripted_decision_is_visible_without_false_real_mcp_call(real_api):
+    _, store, session_id, url = real_api
+    incident_id = "INC-DEMO-001"
+    cutoff = await store.freeze_snapshot(session_id, incident_id)
+
+    class InvalidTypedProvider(DeterministicProvider):
+        name = "scripted_invalid_contract_test"
+
+        async def next_action(self, *args):
+            return {"action": "tool", "request": {"name": "query_metrics", "q": "latency"}}, {}
+
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "creditops_mcp.server"],
+        cwd=ROOT,
+        env={
+            "PYTHONPATH": os.pathsep.join([str(ROOT / "apps/api"), str(ROOT / "apps/mcp")]),
+            "CREDITOPS_API_URL": url,
+            "MCP_DEMO_SESSION": session_id,
+            "MCP_INCIDENT_ID": incident_id,
+            "MCP_AS_OF": cutoff,
+        },
+    )
+    adapter = MCPDiagnosticClient(session_id, incident_id, cutoff, client=Client(parameters, cache=None))
+    snapshots = []
+
+    async def capture(row):
+        snapshots.append(copy.deepcopy(row))
+
+    with pytest.raises(ValueError, match="invalid bounded diagnostic action"):
+        await collect_adaptive_investigation(
+            store,
+            session_id,
+            incident_id,
+            InvalidTypedProvider(),
+            capture,
+            diagnostic_client=adapter,
+        )
+    failed = snapshots[-1]
+    assert failed["status"] == "failed" and failed["assessment"] is None
+    assert [step["tool"] for step in failed["steps"]] == ["get_incident"]
+    assert failed["provenance"]["tool_calls"] == 1
+    assert failed["provenance"]["action_rejections"] == [
+        {
+            "stage": "parsed_decision",
+            "reason": "invalid_tool_contract",
+            "provider_turn": 1,
+            "mcp_dispatched": False,
+        }
+    ]
+    assert adapter._entered is False
 
 
 async def test_real_stdio_disconnect_after_context_cannot_complete_investigation(real_api, tmp_path):

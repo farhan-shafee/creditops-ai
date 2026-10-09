@@ -1,194 +1,163 @@
-# Live verification preparation
+# Live verification and offline tool-contract repair
 
-**LIVE REQUESTS NOT RUN — AWAITING OWNER AUTHORIZATION.**
+**LIVE RETRY NOT RUN — OWNER APPROVAL REQUIRED.**
 
-## Minimum implementation note
+## Failed first attempt
 
-The clean `main` checkout starts at documentation receipt
-`76d1e03d88e796d2fd5f562e7bc6fd289ef970c2`; the previous CI-tested source is
-`4e8cd4ee9809d1d682e3d72d79cdfcd7a3242862`.
+The owner approved only `INC-DEMO-001` under the existing USD 5 envelope.
+Execution source: `5720749903bee1213c531842bcf959b3054c4fc8`.
+Experiment: `4ce25b27-307a-4c20-aa51-6c838e058997`.
+Local sanitized receipt: `artifacts/live-verification/run-f6b52516-bf41-42ac-b8d4-f60229dfbfe5.json`.
+Ledger: `artifacts/live-verification/experiment-4ce25b27-307a-4c20-aa51-6c838e058997.json`.
 
-Source inspection confirms an evidence-adaptive investigation using the real MCP
-client, provider SDK coverage using offline mocks only, and in-place diagnostic
-validation which can replace accepted fields with deterministic domain wording.
-The existing live CLI has a dry-run boundary, finite limits and one in-memory
-reservation ledger shared by cases. That ledger currently does not survive a
-second invocation, and unsuccessful cases need fuller partial receipts.
+| Case | Actual execution and evidence | Model / validation / final output |
+|---|---|---|
+| INC-DEMO-001 | STOPPED in 11.376 s; three OpenAI decision responses; actual MCP `get_incident` → `INC-DEMO-001`, `get_service_topology` → `TOPOLOGY-001`, `search_logs` → no rows | Proposed `query_metrics` with unsupported non-null `q`; rejected locally before dispatch. No assessment proposal, assessment validation, final diagnosis or fallback. Business impact/RFQ/order state and assessment citations were unassessed. |
 
-The minimum changes for this pass are:
+Requested and returned model: `gpt-5.4-mini-2026-03-17`, default service tier.
+Run time: 2026-10-09 20:47:04–20:47:15 UTC; frozen completed-fixture cutoff
+`2026-10-09T15:00:00Z` (`fixed_elapsed=300` with the existing 12× simulation clock).
+Reported usage: 7,110 input + 234 output = 7,344 tokens; 3,584 cached input,
+zero reported reasoning tokens. Conservative usage estimate: USD 0.0063855,
+without cached-input discounts. Retained reservation: USD 0.12633525.
+Neither quantity is confirmed billing. Three successful SDK responses were
+structured action outputs, not a successful diagnosis. Cases 002/003 were not run.
 
-1. Preserve a sanitized deep copy of the structured proposal before validation;
-   retain changed/rejected fields, rule reasons, and the separate final assessment.
-   Identify deterministic, scripted and fallback sources accurately.
-2. Extend existing provider execution records with public SDK metadata, nullable
-   usage/cost, conservative reservations and interruption/error categories. Keep
-   retries disabled and never record private reasoning or credential values.
-3. Extend `scripts/verify_live.py` with distinct run receipts and a persistent
-   shared experiment reservation ledger. Stop after the first case for review;
-   continuation uses the same immutable limits and ledger. Reject unrelated or
-   remote databases before initialization. Retain partial attempts.
-4. Add focused offline regressions, retain the existing benchmarks and replay
-   artifacts, and run normal project verification and CI. No new UI page or
-   evaluation framework is needed: structured receipts provide the comparison.
-5. Document a concrete three-case OpenAI proposal with current official pricing,
-   local configuration checks and commands, then stop for owner authorization.
+## Root cause and minimum correction
 
-Offline edits, tests and private-main publication are authorized. The proposed
-USD 5 ceiling does not authorize paid requests. Account/model access and live
-diagnostic quality remain unverified until an approved execution exists.
+The boundary was: verified MCP catalog → provider output schema → parsed action
+→ investigator argument extraction → `safe_arguments` → MCP → backend filters.
+Before repair, `providers.DiagnosticRequest` had generic `name/service/q` fields,
+so the SDK schema permitted `query_metrics + q`; `diagnostic_clients.FILTERS`
+correctly excluded `q` for that tool. The investigator then extracted generic
+fields and stopped at the runtime guard. `MCPDiagnosticClient.__aenter__` dropped
+tool descriptions from the model catalog. `Store._evidence_query` uses a literal
+case-insensitive substring, so the Boolean-looking OR query matched nothing.
+`security.SENSITIVE_KEYS` also matched singular `input_token_ceiling` and redacted it.
 
-## Historical evaluation limits
+The focused repair keeps the adaptive architecture and conservative validator:
 
-The original 15 labels and archived artifacts remain unchanged. Three database
-exact-label mismatches reflect removal of unsupported application-change
-attribution. The risk case has an earlier anomalous observation and a later
-observation below the threshold (`INC-EVAL-011`: earlier 1,840 ms, later 1,450 ms,
-1,500 ms rule threshold); current-state diagnosis differs from historical
-incident explanation. Mandatory human review differs from legacy escalation
-expectations. The 13-case robustness suite is developer-authored, not an
-independent held-out evaluation. This pass adds no benchmark cases.
+- `tool_contracts.py` supplies shared bounded scalar types, closed per-tool
+  requests, allowed fields and locally reviewed descriptions. `AdaptiveDecision`
+  remains an object root with a nested request `anyOf`; tool names use one-value
+  enums. Unknown fields, metrics `q` (including null), topology filters, and
+  model-supplied session/incident/cutoff/limit controls are rejected.
+- Nine tools are model-selectable; all ten MCP tools are still verified.
+  Initial incident context remains application-owned. Supported nullable filters
+  become omitted MCP arguments only after validation; unsupported fields are
+  never silently removed. Both adaptive and existing plan extraction use the
+  validated request's own fields. Historical action receipts/replays stay readable
+  and are never accepted as new executable commands.
+- Owned descriptions are retained after schema verification, never replaced by
+  arbitrary remote descriptions. Logs search `summary` and serialized `data` as
+  case-insensitive literal substrings: no Boolean OR/AND, SQL, regex or semantic
+  syntax. Empty/null/omitted `q` removes only the text filter. No matches remains
+  unknown; a distinct broader query may retrieve evidence within existing bounds.
+- Metrics use exact identifiers, inclusive timezone bounds and the frozen cutoff.
+  Omit/null `metric` to discover bounded incident-scoped raw rows. Existing full
+  MCP `aggregation` is ignored by the backend; it remains compatibility metadata
+  but is excluded from model requests/catalog. History `service` boosts lexical
+  ranking rather than filtering; descriptions state that behavior.
+- Local action rejection records the schema/parse/argument stage and
+  `mcp_dispatched=false`; partial receipts retain actual dispatched-call counts.
+  Assessment proposal/validator/final-output separation remains unchanged.
+- Future numeric receipts use `input_tokens_ceiling`, an internally computed
+  positive integer. The sensitive-key pattern is unchanged; string protection
+  now also catches refresh-token assignments. Secrets under harmless metadata
+  keys remain sanitized. Old redacted ceilings remain unavailable.
 
-## Proposed paid experiment — approval required
+[Official Structured Outputs documentation](https://developers.openai.com/api/docs/guides/structured-outputs)
+requires an object root, closed objects and required properties, with supported
+nested `anyOf`/definitions and nullable fields. Tests inspect the actual installed
+SDK's outgoing `text.format.schema` over an offline HTTP transport. Calendar/time
+ordering and action/request coherence also require local Pydantic/runtime checks;
+`model_validator` is not claimed to serialize those conditions into JSON Schema.
+Schema serialization tests do not establish new live model capability.
 
-| Setting | Exact proposed scope |
+## Executed offline verification
+
+The required regression first failed because the actual SDK schema accepted the
+reported payload while the guard rejected it. It now rejects that payload,
+including a fully populated metrics object with an added `q` or `q:null`.
+A matrix covers every model-selectable tool's valid request, cross-tool/unknown
+fields, types/bounds and protected-scope injection. Real local MCP scripted tests
+verify unchanged metric/service/time filters, prior-result delivery, literal search,
+no-match uncertainty, broader retrieval, rejection counts and process cleanup.
+They verify integration and are explicitly scripted, not live-model evaluations.
+
+| Check | Actual result |
 |---|---|
-| Provider / model | OpenAI, `gpt-5.4-mini-2026-03-17`; no automatic substitute |
-| Endpoint / tier | `https://api.openai.com/v1`, `service_tier=default`, environment proxies disabled |
-| Cases | `INC-DEMO-001` first; `INC-DEMO-002`, `INC-DEMO-003` only after first-case review warrants continuation |
-| Snapshot | Existing completed synthetic fixtures (`fixed_elapsed=300`), fresh isolated session per invocation; freeze one cutoff per case and pass it to every MCP call |
-| Price ceilings per 1M tokens | USD 0.75 input / USD 4.50 output; cached input officially USD 0.075, conservatively estimated here at the full input ceiling |
-| Shared maximum | **USD 5 for the entire experiment**, including uncertain/interrupted calls; never refund reservations or reset the ledger |
-| Model / diagnostic calls | At most 12 model calls and 12 diagnostic calls (including initial incident context) per case; at most 36 of each across three cases |
-| Output / context | 5,000 output tokens per request, including reasoning tokens; 120,000 serialized diagnostic-data characters, 250 evidence rows / 90,000 evidence bytes |
-| Deadlines | 90 s/provider call, 15 s/diagnostic call, 300 s/case, 900 s/shared active execution including setup; local preflight capped at 15 s; review waiting time excluded |
-| Retry / paid extras | Zero automatic provider retries; no embeddings, hosted search or other paid features |
+| Final full API/MCP/PostgreSQL suite | 233 passed, no skips, 67.17 s; `artifacts/test-results/tool-contract-python-final.xml` |
+| Frontend / dependency compatibility | 13 / 2 passed |
+| Existing Chromium browser regressions | 19 passed, 50.6 s; isolated synthetic API with credentials disabled and external HTTP blocked |
+| Ruff / ESLint / types / production build | Passed; public schema export produced no artifact diff |
+| pip-audit / pnpm audit / Bandit / redacted Git-history Gitleaks | Passed; local package itself is not a PyPI audit target |
+| Linux process-group lifecycle | Windows platform skip; must pass in hosted Linux CI |
+| Original 15-case evaluation, separate output directory | Pipeline 11/15 exact labels, zero invalid references, 3/15 legacy escalation matches |
+| Developer-authored robustness, separate output directory | 13/13 passed; four abstentions; zero invalid references or failed substantive checks |
 
-Official documentation checked on 2026-10-09: [model and pinned snapshot](https://developers.openai.com/api/docs/models/gpt-5.4-mini), [current pricing](https://developers.openai.com/api/docs/pricing), [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Responses metadata/tier/output cap](https://developers.openai.com/api/reference/resources/responses/methods/create), [Python SDK request IDs, raw response access and retries](https://developers.openai.com/api/reference/python).
-The existing Pydantic action/assessment schemas fit documented Structured Outputs
-support and pass installed-SDK offline serialization/parsing tests. This verifies
-schema compatibility, not account access or diagnostic quality. No API request was
-made to test a credential or account availability. Regional/custom endpoints or
-different pricing require a new plan; the runner rejects a custom OpenAI endpoint.
+Pytest disables dotenv loading and blocks default external `httpx` and `httpx2`
+transports; SDK tests use offline transports with synthetic credentials. The owner's
+`.env` stays ignored/untracked and unchanged. No provider inference or embedding
+request occurred in this repair. Independent code/security review found no blockers.
+Normal hosted CI for the repair source is pending publication; its exact SHA/run
+will be recorded in a subsequent documentation receipt.
 
-Each request reserves
-`((serialized input UTF-8 bytes + schema/prompt/instruction bytes + 16,384) × input ceiling + 5,000 × output ceiling) / 1,000,000`.
-At the reviewed source limits, a conservative maximum is 144,391 input tokens
-by byte ceiling, giving USD 0.13079325/request and **USD 4.708557 for 36 calls**.
-The USD 5 ledger remains the hard guard before every request. Reservations differ
-from usage estimates and billing; cached discounts are omitted from estimates and
-reasoning tokens are not charged twice. Missing usage/cost is UNKNOWN. A timeout
-or parsing failure may still incur charges; it is retained and never retried.
+Three database label mismatches retain removal of unsupported change attribution.
+The original risk case still has earlier 1,840 ms and later 1,450 ms observations
+against a 1,500 ms current-state threshold. Current diagnosis differs from historical
+incident explanation; mandatory human review differs from legacy escalation labels.
+No labels, thresholds or benchmark cases were changed. The robustness suite is
+not an independent held-out evaluation or evidence of production reliability/MTTR.
 
-Local preparation verified the runner and refreshed API share the repository's
-`artifacts/creditops.db` at `http://127.0.0.1:8000`: the API read a fresh UUID record
-written by the runner in its isolated session. `/health` confirms synthetic,
-read-only diagnostics with embeddings disabled. The final configuration check
-completed at `2026-10-09T18:44:34.015596+00:00`; session
-`322b682a-a1bd-4e8a-bf9f-c841b56c0c8d`, record
-`3724d16c-8f87-488e-8d19-31063c4d5dbc`. This was local preflight only, with no model
-calls, database seeding/migration/reset or remote database access by the runner.
+## Artifact preservation
 
-**Credential boundary:** `OPENAI_API_KEY` is absent from effective server-side
-configuration. Configure it securely in the repository root's gitignored `.env`
-(`D:\Dev\Repos\creditops-ai\.env`) or the server process environment. Never send
-the key in chat or commit it. Account access to the pinned candidate remains
-UNKNOWN. The key's presence would not authorize execution.
+Before/after SHA-256 checks cover 13 original receipt/ledger/history/replay files;
+all match. Manifests are local under `artifacts/test-results/tool-contract-preservation-{before,after}.json`.
 
-After explicit owner approval and secure credential configuration, the initial
-command is:
+- Failed receipt: `e32502aad350ab195da7e48ff4469e7275ff65be94783822126d3cf2a4060090`.
+- STOPPED ledger: `5a90b70e92dbd2005218ef886ce8fd696dd37e244b16c9161e0c078bbd7402bd`.
 
-```powershell
-.venv\Scripts\python.exe scripts/verify_live.py --provider openai --model gpt-5.4-mini-2026-03-17 --case-count 3 --max-tool-calls 12 --max-provider-turns 12 --max-spend-usd 5 --timeout-seconds 300 --provider-timeout-seconds 90 --diagnostic-timeout-seconds 15 --total-timeout-seconds 900 --input-price-ceiling 0.75 --output-price-ceiling 4.50 --experiment-id 4ce25b27-307a-4c20-aa51-6c838e058997 --stage first --execute-paid
-```
+The original ledger is not reopened/reset, reservations are not refunded, and the
+runner's stopped-state/continuation guards are unchanged. No original receipt is
+rewritten or fabricated. Any later playback must identify a recorded investigation,
+original provider/model/time/cutoff, and no new model calls during playback.
 
-Removing `--execute-paid` produces the credential-free dry-run. Replacing it with
-`--preflight` checks local configuration/persistence only. The first paid invocation
-stops after case 001. Review evidence selection, prior-result consumption, citation
-validity, unsupported claims, business-state interpretation, uncertainty and
-proposal/validator differences. Continue only if the execution is inspectable and
-there is no blocking correctness/security issue, using the identical command with
-`--stage remaining --continue-reviewed` in place of `--stage first`. It reuses the
-same experiment ID, immutable configuration and reservation ledger. No failed case
-is repeated, no model is changed, and unused budget funds no additional experiment.
+## Proposed first-case retry — not authorized
 
-Stop for refusal/incomplete/malformed output, timeout/error, rejected citations,
-MCP transport failure, any failed tool at the case completion gate, absent provider
-proposal, orchestrator fallback, budget/deadline exhaustion or a blocking review
-finding. Preserve every partial attempt. Diagnose corrections offline; a paid
-fix/retry requires separate approval.
+Ledger-verified headroom is USD 5 − USD 0.12633525 = **USD 4.87366475**.
+Keep OpenAI `gpt-5.4-mini-2026-03-17`, default tier, price ceilings USD 0.75/4.50
+per million input/output tokens, 12 model/12 diagnostic calls, 5,000 output tokens,
+90 s/provider, 15 s/tool, 300 s/case, existing context bounds and zero retries.
+No paid extras or automatic model changes. No cases 002/003.
 
-## Observable result and later recording
+Offline SDK capture after repair measured 7,065 raw / 6,934 strict action-schema
+bytes. Existing reservation formula now has a maximum 147,603 input tokens by
+UTF-8 byte ceiling (120,000 data + 96 prefix + 3,415 prompt + 643 instruction
++ 7,065 schema + 16,384 overhead). At recorded ceilings, maximum reservation is
+**USD 0.13320225/call**, **USD 1.598427 for twelve calls**, and **USD 1.72476225**
+including retained earlier spending reservations. SDK format expansion above raw
+schema is at most 162 bytes, covered by the unchanged protocol allowance. This
+is a conservative offline calculation, not usage or billing. Local calculation:
+`artifacts/test-results/tool-contract-reservations.json`.
 
-`provider_proposal` preserves only sanitized structured advisory fields before
-in-place validation. `validation_outcome` distinguishes structural parsing,
-accepted domain, known-domain normalization, abstention/downgrade and rejection.
-Changes identify diagnostic-validation versus orchestration rules. Invalid citation
-counts mean distinct missing IDs; rejected field paths retain each use. The final
-`assessment` is the human-review draft. No field claims a general factuality check.
-Deterministic, scripted and fallback sources are explicit.
+Smallest arrangement supported by the current runner: only after fresh explicit
+owner approval, a new identified first-stage attempt linked in the reviewed plan
+to the stopped experiment, with `--case-count 1` and `--max-spend-usd 4.87366475`.
+Preserve the original ledger and reservation. Keep total active time inside the
+original 900 s envelope by proposing `--total-timeout-seconds 888.624`, after
+subtracting the recorded 11.376 s. All other call/output/deadline controls stay as
+above. Do not use `--stage remaining` or `--continue-reviewed`.
 
-`provider_calls` retains public execution identity, time, status, sanitized typed
-decisions, reported usage/details, recorded price ceilings and reservations.
-OpenAI metadata survives structured parsing failures through documented raw
-response access. Anthropic's current public parse helper may not return metadata
-when parsing fails; those identities/usage stay UNKNOWN. No raw reasoning,
-arbitrary headers, environment dump, unsafe HTML execution or credentials are
-retained. Untrusted proposals are not approved advice or trusted model/runbook input.
+**Enforcement gap:** a new ledger enforces its reduced cap, but the existing
+runner does not automatically link separate ledgers or enforce aggregate spending
+and active time across them. Approval/setup must review that linkage and retained
+reservation; the CLI alone is not independent cumulative-budget enforcement.
+No replacement ID/ledger was created and no retry command was executed.
+A fresh approved attempt needs the reviewed repaired SHA, secure credential
+presence check and existing local-only preflight before its first paid request.
 
-Distinct `run-<UUID>.json` receipts and a durable `experiment-<UUID>.json` ledger
-live under gitignored `artifacts/live-verification`; `latest.json` is a pointer.
-Partial investigations also use existing session persistence. Only reviewed,
-sanitized receipts may be separately published after a real approved run. Existing
-deterministic replay artifacts are preserved; any live replay export needs its own
-run directory and must identify recorded investigation, original provider/model,
-original run time/cutoff, and no new model calls during playback.
-
-There are **no attempted live cases, live usage or billing results** to report.
-After execution, use a compact table covering execution stop/completion, actual
-calls/MCP evidence, proposed domain/support, invalid IDs/unsupported claims,
-validation changes, final limitations, RFQ/order state, latency, usage, usage-based
-estimate and conservative reservation. Compare the deterministic path at the same
-cutoff where feasible, while distinguishing differently retrieved evidence.
-Three synthetic cases demonstrate a small integration/quality check only; they do
-not establish generalization, production reliability or MTTR savings.
-
-## Offline verification and publication
-
-| Executed check | Result |
-|---|---|
-| Full final Python API/MCP suite, existing local synthetic PostgreSQL enabled | 194 passed, no skips, 55.00 s; `artifacts/test-results/live-preparation-python-final.xml` |
-| Final provider metadata / runner subset after the last metadata additions | 32 passed, 7.15 s; installed SDKs use offline HTTP transports |
-| Frontend unit / dependency compatibility tests | 13 / 2 passed |
-| Production Chromium lifecycle / business-state / replay / MCP tests | 19 passed, 47.8 s, against the current local API and production build |
-| Ruff, ESLint, typecheck, production build | Passed |
-| pip-audit, pnpm audit, Bandit | No known dependency vulnerabilities or reported application security issues |
-| Original deterministic pipeline evaluation | 11/15 exact labels, four explained mismatches, 3/15 legacy escalation match; artifacts generated separately without replacing history |
-| Developer-authored robustness suite | 13/13 passed, four abstentions, zero invalid references or failed substantive checks |
-
-The original labels, archived baseline, tracked evaluation/robustness results and
-deterministic replay files are unchanged. Only additive investigation contracts
-were regenerated. The final full suite includes the added failed-response
-regression. Hosted CI must run the complete final source before this preparation
-is considered published and verified.
-
-The first hosted run [37975936137](https://github.com/farhan-shafee/creditops-ai/actions/runs/37975936137)
-on `c03d2edbd42dddda4f4f8d00fa2787c52c76ea45` failed four new runner tests because
-mock executions inherited CI's unrelated test-database URL. The local-only guard
-correctly stopped them. The test fixtures now explicitly set the intended local
-database/API and disable embeddings; no guard or assertion was weakened. The exact
-CI environment reproduced the four failures and then passed all 12 runner tests.
-The other three hosted jobs passed.
-
-The corrected source **`7c028b3b59facc30cfa2fa88631a8041b963b164`** is committed
-and pushed to private `main`. All four jobs passed in
-[CI run 37976482557](https://github.com/farhan-shafee/creditops-ai/actions/runs/37976482557):
-**194 Python tests** (48.80 s, PostgreSQL and real MCP included), **13 frontend
-tests**, **19 browser tests** (3.7 minutes), **two dependency compatibility tests**,
-and **one Linux lifecycle test**. Migrations, lint/typecheck/build, dependency
-audits, Bandit, Gitleaks/history scanning and the unchanged offline evaluations
-passed. Robustness reported 13/13, four abstentions and no failed substantive
-checks. Logs reported no failed, skipped or flaky test results in this final run.
-This documentation receipt is published separately from the tested source.
-
-**LIVE REQUESTS NOT RUN — AWAITING OWNER AUTHORIZATION.** The USD 5 ceiling remains
-a proposal; `OPENAI_API_KEY` is absent and account/model access is unverified.
+The model selects diagnostic actions and proposes an assessment. MCP provides
+controlled access to evidence. A separate conservative rule layer checks and may
+normalize the output. Model proposals and final system outputs are evaluated
+separately. **LIVE RETRY NOT RUN — OWNER APPROVAL REQUIRED.**

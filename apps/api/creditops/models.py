@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .tool_contracts import Aggregation, Identifier, Query, ResultLimit, Severity, TimeFilter
+
 
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -147,18 +149,18 @@ class InvestigationRequest(Contract):
 
 
 class ToolArguments(Contract):
-    incident_id: str | None = Field(default=None, max_length=96)
-    service: str | None = Field(default=None, max_length=96)
-    q: str | None = Field(default=None, max_length=240)
-    limit: int = Field(default=20, ge=1, le=50, strict=True)
+    incident_id: Identifier | None = None
+    service: Identifier | None = None
+    q: Query | None = None
+    limit: ResultLimit = 20
     offset: int = Field(default=0, ge=0, le=5000, strict=True)
-    severity: Literal["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"] | None = None
-    trace_id: str | None = Field(default=None, max_length=96)
-    start: str | None = Field(default=None, max_length=40)
-    end: str | None = Field(default=None, max_length=40)
-    as_of: str | None = Field(default=None, max_length=40)
-    metric: str | None = Field(default=None, max_length=96)
-    aggregation: Literal["raw", "avg", "max", "min"] = "raw"
+    severity: Severity | None = None
+    trace_id: Identifier | None = None
+    start: TimeFilter | None = None
+    end: TimeFilter | None = None
+    as_of: TimeFilter | None = None
+    metric: Identifier | None = None
+    aggregation: Aggregation | None = "raw"
 
 
 class TimeContract(Contract):
