@@ -42,7 +42,8 @@ diagnostic quality remain unverified until an approved execution exists.
 The original 15 labels and archived artifacts remain unchanged. Three database
 exact-label mismatches reflect removal of unsupported application-change
 attribution. The risk case has an earlier anomalous observation and a later
-observation below the threshold; current-state diagnosis differs from historical
+observation below the threshold (`INC-EVAL-011`: earlier 1,840 ms, later 1,450 ms,
+1,500 ms rule threshold); current-state diagnosis differs from historical
 incident explanation. Mandatory human review differs from legacy escalation
 expectations. The 13-case robustness suite is developer-authored, not an
 independent held-out evaluation. This pass adds no benchmark cases.
@@ -176,7 +177,18 @@ mock executions inherited CI's unrelated test-database URL. The local-only guard
 correctly stopped them. The test fixtures now explicitly set the intended local
 database/API and disable embeddings; no guard or assertion was weakened. The exact
 CI environment reproduced the four failures and then passed all 12 runner tests.
-The other three hosted jobs passed. A new complete CI run is required for the fix.
+The other three hosted jobs passed.
 
-Private-main commit/push and hosted CI receipt: pending publication. Paid execution
-remains unauthorized and the server-side OpenAI credential is absent.
+The corrected source **`7c028b3b59facc30cfa2fa88631a8041b963b164`** is committed
+and pushed to private `main`. All four jobs passed in
+[CI run 37976482557](https://github.com/farhan-shafee/creditops-ai/actions/runs/37976482557):
+**194 Python tests** (48.80 s, PostgreSQL and real MCP included), **13 frontend
+tests**, **19 browser tests** (3.7 minutes), **two dependency compatibility tests**,
+and **one Linux lifecycle test**. Migrations, lint/typecheck/build, dependency
+audits, Bandit, Gitleaks/history scanning and the unchanged offline evaluations
+passed. Robustness reported 13/13, four abstentions and no failed substantive
+checks. Logs reported no failed, skipped or flaky test results in this final run.
+This documentation receipt is published separately from the tested source.
+
+**LIVE REQUESTS NOT RUN — AWAITING OWNER AUTHORIZATION.** The USD 5 ceiling remains
+a proposal; `OPENAI_API_KEY` is absent and account/model access is unverified.
