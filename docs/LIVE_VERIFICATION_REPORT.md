@@ -92,7 +92,7 @@ They verify integration and are explicitly scripted, not live-model evaluations.
 | Existing Chromium browser regressions | 19 passed, 50.6 s; isolated synthetic API with credentials disabled and external HTTP blocked |
 | Ruff / ESLint / types / production build | Passed; public schema export produced no artifact diff |
 | pip-audit / pnpm audit / Bandit / redacted Git-history Gitleaks | Passed; local package itself is not a PyPI audit target |
-| Linux process-group lifecycle | Windows platform skip; must pass in hosted Linux CI |
+| Linux process-group lifecycle | Windows platform skip locally; one test passed in hosted Linux CI |
 | Original 15-case evaluation, separate output directory | Pipeline 11/15 exact labels, zero invalid references, 3/15 legacy escalation matches |
 | Developer-authored robustness, separate output directory | 13/13 passed; four abstentions; zero invalid references or failed substantive checks |
 
@@ -100,8 +100,13 @@ Pytest disables dotenv loading and blocks default external `httpx` and `httpx2`
 transports; SDK tests use offline transports with synthetic credentials. The owner's
 `.env` stays ignored/untracked and unchanged. No provider inference or embedding
 request occurred in this repair. Independent code/security review found no blockers.
-Normal hosted CI for the repair source is pending publication; its exact SHA/run
-will be recorded in a subsequent documentation receipt.
+[Hosted CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/37994165621)
+passed all four jobs on source `028223dab4ddd88453a1802168d29c08a1510fa9`:
+233 Python tests (no skips, 39.68 s), 13 frontend tests, two dependency checks,
+19 browser regressions (3.2 min), and one Linux process-group lifecycle test.
+PostgreSQL migrations, original evaluation/robustness, lint/types/build, dependency
+audits, Bandit and the full Git-history secret scan also passed. This later
+documentation receipt changes no application source, schema or CI configuration.
 
 [Initial repair CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/37993269522)
 on `f935412eeb617f77aae4e0a350ffab3935effa11` passed web/browser/Linux lifecycle,
@@ -112,7 +117,7 @@ from [Google's Docker Hub cache](https://docs.cloud.google.com/artifact-registry
 and the same Gitleaks 8.30.1 from its [official registry](https://github.com/gitleaks/gitleaks/pkgs/container/gitleaks/).
 Digest equality and the complete redacted history scan were verified locally;
 no test, scanner rule, migration or assertion was weakened. Cache availability
-remains an external dependency. New source CI must complete before success is claimed.
+remains an external dependency. The corrected source CI passed all required checks.
 
 Three database label mismatches retain removal of unsupported change attribution.
 The original risk case still has earlier 1,840 ms and later 1,450 ms observations
