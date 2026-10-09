@@ -77,7 +77,7 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
                   </div>
                   <div>
                     <strong>{algorithm.hallucinated_evidence_count}</strong>
-                    <span>Hallucinated evidence</span>
+                    <span>Invalid references (legacy metric)</span>
                   </div>
                 </div>
               </Panel>
@@ -113,7 +113,7 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
                       ...algorithms.map((a) => String(a.invalid_evidence_citations)),
                     ],
                     [
-                      'Hallucinated evidence count',
+                      'Invalid references (legacy metric)',
                       ...algorithms.map((a) => String(a.hallucinated_evidence_count)),
                     ],
                     [
@@ -174,7 +174,8 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
             do not establish live model accuracy, customer usage, or production MTTR reduction.
             Latency is synthetic benchmark investigation latency; no human-operator study has been
             performed. AI-Assisted Investigator comparisons appear only after an actual
-            live-provider evaluation.
+            live-provider evaluation. The legacy invalid-reference metric counts nonexistent
+            evidence IDs only; it does not measure whether a cited record supports a claim.
           </p>
         </div>
       </div>

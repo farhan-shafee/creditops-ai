@@ -72,6 +72,28 @@ class LogRow(Base):
     message: Mapped[str] = mapped_column(Text)
 
 
+class InstrumentRow(Base):
+    __tablename__ = "synthetic_instruments"
+    id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class RFQRow(Base):
+    __tablename__ = "synthetic_rfqs"
+    id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    instrument_id: Mapped[str] = mapped_column(ForeignKey("synthetic_instruments.id"), index=True)
+    trace_id: Mapped[str] = mapped_column(String(96), index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class BusinessEventRow(Base):
+    __tablename__ = "synthetic_business_events"
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), primary_key=True)
+    rfq_id: Mapped[str] = mapped_column(ForeignKey("synthetic_rfqs.id"), index=True)
+    event_type: Mapped[str] = mapped_column(String(40), index=True)
+
+
 class MetricRow(Base):
     __tablename__ = "metric_samples"
     evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), primary_key=True)

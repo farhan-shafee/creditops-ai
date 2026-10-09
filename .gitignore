@@ -24,3 +24,4 @@ coverage/
 next-env.d.ts
 artifacts/local-validation/
 artifacts/test-tmp/
+artifacts/live-verification/

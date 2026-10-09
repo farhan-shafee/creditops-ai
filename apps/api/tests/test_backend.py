@@ -214,3 +214,28 @@ async def test_fractional_timestamp_bounds_exclude_earlier_whole_second_samples(
     threshold = datetime.fromisoformat("2026-10-09T14:00:00.100000+00:00")
     assert records
     assert all(datetime.fromisoformat(row.timestamp.replace("Z", "+00:00")) >= threshold for row in records)
+
+
+async def test_current_subthreshold_risk_sample_overrides_older_timeout_corroboration(store):
+    from creditops.diagnostics import ABSTAIN_DOMAIN, RISK_DOMAIN, diagnose
+    from creditops.tools import DiagnosticTools
+
+    database, _ = store
+    owner = str(uuid4())
+    await database.activate_case(owner, "INC-EVAL-011")
+    tools = DiagnosticTools(database, owner)
+    logs = await tools.call("search_logs", {"incident_id": "INC-EVAL-011", "limit": 50})
+    metrics = await tools.call("query_metrics", {"incident_id": "INC-EVAL-011", "limit": 50})
+    primary = next(row for row in metrics if row.id == "METRIC-011-RISK")
+    assert primary.data["value"] == 1840
+    assert diagnose([row.model_dump() for row in [*logs, primary]])[0] == RISK_DOMAIN
+    latest = max(
+        (
+            row
+            for row in metrics
+            if row.service == "risk-service" and row.data["metric"] == "request_latency_p95_ms"
+        ),
+        key=lambda row: row.timestamp,
+    )
+    assert latest.data["value"] == 1450
+    assert diagnose([row.model_dump() for row in [*logs, *metrics]])[0] == ABSTAIN_DOMAIN

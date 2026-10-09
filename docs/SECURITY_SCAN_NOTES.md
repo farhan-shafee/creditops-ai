@@ -8,7 +8,7 @@ The reviewed allowlist matches only that exact fixture value. It does not suppre
 
 Local Compose passwords are conspicuous disposable defaults and all infrastructure ports bind to loopback. Backend provider/admin credentials and the optional private MCP HTTP token must be supplied through deployment environment configuration, never source or frontend bundles.
 
-Scan results are recorded in the final report after final verification. A clean scan is a useful automated check, not a guarantee that every future secret format or vulnerability will be detected.
+Current second-pass scan results are recorded in [SECOND_PASS_REPORT.md](SECOND_PASS_REPORT.md); the first-pass report preserves earlier receipts. A clean scan is a useful automated check, not a guarantee that every future secret format or vulnerability will be detected.
 
 ## Development dependency remediation
 

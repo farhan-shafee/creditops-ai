@@ -9,8 +9,14 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import type { Assessment, Incident, Investigation } from '@/lib/types';
-import { Citation, Panel, percent, Spinner, time } from './primitives';
+import type {
+  Assessment,
+  EvidenceClaim,
+  Incident,
+  Investigation,
+  InvestigationMode,
+} from '@/lib/types';
+import { Citation, Panel, Spinner, Status, time } from './primitives';
 import { EvidenceText } from './evidence-text';
 
 export function Investigator({
@@ -18,6 +24,8 @@ export function Investigator({
   investigation,
   investigating,
   disabled = false,
+  mode = 'REPLAY',
+  onMode,
   onInvestigate,
   onEvidence,
 }: {
@@ -25,15 +33,25 @@ export function Investigator({
   investigation: Investigation | null;
   investigating: boolean;
   disabled?: boolean;
+  mode?: InvestigationMode;
+  onMode?: (mode: InvestigationMode) => void;
   onInvestigate: () => void;
   onEvidence: (id: string) => void;
 }) {
   const provider = investigation?.provider;
-  const provenance = !provider
-    ? 'Replay · persisted artifact'
-    : /deterministic|rules/i.test(provider)
-      ? 'Replay · deterministic provider'
-      : `Replay · ${provider} artifact`;
+  const recorded = investigation ? investigation.mode === 'REPLAY' : mode === 'REPLAY';
+  const metadata = investigation?.provenance;
+  const provenance = !recorded
+    ? investigation?.mode === 'MCP_DEMO'
+      ? 'MCP · adaptive deterministic'
+      : investigation?.mode === 'LIVE_AI'
+        ? `AI-assisted · ${provider ?? 'provider not recorded'}`
+        : 'Adaptive MCP selected · deterministic provider'
+    : !provider
+      ? 'Replay · persisted artifact'
+      : /deterministic|rules/i.test(provider)
+        ? 'Replay · deterministic provider'
+        : `Replay · ${provider} artifact`;
   return (
     <section className="investigator" aria-label="AI investigation">
       <div className="investigator-heading">
@@ -44,29 +62,95 @@ export function Investigator({
           <h2>From signal to supported assessment.</h2>
           <p>Read-only diagnostics. Every finding returns to its source.</p>
         </div>
-        <button
-          className="button primary"
-          onClick={onInvestigate}
-          disabled={investigating || disabled}
-        >
-          <Sparkles size={16} />
-          {investigating ? (
-            <>
-              <Spinner /> Investigating…
-            </>
-          ) : (
-            'Investigate with AI'
+        <div className="investigator-actions">
+          {onMode && (
+            <div className="investigation-path">
+              <label htmlFor="investigation-path">Investigation path</label>
+              <select
+                id="investigation-path"
+                value={mode}
+                disabled={investigating || disabled}
+                onChange={(event) => onMode(event.target.value as InvestigationMode)}
+              >
+                <option value="REPLAY">Recorded replay · complete snapshot</option>
+                <option value="MCP_DEMO">Adaptive MCP · deterministic provider</option>
+              </select>
+            </div>
           )}
-          {!investigating && <ArrowRight size={16} />}
-        </button>
+          <button
+            className="button primary"
+            onClick={onInvestigate}
+            disabled={investigating || disabled}
+          >
+            <Sparkles size={16} />
+            {investigating ? (
+              <>
+                <Spinner /> Investigating…
+              </>
+            ) : mode === 'MCP_DEMO' ? (
+              'Run adaptive MCP investigation'
+            ) : (
+              'Investigate with AI'
+            )}
+            {!investigating && <ArrowRight size={16} />}
+          </button>
+        </div>
       </div>
       <div className="investigator-mode">
         <span className="mode-pill">{provenance}</span>
-        <span>Persisted pipeline artifact · no live model call</span>
+        <span>
+          {recorded
+            ? 'Persisted pipeline artifact · no live model call'
+            : investigation?.mode === 'LIVE_AI'
+              ? metadata?.model_called === true
+                ? 'Model call recorded · read-only diagnostic execution'
+                : 'Model-call provenance not recorded'
+              : 'Fresh diagnostics · deterministic provider · no live model call'}
+        </span>
         <span className="mode-safety">
           <ShieldCheck size={14} /> Diagnostic tools only
         </span>
       </div>
+      {investigation && (
+        <div className="investigation-provenance" data-testid="investigation-provenance">
+          <span>
+            <strong>{recorded ? 'Recorded tool results' : 'Fresh diagnostic execution'}</strong> ·{' '}
+            {metadata?.snapshot_kind === 'complete_scenario'
+              ? 'Complete scenario snapshot'
+              : metadata?.snapshot_kind === 'frozen_current'
+                ? 'Frozen current snapshot'
+                : 'Snapshot kind not recorded'}
+          </span>
+          <span>
+            {metadata?.snapshot_cutoff ? (
+              <>
+                Evidence cutoff{' '}
+                <time dateTime={metadata.snapshot_cutoff}>{metadata.snapshot_cutoff}</time>
+              </>
+            ) : (
+              'Cutoff not recorded'
+            )}
+          </span>
+          <span>
+            {recorded
+              ? `Original transport: ${transportLabel(metadata?.original_transport)}`
+              : `Transport: ${transportLabel(metadata?.transport)}`}
+          </span>
+          <span>
+            {metadata?.tool_schema_verified === true
+              ? 'Tool schemas verified'
+              : metadata?.tool_schema_verified === false
+                ? 'Tool schemas not verified'
+                : 'Tool schema verification not recorded'}
+          </span>
+          {recorded && (
+            <p>
+              Recorded steps retain their original timestamps and durations. Playback does not
+              execute those tools again.
+            </p>
+          )}
+        </div>
+      )}
       {!investigation ? (
         <div className="investigation-ready">
           <div className="trace-preview">
@@ -81,9 +165,11 @@ export function Investigator({
             </div>
           </div>
           <p>
-            Start an investigation for <code>{incident.id}</code>. Public replay loads a persisted
-            collection and validation pipeline artifact. Its provider metadata appears when loaded.
-            Protected LIVE_AI is available through the API.
+            Start an investigation for <code>{incident.id}</code>.{' '}
+            {mode === 'MCP_DEMO'
+              ? 'The offline adaptive path requests real MCP stdio diagnostics at the current evidence cutoff. The deterministic provider can select follow-up checks from returned evidence.'
+              : 'Public replay loads a recorded complete-scenario artifact, including evidence beyond the current simulation window.'}{' '}
+            No paid model call is made. Protected LIVE_AI remains separate.
           </p>
         </div>
       ) : (
@@ -98,7 +184,7 @@ export function Investigator({
             {investigation.steps.map((step, index) => (
               <li key={step.id} data-testid="investigation-step">
                 <div className="trace-icon">
-                  {step.status === 'completed' || step.status === 'success' ? (
+                  {['complete', 'completed', 'success'].includes(step.status) ? (
                     <Check size={13} />
                   ) : (
                     <Circle size={10} />
@@ -107,12 +193,33 @@ export function Investigator({
                 <div className="trace-content">
                   <div>
                     <strong>{step.action}</strong>
-                    <time>{time(step.timestamp)} UTC</time>
+                    <time dateTime={step.timestamp}>{time(step.timestamp)} UTC</time>
                   </div>
                   <p>
                     <code>{step.tool}</code>
                     <span>{step.duration_ms} ms</span>
+                    <Status value={step.status} />
                   </p>
+                  <p className="trace-provenance">
+                    <span>
+                      {recorded || step.recorded
+                        ? step.transport === 'local_validation'
+                          ? 'Recorded validation action'
+                          : 'Recorded tool result'
+                        : step.transport === 'mcp_stdio' || step.transport === 'direct'
+                          ? 'Executed tool call'
+                          : 'Diagnostic workflow action'}
+                    </span>
+                    <span>{transportLabel(step.transport)}</span>
+                    {step.provider && <span>Provider {step.provider}</span>}
+                    {Boolean(step.provider_turn) && <span>Provider turn {step.provider_turn}</span>}
+                  </p>
+                  {step.safe_arguments && Object.keys(step.safe_arguments).length > 0 && (
+                    <p className="trace-filters">
+                      Safe filters <code>{JSON.stringify(step.safe_arguments)}</code>
+                    </p>
+                  )}
+                  {step.error && <p className="trace-error">Tool error: {step.error}</p>}
                   {step.evidence_ids.length > 0 && (
                     <div className="citations">
                       {step.evidence_ids.slice(0, 8).map((id) => (
@@ -143,6 +250,22 @@ export function Investigator({
   );
 }
 
+function transportLabel(value?: string): string {
+  return value === 'mcp_stdio'
+    ? 'MCP stdio'
+    : value === 'mcp_http'
+      ? 'MCP HTTP'
+      : value === 'direct'
+        ? 'direct'
+        : value === 'recorded_replay'
+          ? 'recorded replay'
+          : value === 'local_validation'
+            ? 'local validation'
+            : value && value !== 'unknown'
+              ? value
+              : 'not recorded';
+}
+
 function AssessmentResult({
   assessment: a,
   onEvidence,
@@ -152,6 +275,24 @@ function AssessmentResult({
 }) {
   const [rcaOpen, setRcaOpen] = useState(true);
   const text = (value: string) => <EvidenceText text={value} onEvidence={onEvidence} />;
+  const structured = a.supported_failure_condition !== undefined;
+  const condition = structured
+    ? (a.supported_failure_condition ?? 'Insufficient evidence for a supported failure condition')
+    : a.probable_failure_domain;
+  const claims = (values: EvidenceClaim[]) => (
+    <ul className="assessment-claims">
+      {values.map((value, index) => (
+        <li key={index}>
+          <p>{text(value.statement)}</p>
+          <div className="citations">
+            {value.evidence_ids.map((id) => (
+              <Citation key={id} id={id} onEvidence={onEvidence} />
+            ))}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
   const lines = (values: string[]) => (
     <ul className="prose-list">
       {values.map((value, index) => (
@@ -167,18 +308,20 @@ function AssessmentResult({
         </span>
         <div className="assessment-title">
           <div>
-            <span className="muted">Probable failure domain</span>
-            <h3 data-testid="failure-domain">{a.probable_failure_domain}</h3>
+            <span className="muted">
+              {structured ? 'Supported failure condition' : 'Recorded failure-domain claim'}
+            </span>
+            <h3 data-testid="failure-domain">{condition}</h3>
           </div>
           <div className="confidence">
-            <strong>{percent(a.confidence)}</strong>
-            <span>confidence</span>
+            <strong>{(a.confidence * 100).toFixed(0)} / 100</strong>
+            <span>uncalibrated support score</span>
           </div>
         </div>
         <p>{text(a.incident_summary)}</p>
-        <div className="confidence-bar">
-          <span style={{ width: percent(a.confidence) }} />
-        </div>
+        <p className="score-note">
+          A rule or provider support score; this is not a calibrated probability of correctness.
+        </p>
         <div className="review-note">
           <ShieldCheck size={16} />
           <span>
@@ -192,6 +335,52 @@ function AssessmentResult({
           {a.supporting_evidence_ids.map((id) => (
             <Citation key={id} id={id} onEvidence={onEvidence} />
           ))}
+        </div>
+      </div>
+      <div className="assessment-qualification" data-testid="assessment-qualification">
+        <div>
+          <h4>Observed symptoms</h4>
+          {a.observations?.length ? (
+            claims(a.observations)
+          ) : (
+            <p>Structured observations were not recorded in this artifact.</p>
+          )}
+        </div>
+        <div>
+          <h4>Possible triggers</h4>
+          {a.possible_triggers?.length ? (
+            a.possible_triggers.map((trigger, index) => (
+              <div key={index} className="candidate-trigger">
+                <span className="draft-label">Candidate · causation unproven</span>
+                {claims([trigger])}
+                <p className="muted">{text(trigger.reason)}</p>
+              </div>
+            ))
+          ) : (
+            <p>
+              Not established. Missing change evidence does not rule out a supported failure
+              condition.
+            </p>
+          )}
+        </div>
+        <div>
+          <h4>Confirmed cause</h4>
+          {a.confirmed_cause ? (
+            claims([a.confirmed_cause])
+          ) : (
+            <p>
+              Not established. A failure condition, recent change or historical match does not
+              establish a causal mechanism.
+            </p>
+          )}
+        </div>
+        <div>
+          <h4>Unknowns and next checks</h4>
+          {a.unknowns?.length ? (
+            lines(a.unknowns)
+          ) : (
+            <p>Unknowns were not recorded. Continue human verification before acting.</p>
+          )}
         </div>
       </div>
       <div className="grid-two assessment-secondary">
@@ -232,6 +421,9 @@ function AssessmentResult({
           </div>
         </div>
       </div>
+      <p className="reference-note">
+        Runbooks and historical matches guide checks; they do not prove the current cause.
+      </p>
       <div className="rca-draft">
         <button
           className="rca-heading"
@@ -255,8 +447,14 @@ function AssessmentResult({
             {lines(a.rca.timeline)}
             <h4>Observed evidence</h4>
             {lines(a.rca.observed_evidence)}
-            <h4>Probable root cause</h4>
-            <p>{text(a.rca.probable_root_cause)}</p>
+            <h4>Supported failure condition</h4>
+            <p>{text(condition)}</p>
+            <h4>Confirmed cause</h4>
+            {a.confirmed_cause ? (
+              claims([a.confirmed_cause])
+            ) : (
+              <p>Not established; further causal investigation is required.</p>
+            )}
             <h4>Contributing factors</h4>
             {lines(a.rca.contributing_factors)}
             <h4>Immediate next steps</h4>

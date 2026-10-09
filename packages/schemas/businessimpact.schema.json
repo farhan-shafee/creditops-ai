@@ -1,0 +1,525 @@
+{
+  "$defs": {
+    "AffectedRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "affected": {
+          "title": "Affected",
+          "type": "boolean"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "instrument": {
+          "$ref": "#/$defs/Instrument"
+        },
+        "order": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OrderState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processing_state": {
+          "enum": [
+            "RECEIVED",
+            "WAITING_PRICING",
+            "QUOTE_AVAILABLE",
+            "DB_WAIT",
+            "TIMED_OUT"
+          ],
+          "title": "Processing State",
+          "type": "string"
+        },
+        "quote": {
+          "$ref": "#/$defs/QuoteState"
+        },
+        "rfq": {
+          "$ref": "#/$defs/SyntheticRFQ"
+        },
+        "timeline": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Timeline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rfq",
+        "instrument",
+        "processing_state",
+        "quote",
+        "order",
+        "affected",
+        "timeline",
+        "evidence_ids"
+      ],
+      "title": "AffectedRequest",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "title": "Data",
+          "type": "object"
+        },
+        "id": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "service": {
+          "maxLength": 96,
+          "title": "Service",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 8000,
+          "title": "Summary",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "service",
+        "timestamp",
+        "summary",
+        "data"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "ImpactCounters": {
+      "additionalProperties": false,
+      "properties": {
+        "expired_quotes": {
+          "default": 0,
+          "title": "Expired Quotes",
+          "type": "integer"
+        },
+        "expired_rfqs": {
+          "default": 0,
+          "title": "Expired Rfqs",
+          "type": "integer"
+        },
+        "pending_acknowledgements": {
+          "default": 0,
+          "title": "Pending Acknowledgements",
+          "type": "integer"
+        },
+        "processing_timeouts": {
+          "default": 0,
+          "title": "Processing Timeouts",
+          "type": "integer"
+        },
+        "rfqs_affected": {
+          "default": 0,
+          "title": "Rfqs Affected",
+          "type": "integer"
+        },
+        "rfqs_total": {
+          "default": 0,
+          "title": "Rfqs Total",
+          "type": "integer"
+        },
+        "stale_quotes": {
+          "default": 0,
+          "title": "Stale Quotes",
+          "type": "integer"
+        },
+        "unavailable_quotes": {
+          "default": 0,
+          "title": "Unavailable Quotes",
+          "type": "integer"
+        },
+        "unknown_acknowledgements": {
+          "default": 0,
+          "title": "Unknown Acknowledgements",
+          "type": "integer"
+        }
+      },
+      "title": "ImpactCounters",
+      "type": "object"
+    },
+    "Instrument": {
+      "additionalProperties": false,
+      "properties": {
+        "coupon_percent": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Coupon Percent"
+        },
+        "coupon_unit": {
+          "default": "percent per annum",
+          "title": "Coupon Unit",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "fictional": {
+          "const": true,
+          "default": true,
+          "title": "Fictional",
+          "type": "boolean"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "instrument_type": {
+          "const": "CORPORATE_BOND",
+          "default": "CORPORATE_BOND",
+          "title": "Instrument Type",
+          "type": "string"
+        },
+        "issuer": {
+          "title": "Issuer",
+          "type": "string"
+        },
+        "maturity": {
+          "title": "Maturity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "issuer",
+        "coupon_percent",
+        "maturity"
+      ],
+      "title": "Instrument",
+      "type": "object"
+    },
+    "OrderState": {
+      "additionalProperties": false,
+      "properties": {
+        "acknowledged_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acknowledged At"
+        },
+        "acknowledgement_meaning": {
+          "default": "Receipt acknowledgement only; execution is not established",
+          "title": "Acknowledgement Meaning",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "PENDING_ACK",
+            "UNKNOWN",
+            "ACKNOWLEDGED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "submitted_at": {
+          "format": "date-time",
+          "title": "Submitted At",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "submitted_at",
+        "trace_id"
+      ],
+      "title": "OrderState",
+      "type": "object"
+    },
+    "QuoteState": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accepted At"
+        },
+        "clean_price_per_100_par": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clean Price Per 100 Par"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "freshness_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Freshness Ms"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "price_convention": {
+          "default": "clean price per 100 units of par; excludes accrued interest",
+          "title": "Price Convention",
+          "type": "string"
+        },
+        "source_timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timestamp"
+        },
+        "status": {
+          "default": "UNAVAILABLE",
+          "enum": [
+            "UNAVAILABLE",
+            "FRESH",
+            "STALE",
+            "EXPIRED",
+            "ACCEPTED"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "title": "QuoteState",
+      "type": "object"
+    },
+    "SyntheticRFQ": {
+      "additionalProperties": false,
+      "properties": {
+        "client_id": {
+          "title": "Client Id",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "instrument_id": {
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "par_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Par Amount"
+        },
+        "par_unit": {
+          "default": "currency units of requested face value",
+          "title": "Par Unit",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "BUY",
+            "SELL"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "status": {
+          "default": "OPEN",
+          "enum": [
+            "OPEN",
+            "COMPLETED",
+            "EXPIRED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "client_id",
+        "instrument_id",
+        "side",
+        "par_amount",
+        "requested_at",
+        "expires_at",
+        "trace_id"
+      ],
+      "title": "SyntheticRFQ",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "as_of": {
+      "title": "As Of",
+      "type": "string"
+    },
+    "counters": {
+      "$ref": "#/$defs/ImpactCounters"
+    },
+    "incident_id": {
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "requested_par_by_currency": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Requested Par By Currency",
+      "type": "object"
+    },
+    "requests": {
+      "items": {
+        "$ref": "#/$defs/AffectedRequest"
+      },
+      "title": "Requests",
+      "type": "array"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "as_of",
+    "summary",
+    "counters",
+    "requested_par_by_currency",
+    "requests",
+    "limitations"
+  ],
+  "title": "BusinessImpact",
+  "type": "object"
+}

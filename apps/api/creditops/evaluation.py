@@ -31,6 +31,10 @@ def citations(assessment: dict[str, Any]) -> set[str]:
     )
     for hypothesis in assessment.get("alternative_hypotheses", []):
         identifiers.update(hypothesis.get("evidence_ids", []))
+    for claim in [*assessment.get("observations", []), *assessment.get("possible_triggers", [])]:
+        identifiers.update(claim.get("evidence_ids", []))
+    if assessment.get("confirmed_cause"):
+        identifiers.update(assessment["confirmed_cause"].get("evidence_ids", []))
     return identifiers
 
 
@@ -54,7 +58,10 @@ def score_case(
         in [predicted, *[item["domain"] for item in assessment.get("alternative_hypotheses", [])[:2]]],
         "required_evidence_recall": len(supported & required) / len(required) if required else 1.0,
         "invalid_evidence_citations": len(unknown),
+        # Retained only for artifact/client compatibility. It counts invalid IDs,
+        # not hallucinations or substantively unsupported surrounding claims.
         "hallucinated_evidence_count": len(unknown),
+        "substantive_claim_support_evaluated": False,
         "abstention_case": abstention_case,
         "correct_abstention": abstention_case
         and predicted == ABSTAIN_DOMAIN
@@ -118,6 +125,12 @@ def aggregate(name: str, provider: str, results: list[dict[str, Any]]) -> dict[s
         "name": name,
         "provider": provider,
         "cases": len(scores),
+        "top1_correct_count": sum(score["top1_correct"] for score in scores),
+        "top1_mismatch_count": sum(not score["top1_correct"] for score in scores),
+        "abstention_count": sum(item["predicted_domain"] == ABSTAIN_DOMAIN for item in results),
+        "expected_abstention_count": len(abstentions),
+        "correct_abstention_count": sum(score["correct_abstention"] for score in abstentions),
+        "substantive_claim_support_evaluated": False,
         "top1_accuracy": statistics.mean(score["top1_correct"] for score in scores),
         "top3_accuracy": statistics.mean(score["top3_correct"] for score in scores),
         "required_evidence_recall": statistics.mean(score["required_evidence_recall"] for score in scores),
@@ -219,10 +232,12 @@ async def run_evaluations(
         else "AI-Assisted Investigator"
     )
     artifact = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "generated",
         "generated_at": utc_now(),
-        "dataset_version": "synthetic-v1",
+        "dataset_version": "synthetic-v1-unchanged-labels",
+        "historical_baseline": "artifacts/eval/baseline-v1/latest.json",
+        "citation_metric_scope": "Invalid references only. The legacy hallucinated_evidence_count field is a compatibility alias, not a general factuality metric.",
         "case_count": len(cases),
         "seed": 42,
         "methodology": "15 labeled synthetic cases: 12 diagnosable incidents and 3 insufficient-evidence cases. Labels are available only to the scorer. Complete case telemetry is activated in an isolated evaluation session. Latency measures the synthetic diagnostic pipeline, not human MTTR. The baseline uses first matching log signatures; the investigator requires corroborating independent signals. Deterministic rules are designed for these fixtures; this is an in-distribution functional benchmark, not a generalization study.",
@@ -232,6 +247,10 @@ async def run_evaluations(
             "Deterministic confidence scores are not calibrated probabilities.",
             "No live model result is claimed unless provider is openai or anthropic.",
             "A failure stops artifact generation; existing artifact remains from its recorded timestamp.",
+            "Original cases and labels remain unchanged. Legacy database labels include unproven change attribution; corrected condition-only output is scored as a mismatch instead of relabeling the cases.",
+            "Every current draft requires human review; legacy cases expecting no escalation can therefore fail the original escalation metric.",
+            "INC-EVAL-011 retains its original 1840ms risk sample and later 1450ms sample. Current-evidence rules abstain at the complete cutoff because the later value is below the 1500ms threshold; this original-fixture mismatch is preserved.",
+            "Citation existence is not substantive claim support. A separate developer-authored robustness suite tests declared causal/uncertainty checks.",
         ],
         "live_ai_status": "not_run" if provider_name == "deterministic" else "generated",
         "algorithms": [
@@ -249,12 +268,12 @@ async def run_evaluations(
         "",
         artifact["methodology"],
         "",
-        "| Algorithm | Top-1 | Top-3 | Required evidence recall | Invalid citations | Abstention | Mean pipeline ms |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| Algorithm | Top-1 correct/cases | Mismatches | Top-3 | Required evidence recall | Invalid references | Total abstentions | Correct expected abstentions | Mean pipeline ms |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for algorithm in artifact["algorithms"]:
         lines.append(
-            f"| {algorithm['name']} | {algorithm['top1_accuracy']:.1%} | {algorithm['top3_accuracy']:.1%} | {algorithm['required_evidence_recall']:.1%} | {algorithm['invalid_evidence_citations']} | {algorithm['correct_abstention_rate']:.1%} | {algorithm['mean_latency_ms']:.2f} |"
+            f"| {algorithm['name']} | {algorithm['top1_correct_count']}/{algorithm['cases']} | {algorithm['top1_mismatch_count']} | {algorithm['top3_accuracy']:.1%} | {algorithm['required_evidence_recall']:.1%} | {algorithm['invalid_evidence_citations']} | {algorithm['abstention_count']} | {algorithm['correct_abstention_count']}/{algorithm['expected_abstention_count']} | {algorithm['mean_latency_ms']:.2f} |"
         )
     lines += [
         "",

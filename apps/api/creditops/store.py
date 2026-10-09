@@ -7,15 +7,19 @@ import re
 import time
 from collections import Counter
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy import DateTime, String, and_, case, cast, delete, event, func, or_, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from .business import observation_time, reduce_request
+from .business_seed import make_business_seed
 from .db import (
     Base,
+    BusinessEventRow,
     DatabaseHealthRow,
     DemoRunRow,
     DependencyRow,
@@ -25,18 +29,31 @@ from .db import (
     HistoricalIncidentRow,
     IncidentEventRow,
     IncidentRow,
+    InstrumentRow,
     InvestigationRow,
     InvestigationStepRow,
     KafkaGroupRow,
     KafkaTopicRow,
     LogRow,
     MetricRow,
+    RFQRow,
     RunbookRow,
     ServiceRow,
 )
-from .models import Evidence, Incident, MetricPoint, MetricSeries, Service
+from .models import (
+    AffectedRequest,
+    BusinessImpact,
+    Evidence,
+    ImpactCounters,
+    Incident,
+    Instrument,
+    MetricPoint,
+    MetricSeries,
+    Service,
+    SyntheticRFQ,
+)
 from .security import sanitize
-from .seed import make_seed
+from .seed import BASE_TIME, make_seed
 from .settings import PROJECT_ROOT, get_settings
 
 
@@ -94,6 +111,8 @@ class Store:
             return
         async with self._lock, self.sessions.begin() as session:
             fixture = make_seed()
+            business = make_business_seed()
+            fixture["evidence"].extend(business["events"])
             existing_incidents = {row.id: row for row in await session.scalars(select(IncidentRow))}
             existing_evidence = {row.id: row for row in await session.scalars(select(EvidenceRow))}
             first_seed = not existing_incidents
@@ -142,11 +161,33 @@ class Store:
                         )
             await session.flush()
             session.add_all(pending_events)
+            instrument_ids = set(await session.scalars(select(InstrumentRow.id)))
+            for instrument in business["instruments"]:
+                if instrument["id"] not in instrument_ids:
+                    model = Instrument.model_validate(instrument)
+                    session.add(InstrumentRow(id=model.id, payload=model.model_dump(mode="json")))
+            await session.flush()
+            rfq_ids = set(await session.scalars(select(RFQRow.id)))
+            for rfq in business["rfqs"]:
+                model = SyntheticRFQ.model_validate(rfq["payload"])
+                if model.id not in rfq_ids:
+                    session.add(
+                        RFQRow(
+                            id=model.id,
+                            incident_id=rfq["incident_id"],
+                            instrument_id=model.instrument_id,
+                            trace_id=model.trace_id,
+                            payload=model.model_dump(mode="json"),
+                        )
+                    )
+            await session.flush()
             for record in fixture["evidence"]:
                 if record["id"] in existing_evidence:
                     row = existing_evidence[record["id"]]
                     if row.data != record["data"]:
                         row.data = record["data"]
+                    if record["kind"] == "business_event":
+                        row.service = record["service"]
                 else:
                     session.add(EvidenceRow(**record))
             await session.flush()
@@ -154,7 +195,7 @@ class Store:
                 if record["id"] in existing_evidence:
                     continue
                 id, kind, data = record["id"], record["kind"], record["data"]
-                if kind == "log":
+                if kind in {"log", "business_event"}:
                     session.add(
                         LogRow(
                             evidence_id=id,
@@ -163,6 +204,12 @@ class Store:
                             message=data["message"],
                         )
                     )
+                    if kind == "business_event":
+                        session.add(
+                            BusinessEventRow(
+                                evidence_id=id, rfq_id=data["rfq_id"], event_type=data["event_type"]
+                            )
+                        )
                 elif kind == "metric":
                     session.add(
                         MetricRow(
@@ -328,21 +375,127 @@ class Store:
                 )
             self._starts.pop((session_id, incident.id), None)
 
-    async def get_incident(self, session_id: str, id: str) -> Incident | None:
+    def _snapshot(self, run: DemoRunRow, started_at: str, as_of: str | None = None) -> tuple[float, datetime]:
+        started = observation_time(started_at)
+        elapsed = self._elapsed(run)
+        current = started + timedelta(seconds=elapsed * 12)
+        cutoff = observation_time(as_of) if as_of else current
+        if cutoff > current:
+            raise ValueError("Snapshot cutoff cannot be in the future")
+        if cutoff < started:
+            raise ValueError("Snapshot cutoff precedes this incident")
+        return min(elapsed, (cutoff - started).total_seconds() / 12), cutoff
+
+    async def freeze_snapshot(self, session_id: str, incident_id: str) -> str:
+        async with self.sessions() as session:
+            run = await session.get(DemoRunRow, (session_id, incident_id))
+            incident = await session.get(IncidentRow, incident_id)
+            if run is None or incident is None:
+                raise ValueError("Incident is unavailable in this session")
+            _, cutoff = self._snapshot(run, incident.started_at)
+            return cutoff.isoformat().replace("+00:00", "Z")
+
+    async def get_incident(self, session_id: str, id: str, as_of: str | None = None) -> Incident | None:
         async with self.sessions() as session:
             run = await session.get(DemoRunRow, (session_id, id))
             incident = await session.get(IncidentRow, id)
             if run is None or incident is None:
                 return None
-            elapsed = self._elapsed(run)
+            elapsed, cutoff = self._snapshot(run, incident.started_at, as_of)
             payload = dict(incident.payload)
             payload["timeline"] = [
                 {k: v for k, v in event.items() if k != "reveal_seconds"}
                 for event in payload["timeline"]
-                if event["reveal_seconds"] <= elapsed
+                if event["reveal_seconds"] <= elapsed and observation_time(event["timestamp"]) <= cutoff
             ]
             payload["simulated_elapsed_seconds"] = int(elapsed * 12)
+            impact = await self.business_impact(session_id, id, as_of=cutoff.isoformat())
+            if impact is not None:
+                payload["client_impact"] = impact.summary
             return Incident.model_validate(payload)
+
+    async def instruments(self) -> list[Instrument]:
+        async with self.sessions() as session:
+            return [
+                Instrument.model_validate(row.payload)
+                for row in await session.scalars(select(InstrumentRow).order_by(InstrumentRow.id))
+            ]
+
+    async def business_impact(
+        self, session_id: str, incident_id: str, as_of: str | None = None
+    ) -> BusinessImpact | None:
+        async with self.sessions() as session:
+            run = await session.get(DemoRunRow, (session_id, incident_id))
+            incident = await session.get(IncidentRow, incident_id)
+            if run is None or incident is None:
+                return None
+            _, cutoff = self._snapshot(run, incident.started_at, as_of)
+            rows = list(
+                await session.scalars(
+                    select(RFQRow).where(RFQRow.incident_id == incident_id).order_by(RFQRow.id)
+                )
+            )
+        frozen = cutoff.isoformat().replace("+00:00", "Z")
+        events = await self.evidence(
+            session_id, incident_id=incident_id, kind="business_event", as_of=frozen, limit=50
+        )
+        instruments = {model.id: model for model in await self.instruments()}
+        requests, par, counters = [], {}, ImpactCounters()
+        for row in rows:
+            timeline = [event for event in events if event.data["rfq_id"] == row.id]
+            if not any(event.data["event_type"] == "RFQ_REQUESTED" for event in timeline):
+                continue
+            initial = SyntheticRFQ.model_validate(row.payload)
+            reduced = reduce_request(
+                initial,
+                [
+                    {
+                        "id": event.id,
+                        "timestamp": event.timestamp,
+                        "event_type": event.data["event_type"],
+                        "data": event.data,
+                    }
+                    for event in timeline
+                ],
+                cutoff,
+            )
+            kinds = reduced.pop("event_types")
+            request = AffectedRequest(
+                **reduced,
+                instrument=instruments[initial.instrument_id],
+                timeline=timeline,
+                evidence_ids=[event.id for event in timeline],
+            )
+            requests.append(request)
+            par[initial.currency] = par.get(initial.currency, Decimal("0.00")) + initial.par_amount
+            counters.rfqs_total += 1
+            counters.rfqs_affected += int(request.affected)
+            for field, event_type in [
+                ("stale_quotes", "QUOTE_STALE"),
+                ("unavailable_quotes", "QUOTE_UNAVAILABLE"),
+                ("expired_rfqs", "RFQ_EXPIRED"),
+                ("expired_quotes", "QUOTE_EXPIRED"),
+                ("processing_timeouts", "PROCESSING_TIMEOUT"),
+            ]:
+                setattr(counters, field, getattr(counters, field) + int(event_type in kinds))
+            if request.order:
+                counters.pending_acknowledgements += int(request.order.status == "PENDING_ACK")
+                counters.unknown_acknowledgements += int(request.order.status == "UNKNOWN")
+        return BusinessImpact(
+            incident_id=incident_id,
+            as_of=frozen,
+            counters=counters,
+            requested_par_by_currency=par,
+            requests=requests,
+            summary=f"Observed lifecycle events affect {counters.rfqs_affected} of {counters.rfqs_total} visible fictional RFQs. "
+            f"{counters.processing_timeouts} processing timeouts; {counters.unknown_acknowledgements} orders have unknown acknowledgement status.",
+            limitations=[
+                "Requested par is face value, not loss or P&L.",
+                "Quote expiry and RFQ expiry are independent recorded events.",
+                "Stale/unavailable/expiry/timeout counters count unique requests with observed events; acknowledgement counters reflect current recorded state.",
+                "Acknowledgement indicates receipt only; execution is not established. No settlement or accrued-interest calculation is performed.",
+            ],
+        )
 
     async def list_incidents(self, session_id: str) -> list[Incident]:
         async with self.sessions() as session:
@@ -382,7 +535,7 @@ class Store:
         self,
         session_id: str,
         incident_id: str | None = None,
-        kind: str | None = None,
+        kind: str | tuple[str, ...] | None = None,
         service: str | None = None,
         q: str | None = None,
         severity: str | None = None,
@@ -390,22 +543,67 @@ class Store:
         start: str | None = None,
         end: str | None = None,
         metric: str | None = None,
+        as_of: str | None = None,
     ):
         async with self.sessions() as session:
             runs = (
                 await session.scalars(select(DemoRunRow).where(DemoRunRow.session_id == session_id))
             ).all()
+            incidents = {row.id: row for row in await session.scalars(select(IncidentRow))}
+
+        def at_or_before(cutoff):
+            return (
+                func.julianday(EvidenceRow.timestamp) <= func.julianday(cutoff.isoformat())
+                if self.engine.dialect.name == "sqlite"
+                else cast(EvidenceRow.timestamp, DateTime(timezone=True)) <= cutoff
+            )
+
+        selected = [run for run in runs if incident_id is None or run.incident_id == incident_id]
+        if as_of and incident_id is None:
+            requested = observation_time(as_of)
+            current_snapshots = [
+                (run, *self._snapshot(run, incidents[run.incident_id].started_at)) for run in selected
+            ]
+            if requested > max((point[2] for point in current_snapshots), default=BASE_TIME):
+                raise ValueError("Snapshot cutoff cannot be in the future")
+            snapshots = [
+                (
+                    run,
+                    *self._snapshot(
+                        run, incidents[run.incident_id].started_at, min(requested, current).isoformat()
+                    ),
+                )
+                for run, _, current in current_snapshots
+            ]
+        else:
+            snapshots = [
+                (run, *self._snapshot(run, incidents[run.incident_id].started_at, as_of)) for run in selected
+            ]
         clauses = [
-            and_(EvidenceRow.incident_id == run.incident_id, EvidenceRow.reveal_seconds <= self._elapsed(run))
-            for run in runs
-            if incident_id is None or run.incident_id == incident_id
+            and_(
+                EvidenceRow.incident_id == run.incident_id,
+                EvidenceRow.reveal_seconds <= elapsed,
+                at_or_before(cutoff),
+            )
+            for run, elapsed, cutoff in snapshots
         ]
         if incident_id is None:
-            clauses.append(EvidenceRow.incident_id.is_(None))
+            cutoff = (
+                observation_time(as_of)
+                if as_of
+                else max((point[2] for point in snapshots), default=BASE_TIME)
+            )
+            if not snapshots and cutoff > BASE_TIME:
+                raise ValueError("Snapshot cutoff cannot be in the future")
+            clauses.append(and_(EvidenceRow.incident_id.is_(None), at_or_before(cutoff)))
         query = select(EvidenceRow).where(
             or_(*clauses) if clauses else EvidenceRow.id == "__no_visible_evidence__"
         )
-        for column, value in [(EvidenceRow.kind, kind), (EvidenceRow.service, service)]:
+        if kind is not None:
+            query = query.where(
+                EvidenceRow.kind.in_(kind) if isinstance(kind, tuple) else EvidenceRow.kind == kind
+            )
+        for column, value in [(EvidenceRow.service, service)]:
             if value is not None:
                 query = query.where(column == value)
         if q:
@@ -461,7 +659,7 @@ class Store:
         self,
         session_id: str,
         incident_id: str | None = None,
-        kind: str | None = None,
+        kind: str | tuple[str, ...] | None = None,
         service: str | None = None,
         q: str | None = None,
         severity: str | None = None,
@@ -471,11 +669,12 @@ class Store:
         limit: int = 50,
         offset: int = 0,
         metric: str | None = None,
+        as_of: str | None = None,
     ) -> list[Evidence]:
         if not 1 <= limit <= 50 or not 0 <= offset <= 5000:
             raise ValueError("Evidence result bounds exceeded")
         query = await self._evidence_query(
-            session_id, incident_id, kind, service, q, severity, trace_id, start, end, metric
+            session_id, incident_id, kind, service, q, severity, trace_id, start, end, metric, as_of
         )
         async with self.sessions() as session:
             ordering = (
@@ -495,8 +694,8 @@ class Store:
         async with self.sessions() as session:
             return int(await session.scalar(select(func.count()).select_from(query.subquery())) or 0)
 
-    async def get_evidence(self, session_id: str, id: str) -> Evidence | None:
-        query = await self._evidence_query(session_id)
+    async def get_evidence(self, session_id: str, id: str, as_of: str | None = None) -> Evidence | None:
+        query = await self._evidence_query(session_id, as_of=as_of)
         async with self.sessions() as session:
             row = await session.scalar(query.where(EvidenceRow.id == id))
             return self._public(row) if row else None
@@ -556,10 +755,19 @@ class Store:
             }
 
     async def retrieve(
-        self, session_id: str, kind: str, q: str | None, service: str | None = None, limit: int = 10
+        self,
+        session_id: str,
+        kind: str,
+        q: str | None,
+        service: str | None = None,
+        limit: int = 10,
+        as_of: str | None = None,
+        incident_id: str | None = None,
     ) -> list[Evidence]:
         """BM25-style lexical retrieval with explicit symptom/service match explanations."""
-        candidates = await self.evidence(session_id, kind=kind, limit=50)
+        if incident_id is not None and await self.get_incident(session_id, incident_id, as_of=as_of) is None:
+            return []
+        candidates = await self.evidence(session_id, kind=kind, limit=50, as_of=as_of)
         terms = re.findall(r"[a-z0-9_-]+", (q or "").lower())[:30]
         documents = [
             re.findall(r"[a-z0-9_-]+", (row.summary + " " + json.dumps(row.data)).lower())

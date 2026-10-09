@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     admin_api_key: SecretStr | None = None
     investigation_timeout_seconds: float = Field(default=45, ge=1, le=300)
+    diagnostic_timeout_seconds: float = Field(default=10, ge=0.1, le=30)
+    provider_timeout_seconds: float = Field(default=20, ge=0.1, le=60)
+    max_provider_turns: int = Field(default=12, ge=2, le=16)
+    max_diagnostic_calls: int = Field(default=12, ge=2, le=16)
+    max_no_progress_calls: int = Field(default=2, ge=1, le=3)
+    mcp_api_url: str = "http://127.0.0.1:8000"
+    live_max_spend_usd: float | None = Field(default=None, gt=0, le=10)
     max_investigations_per_window: int = Field(default=8, ge=1, le=100)
     rate_limit_window_seconds: float = Field(default=60, ge=1, le=3600)
     replay_dir: Path = PROJECT_ROOT / "data" / "replay"

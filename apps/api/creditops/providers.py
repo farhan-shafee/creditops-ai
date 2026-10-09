@@ -3,23 +3,56 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .diagnostics import (
+    ABSTAIN_DOMAIN,
+    CPU_DOMAIN,
+    DB_DOMAIN,
+    FIX_DOMAIN,
+    KAFKA_DOMAIN,
+    MARKET_DOMAIN,
+    RISK_DOMAIN,
+    as_dict,
+    build_assessment,
+    diagnose,
+    number,
+    utilization_percent,
+)
 from .models import Assessment
 from .security import sanitize
 from .settings import Settings
 
-KAFKA_DOMAIN = "pricing-service / Kafka consumer backlog"
-FIX_DOMAIN = "FIX connectivity/session instability"
-DB_DOMAIN = "database connection pool exhaustion following application change"
-MARKET_DOMAIN = "market-data-service / stale market data"
-RISK_DOMAIN = "risk-service / upstream dependency timeout"
-CPU_DOMAIN = "quote-service / CPU saturation"
-ABSTAIN_DOMAIN = "insufficient evidence"
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "investigator.md").read_text(encoding="utf-8")
+
+# Backward-compatible imports for existing evaluation/tests; diagnostic rules
+# now have their own independently tested module.
+__all__ = [
+    "ABSTAIN_DOMAIN",
+    "CPU_DOMAIN",
+    "DB_DOMAIN",
+    "FIX_DOMAIN",
+    "KAFKA_DOMAIN",
+    "MARKET_DOMAIN",
+    "RISK_DOMAIN",
+    "as_dict",
+    "diagnose",
+    "number",
+    "AssessmentProvider",
+    "DeterministicProvider",
+    "DiagnosticPlan",
+    "DiagnosticRequest",
+    "AdaptiveDecision",
+    "ProviderUnavailable",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "create_provider",
+    "usage_record",
+]
 
 ToolName = Literal[
     "search_logs",
@@ -37,13 +70,27 @@ ToolName = Literal[
 class DiagnosticRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: ToolName
-    service: str | None
-    q: str | None
+    service: str | None = Field(max_length=80)
+    q: str | None = Field(max_length=240)
 
 
 class DiagnosticPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requests: list[DiagnosticRequest] = Field(max_length=12)
+
+
+class AdaptiveDecision(BaseModel):
+    """Only visible diagnostic actions; no private reasoning or model-set limits."""
+
+    model_config = ConfigDict(extra="forbid")
+    action: Literal["tool", "assess"]
+    request: DiagnosticRequest | None
+
+    @model_validator(mode="after")
+    def coherent_action(self):
+        if (self.action == "tool") != (self.request is not None):
+            raise ValueError("Tool actions require a request; assessment actions must omit it")
+        return self
 
 
 class ProviderUnavailable(RuntimeError):
@@ -55,161 +102,74 @@ class AssessmentProvider(Protocol):
 
     async def plan(self, incident: dict[str, Any]) -> tuple[DiagnosticPlan, dict[str, Any]]: ...
 
+    async def next_action(
+        self, incident: dict[str, Any], schemas: list[dict], observations: list[dict], evidence: list[dict]
+    ) -> tuple[AdaptiveDecision, dict[str, Any]]: ...
+
     async def assess(
         self, incident: dict[str, Any], evidence: list[dict[str, Any]]
     ) -> tuple[Assessment, dict[str, Any]]: ...
 
 
-def as_dict(value: Any) -> dict[str, Any]:
-    return value.model_dump(mode="json") if hasattr(value, "model_dump") else value
-
-
-def number(data: dict[str, Any], *names: str) -> float:
-    for name in names:
-        value = data.get(name)
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return float(value)
-        if data.get("metric") == name or data.get("name") == name:
-            value = data.get("value")
-            if isinstance(value, (int, float)):
-                return float(value)
-    return 0.0
-
-
-def diagnose(evidence: list[dict[str, Any]]) -> tuple[str, list[str], float]:
-    """Require corroboration; incident names and evaluation labels are never inputs."""
-    signals: dict[str, dict[str, list[str]]] = {
-        domain: {} for domain in (KAFKA_DOMAIN, FIX_DOMAIN, DB_DOMAIN, MARKET_DOMAIN, RISK_DOMAIN, CPU_DOMAIN)
-    }
-
-    def add(domain: str, signal: str, identifier: str) -> None:
-        signals[domain].setdefault(signal, []).append(identifier)
-
-    for raw in evidence:
-        item = as_dict(raw)
-        kind, service, data = item["kind"], item.get("service", ""), item.get("data", {})
-        if kind in ("incident", "runbook", "historical_incident", "history", "topology"):
-            continue
-        text = (item.get("summary", "") + " " + str(data.get("message", ""))).lower()
-        identifier = item["id"]
-        if number(data, "consumer_lag", "consumer_lag_messages", "lag", "kafka_consumer_lag") >= 1000 and (
-            service == "pricing-service" or kind == "kafka"
-        ):
-            add(KAFKA_DOMAIN, "lag", identifier)
-        if number(data, "quote_age_ms", "quote_age", "stale_price_count") >= 500 or (
-            kind == "log"
-            and service == "pricing-service"
-            and any(
-                term in text
-                for term in (
-                    "stale pricing",
-                    "consumer backlog",
-                    "consumer processing backlog",
-                    "stale price",
-                )
-            )
-        ):
-            add(KAFKA_DOMAIN, "freshness", identifier)
-        if number(data, "reconnect_count", "reconnects", "fix_reconnect_count") >= 2 or (
-            kind in ("fix", "log")
-            and service == "fix-gateway"
-            and ("disconnect" in text or "reconnect" in text)
-        ):
-            add(FIX_DOMAIN, "reconnect", identifier)
-        if number(data, "sequence_gaps", "sequence_gap_count", "fix_sequence_gaps") >= 1 or (
-            kind in ("fix", "log")
-            and ("heartbeat" in text or "sequence gap" in text)
-            and service == "fix-gateway"
-        ):
-            add(FIX_DOMAIN, "session", identifier)
-        pool = number(
-            data,
-            "pool_utilization",
-            "pool_utilization_pct",
-            "db_pool_utilization",
-            "db_pool_utilization_pct",
-            "connection_pool_utilization",
-        )
-        if pool >= 95 or 0.95 <= pool <= 1:
-            add(DB_DOMAIN, "pool", identifier)
-        if number(
-            data, "wait_time_ms", "pool_wait_ms", "db_wait_ms", "db_query_latency_ms", "query_latency_ms"
-        ) >= 500 or (
-            kind == "log"
-            and (
-                "pool timeout" in text
-                or "pool exhausted" in text
-                or "connection pool" in text
-                and "timeout" in text
-            )
-        ):
-            add(DB_DOMAIN, "wait", identifier)
-        if kind == "deployment":
-            add(DB_DOMAIN, "change", identifier)
-        if service == "market-data-service":
-            if (
-                number(data, "price_age_ms", "market_data_age_ms", "quote_age_ms", "stale_price_count")
-                >= 1000
-            ):
-                add(MARKET_DOMAIN, "age", identifier)
-            if kind == "log" and ("stale" in text or "feed stalled" in text):
-                add(MARKET_DOMAIN, "feed", identifier)
-        if service == "risk-service":
-            if (
-                number(
-                    data,
-                    "p95_latency_ms",
-                    "request_latency_p95",
-                    "request_latency_p95_ms",
-                    "latency_p95_ms",
-                    "dependency_latency_ms",
-                )
-                >= 1500
-            ):
-                add(RISK_DOMAIN, "latency", identifier)
-            if kind == "log" and ("timeout" in text or "deadline" in text):
-                add(RISK_DOMAIN, "timeout", identifier)
-        if service == "quote-service":
-            cpu = number(data, "cpu_percent", "cpu_pct", "cpu_utilization")
-            if cpu >= 90 or 0.9 <= cpu <= 1 or kind == "log" and "cpu saturation" in text:
-                add(CPU_DOMAIN, "cpu", identifier)
-            if (
-                number(
-                    data, "p95_latency_ms", "request_latency_p95", "request_latency_p95_ms", "latency_p95_ms"
-                )
-                >= 500
-            ):
-                add(CPU_DOMAIN, "latency", identifier)
-
-    qualified = [
-        (domain, sigs)
-        for domain, sigs in signals.items()
-        if len(sigs) >= 2 and (domain != DB_DOMAIN or "pool" in sigs and "wait" in sigs)
-    ]
-    if len(qualified) != 1:
-        return (
-            ABSTAIN_DOMAIN,
-            [
-                as_dict(item)["id"]
-                for item in evidence
-                if as_dict(item)["kind"] in ("metric", "kafka", "fix", "database", "log")
-            ][:12],
-            0.35,
-        )
-    domain, selected = qualified[0]
-    identifiers = list(dict.fromkeys(identifier for values in selected.values() for identifier in values))
-    if domain == FIX_DOMAIN:
-        identifiers.extend(
-            as_dict(item)["id"]
-            for item in evidence
-            if number(as_dict(item).get("data", {}), "execution_ack_latency_ms", "ack_latency_ms") >= 1000
-            and as_dict(item)["id"] not in identifiers
-        )
-    return domain, identifiers, min(0.92, 0.72 + 0.06 * len(selected))
-
-
 class DeterministicProvider:
     name = "deterministic"
+
+    async def next_action(
+        self, incident: dict[str, Any], schemas: list[dict], observations: list[dict], evidence: list[dict]
+    ) -> tuple[AdaptiveDecision, dict[str, Any]]:
+        """Transparent rules choose checks from returned metrics, never fixture IDs."""
+        called = {item["tool"] for item in observations}
+        metrics = [item for item in evidence if item["kind"] == "metric"]
+        priorities: list[ToolName] = ["query_metrics"]
+        if any(
+            (
+                utilization_percent(
+                    item["data"],
+                    "pool_utilization",
+                    "pool_utilization_pct",
+                    "db_pool_utilization",
+                    "db_pool_utilization_pct",
+                )
+                or 0
+            )
+            >= 95
+            for item in metrics
+        ):
+            priorities.append("inspect_database_health")
+        if any(
+            number(item["data"], "fix_reconnect_count", "reconnect_count") >= 2
+            or number(item["data"], "fix_sequence_gaps", "sequence_gap_count") >= 1
+            or number(item["data"], "execution_ack_latency_ms", "ack_latency_ms") >= 1000
+            for item in metrics
+        ):
+            priorities.append("inspect_fix_session")
+        if any(
+            number(item["data"], "consumer_lag", "consumer_lag_messages", "kafka_consumer_lag") >= 1000
+            for item in metrics
+        ):
+            priorities.append("inspect_kafka_lag")
+        priorities.extend(
+            [
+                "inspect_kafka_lag",
+                "inspect_fix_session",
+                "inspect_database_health",
+                "search_logs",
+                "get_recent_deployments",
+                "get_service_topology",
+                "search_runbooks",
+                "find_similar_incidents",
+            ]
+        )
+        for name in priorities:
+            if name not in called:
+                query = None
+                if name in ("search_runbooks", "find_similar_incidents"):
+                    domain, _, _ = diagnose(evidence)
+                    query = domain if domain != ABSTAIN_DOMAIN else "latency timeout"
+                return AdaptiveDecision(
+                    action="tool", request=DiagnosticRequest(name=name, service=None, q=query)
+                ), {}
+        return AdaptiveDecision(action="assess", request=None), {}
 
     async def plan(self, incident: dict[str, Any]) -> tuple[DiagnosticPlan, dict[str, Any]]:
         names: list[ToolName] = [
@@ -230,100 +190,7 @@ class DeterministicProvider:
     async def assess(
         self, incident: dict[str, Any], evidence: list[dict[str, Any]]
     ) -> tuple[Assessment, dict[str, Any]]:
-        rows = [as_dict(item) for item in evidence]
-        domain, identifiers, confidence = diagnose(rows)
-        selected = [item for item in rows if item["id"] in identifiers]
-        query = {
-            KAFKA_DOMAIN: "kafka consumer",
-            FIX_DOMAIN: "fix session",
-            DB_DOMAIN: "connection pool",
-            MARKET_DOMAIN: "market data",
-            RISK_DOMAIN: "dependency timeout",
-            CPU_DOMAIN: "quote latency",
-        }.get(domain, "dependency timeout")
-        runbooks = [
-            item["id"]
-            for item in rows
-            if item["kind"] == "runbook"
-            and any(
-                token in (item["summary"] + str(item["data"].get("title", ""))).lower()
-                for token in query.split()
-            )
-        ][:2]
-        histories = [
-            item["id"]
-            for item in rows
-            if item["kind"] in ("history", "historical_incident")
-            and any(token in item["summary"].lower() for token in query.split())
-        ][:2]
-        citation = ", ".join(identifiers[:4]) or "no corroborating diagnostic evidence returned"
-        title = sanitize(incident.get("title", "Synthetic incident"))
-        impact = sanitize(
-            incident.get("client_impact", "Synthetic clients only; no real orders or counterparties.")
-        )
-        abstained = domain == ABSTAIN_DOMAIN
-        cause = (
-            f"Insufficient independent signals to isolate a failure domain [{citation}]."
-            if abstained
-            else f"Probable failure domain: {domain}. Corroborating diagnostics: [{citation}]."
-        )
-        steps = [
-            "Compare the affected service time window with its upstream and downstream dependencies.",
-            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
-            "Escalate to the owning service team before considering any configuration change.",
-        ]
-        alternatives = []
-        for item in rows:
-            if item["kind"] in ("database", "fix", "kafka") and item["id"] not in identifiers:
-                alternatives.append(
-                    {
-                        "domain": f"{item['kind']} subsystem",
-                        "reason": f"Considered separately; returned health snapshot [{item['id']}] does not establish the primary failure.",
-                        "evidence_ids": [item["id"]],
-                    }
-                )
-        result = Assessment.model_validate(
-            {
-                "incident_summary": f"{title}. {cause}",
-                "probable_failure_domain": domain,
-                "confidence": confidence,
-                "supporting_evidence_ids": identifiers,
-                "alternative_hypotheses": alternatives[:2],
-                "recommended_next_steps": steps,
-                "relevant_runbooks": runbooks,
-                "similar_incidents": histories,
-                "requires_human_review": abstained or confidence < 0.7,
-                "limitations": [
-                    "Deterministic evidence assessment; no language model was called.",
-                    "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
-                    "Draft — human review required. Correlation does not establish a definitive root cause.",
-                ],
-                "rca": {
-                    "executive_summary": f"Draft — human review required. {cause}",
-                    "impact": impact,
-                    "timeline": [
-                        f"{item['timestamp']}: {item['summary']} [{item['id']}]" for item in selected[:5]
-                    ],
-                    "observed_evidence": [f"{item['summary']} [{item['id']}]" for item in selected],
-                    "probable_root_cause": cause,
-                    "contributing_factors": [
-                        f"Service dependency propagation needs human confirmation [{citation}]."
-                    ],
-                    "immediate_next_steps": steps,
-                    "follow_up_work": [
-                        "Validate alert coverage and collect a longer diagnostic window.",
-                        "Review the application change and capacity assumptions with its owner.",
-                        "Add the verified incident outcome to the synthetic regression dataset.",
-                    ],
-                },
-            }
-        )
-        return result, {
-            "total_tokens": None,
-            "input_tokens": None,
-            "output_tokens": None,
-            "estimated_cost_usd": None,
-        }
+        return build_assessment(incident, evidence)
 
 
 def usage_record(provider: str, input_tokens: int, output_tokens: int) -> dict[str, Any]:
@@ -351,7 +218,62 @@ def data_message(value: Any) -> str:
     )
 
 
-class OpenAIProvider:
+class AdaptiveProviderMixin:
+    def enable_budget(self, maximum_usd: float | None) -> None:
+        configuration = Settings()
+        input_price = getattr(configuration, f"{self.name}_input_usd_per_million")
+        output_price = getattr(configuration, f"{self.name}_output_usd_per_million")
+        if (
+            maximum_usd is None
+            or maximum_usd <= 0
+            or input_price is None
+            or output_price is None
+            or input_price <= 0
+            or output_price <= 0
+        ):
+            raise ProviderUnavailable(
+                "LIVE_AI requires an approved server-side spend cap and positive input/output price ceilings"
+            )
+        self._maximum_spend = Decimal(str(maximum_usd))
+        self._reserved_spend = Decimal("0")
+        self._input_price = Decimal(str(input_price))
+        self._output_price = Decimal(str(output_price))
+
+    def reserve_call(self, schema: type[BaseModel], instruction: str, message: str) -> None:
+        if not hasattr(self, "_maximum_spend"):
+            raise ProviderUnavailable("Live provider budget has not been explicitly enabled")
+        # UTF-8 byte count is a conservative token ceiling for these JSON/text
+        # inputs. Include schema, system prompt and a large protocol overhead
+        # allowance; reserve full output allowance and never refund reservations.
+        serialized = (
+            message + SYSTEM_PROMPT + instruction + json.dumps(schema.model_json_schema(), ensure_ascii=True)
+        )
+        input_ceiling = len(serialized.encode("utf-8")) + 16384
+        reserve = (Decimal(input_ceiling) * self._input_price + Decimal(5000) * self._output_price) / Decimal(
+            1_000_000
+        )
+        if self._reserved_spend + reserve > self._maximum_spend:
+            raise ProviderUnavailable(
+                "Conservative provider spend reservation would exceed the approved cap; stopped before request"
+            )
+        self._reserved_spend += reserve
+
+    async def next_action(
+        self, incident: dict[str, Any], schemas: list[dict], observations: list[dict], evidence: list[dict]
+    ) -> tuple[AdaptiveDecision, dict[str, Any]]:
+        return await self._parse(
+            AdaptiveDecision,
+            "Choose ONE next read-only diagnostic action from the supplied verified schemas based on actual returned observations and errors. Do not repeat the same request. Null service/q means the bounded incident scope. If evidence is sufficient, contradictory after checks, or exhausted, choose assess with null request. Tool failures are unknown, never healthy evidence. Do not output reasoning, invented results, or change session/incident/time/limits.",
+            {
+                "incident": incident,
+                "available_tools": schemas,
+                "observations": observations,
+                "evidence": evidence,
+            },
+        )
+
+
+class OpenAIProvider(AdaptiveProviderMixin):
     name = "openai"
 
     def __init__(self) -> None:
@@ -367,11 +289,13 @@ class OpenAIProvider:
     async def _parse(
         self, schema: type[BaseModel], instruction: str, data: Any
     ) -> tuple[Any, dict[str, Any]]:
+        message = data_message(data)
+        self.reserve_call(schema, instruction, message)
         response = await self.client.responses.parse(
             model=self.model,
             input=[
                 {"role": "system", "content": SYSTEM_PROMPT + "\n" + instruction},
-                {"role": "user", "content": data_message(data)},
+                {"role": "user", "content": message},
             ],
             text_format=schema,
             max_output_tokens=5000,
@@ -401,7 +325,7 @@ class OpenAIProvider:
         )
 
 
-class AnthropicProvider:
+class AnthropicProvider(AdaptiveProviderMixin):
     name = "anthropic"
 
     def __init__(self) -> None:
@@ -417,11 +341,13 @@ class AnthropicProvider:
     async def _parse(
         self, schema: type[BaseModel], instruction: str, data: Any
     ) -> tuple[Any, dict[str, Any]]:
+        message = data_message(data)
+        self.reserve_call(schema, instruction, message)
         response = await self.client.messages.parse(
             model=self.model,
             max_tokens=5000,
             system=SYSTEM_PROMPT + "\n" + instruction,
-            messages=[{"role": "user", "content": data_message(data)}],
+            messages=[{"role": "user", "content": message}],
             output_format=schema,
         )
         if response.parsed_output is None:

@@ -16,7 +16,15 @@ from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, G
 from pydantic import Field
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from .models import Evidence, Incident, Investigation, InvestigationRequest, ToolArguments
+from .models import (
+    BusinessImpact,
+    Evidence,
+    Incident,
+    Instrument,
+    Investigation,
+    InvestigationRequest,
+    ToolArguments,
+)
 from .security import RateLimiter, authorize_admin, sanitize
 from .settings import Settings, get_settings
 from .store import Store
@@ -283,11 +291,22 @@ def create_app(
         return await database.list_incidents(session_id)
 
     @app.get("/api/incidents/{id}", response_model=Incident)
-    async def incident(id: str, session_id: Session):
-        row = await database.get_incident(session_id, id)
+    async def incident(id: str, session_id: Session, as_of: TimeFilter = None):
+        row = await database.get_incident(session_id, id, as_of=canonical_time(as_of))
         if row is None:
             raise HTTPException(404, "Incident not found in this session")
         return row
+
+    @app.get("/api/instruments", response_model=list[Instrument])
+    async def instruments():
+        return await database.instruments()
+
+    @app.get("/api/incidents/{id}/business-impact", response_model=BusinessImpact)
+    async def business_impact(id: str, session_id: Session, as_of: TimeFilter = None):
+        value = await database.business_impact(session_id, id, as_of=canonical_time(as_of))
+        if value is None:
+            raise HTTPException(404, "Incident not found in this session")
+        return value
 
     @app.get("/api/logs/search")
     async def logs(
@@ -308,7 +327,7 @@ def create_app(
         if lower and upper and lower > upper:
             raise HTTPException(422, "start must precede end")
         filters = {
-            "kind": "log",
+            "kind": ("log", "business_event"),
             "service": service,
             "severity": severity,
             "trace_id": trace_id,

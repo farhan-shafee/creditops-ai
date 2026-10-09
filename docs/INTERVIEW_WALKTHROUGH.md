@@ -13,7 +13,7 @@ Follow `DEMO_SCRIPT.md`. Start with the problem: information is fragmented acros
 1. **0–2 minutes:** RFQ service graph and three different failure domains. Explain why high latency alone cannot distinguish a consumer backlog, unstable FIX session or exhausted DB pool.
 2. **2–4 minutes:** Run a scenario; inspect the synthetic timestamps, delayed evidence reveal, stable IDs and session scope. Show healthy negative controls.
 3. **4–6 minutes:** Read the allowlist and investigator prompt. Explain model-selected bounded queries, untrusted telemetry, redaction, typed assessment and citation validation. Replay comes from pipeline artifacts with explicit deterministic provenance.
-4. **6–7 minutes:** MCP stdio client configuration, schemas and registration test. Explain why simulation controls are API-only and never agent tools.
+4. **6–7 minutes:** Execute MCP mode and show transport/schema/cutoff provenance. Explain the real API-worker -> official SDK -> stdio server -> same-API integration and disconnect regression. Simulation controls remain API-only.
 5. **7–8 minutes:** Docker PostgreSQL, Redpanda, Prometheus/Grafana. Distinguish real broker interaction from modeled lag and fictional FIX connectivity.
 6. **8–9 minutes:** Labeled dataset, cheap log-signature baseline, corroborating pipeline, abstention and recall arithmetic. No real operator MTTR claim.
 7. **9–10 minutes:** Discuss deployment boundary, multi-replica rate budgets, durable workers, tenant authorization, retention and held-out evaluation.
@@ -41,7 +41,19 @@ Follow `DEMO_SCRIPT.md`. Start with the problem: information is fragmented acros
 
 **What is confidence?** For the deterministic provider it is an uncalibrated rule score based on independent signals. The UI and limitations say so. Live-provider confidence would also require calibration against held-out incidents.
 
-**How is a recent deployment handled?** It is supporting temporal evidence, not proof of causality. The investigation correlates pool pressure, waits and timeout logs, and the draft asks the operator to validate the change.
+**Why doesn't a recent deployment prove causation?** Saturation plus waiters/timeouts establishes a failure condition without any release record. Only a same-service change before onset is a candidate trigger. Other services' changes and later deployments cannot explain earlier symptoms. None of these fixtures establish a confirmed cause.
+
+**How do you prove the investigator used MCP?** The real integration starts an async API worker, opens the official client, discovers verified schemas and invokes an owned stdio server that calls the API's diagnostic GET routes. It compares returned metric objects, asserts transport provenance and forces child termination to verify fail-closed behavior. The UI's keyless MCP mode executes that path with a deterministic provider; replay shows recorded steps.
+
+**What can change the next tool?** After the same initial latency symptoms, actual consumer-lag results lead to Kafka inspection; pool-pressure results lead to database inspection. Scripted providers assert those different requests in offline tests. The live SDK receives previous sanitized results/errors before its next typed decision, but real model decisions have not been measured.
+
+**How do you prevent a missing acknowledgement becoming a false failed order?** RFQ, quote, processing and acknowledgement states are separate event reductions. A valid accepted quote can create one pending economic order; missing acknowledgement becomes UNKNOWN. Retransmission retains that order ID. There is no inferred FAILED/EXECUTED state or blind resubmission recommendation. Reconcile the existing order with authoritative venue/internal records before acting in a real system.
+
+**What does evaluation demonstrate?** Reproducible behavior on developer-authored synthetic fixtures: literal domain scoring, retrieval, abstention and ID validity. The unchanged 15-case benchmark exposes legacy causal-label mismatches and a risk fixture's later subthreshold telemetry. A separate 13-case suite tests declared support/trigger/uncertainty expectations. Neither is independently held out; zero invalid IDs is not zero hallucinations. Live-model execution is NOT RUN and quality UNVERIFIED.
+
+**Which parts are simulated, recorded, direct or live?** Bonds, RFQs, orders, FIX and diagnostic incident metrics are synthetic. REPLAY plays direct-pipeline artifacts with original times and a complete cutoff. MCP_DEMO makes fresh protocol calls with deterministic adaptive rules. PostgreSQL, local Redpanda and SDK protocol transport are real. LIVE_AI is implemented and tested with mocked network responses only; no paid model or embedding call was made.
+
+**What would you check before trusting a recommendation?** Inspect exact cited records and their cutoff, session, freshness and source; distinguish observed condition from trigger hypothesis; review missing/contradictory telemetry and tool errors; reconcile affected request/order IDs; confirm authorization, blast radius and rollback plans through human change controls. The limited known-domain rule gate is not a general factuality guarantee.
 
 **Can this handle institutional scale?** The patterns transfer, but this implementation needs durable jobs, shared budgets, tenant-aware queries, retention, enterprise identity, on-call integrations and independent evaluations before real deployment.
 

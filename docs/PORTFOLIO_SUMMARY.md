@@ -7,8 +7,11 @@ CreditOps AI is an independent portfolio project demonstrating incident intellig
 ## Resume project section
 
 - Independently built a typed incident-intelligence monorepo with synthetic Kafka backlog, FIX instability and database saturation scenarios, session-scoped simulation, REST/SSE APIs and a responsive operations console.
-- Implemented bounded read-only MCP tools, sanitized provider context, structured evidence validation and human-review escalation; intentionally excluded operational mutation.
+- Connected an evidence-adaptive investigation to the official MCP client/server, with tested scope, disconnect/cancellation cleanup, sanitized context and human-review drafts; intentionally excluded operational mutation.
+- Connected three fictional bonds to event-derived RFQ/quote/order impact, keeping quote expiry, RFQ deadlines and unknown acknowledgements separate.
 - Created deterministic replay artifacts and labeled evaluations measuring failure-domain accuracy, evidence recall, abstention and synthetic pipeline latency without claiming production MTTR reduction.
+
+The second pass preserves the original 15-case benchmark and adds a separate 13-case synthetic robustness suite. Live provider execution remains NOT RUN and model quality UNVERIFIED; keyless adaptive MCP uses deterministic rules. See the [verification report](SECOND_PASS_REPORT.md) for actual outcomes, including preserved legacy-label mismatches.
 
 ## Recruiter email excerpt
 

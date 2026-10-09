@@ -282,10 +282,15 @@ test('a replay citation opens its exact persisted investigation record even befo
     headers: { 'X-Demo-Session': ids.session },
   });
   const artifact = await response.json();
-  const source = artifact.evidence.find((item: { id: string }) => item.id === 'METRIC-001-AGE');
+  const source = artifact.evidence.find(
+    (item: { id: string; kind: string; data: { metric?: string } }) =>
+      artifact.assessment.supporting_evidence_ids.includes(item.id) &&
+      item.kind === 'metric' &&
+      item.data.metric === 'quote_age_ms',
+  );
   expect(source).toBeTruthy();
   let windowReads = 0;
-  await page.route('**/api/evidence/METRIC-001-AGE', (route) => {
+  await page.route(`**/api/evidence/${source.id}`, (route) => {
     windowReads++;
     return route.fulfill({
       status: 404,
@@ -295,9 +300,12 @@ test('a replay citation opens its exact persisted investigation record even befo
   });
   await page
     .getByTestId('supporting-evidence')
-    .getByRole('button', { name: 'METRIC-001-AGE', exact: true })
+    .getByRole('button', { name: source.id, exact: true })
     .click();
-  await expect(page.getByRole('dialog').getByText(source.summary, { exact: true })).toBeVisible();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByText(source.summary, { exact: true })).toBeVisible();
+  await expect(drawer).toContainText(source.timestamp);
+  await expect(drawer.locator('pre')).toHaveText(JSON.stringify(source.data, null, 2));
   expect(windowReads).toBe(0);
 });
 

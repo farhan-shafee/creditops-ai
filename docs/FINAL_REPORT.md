@@ -1,5 +1,7 @@
 # CreditOps AI final verification report
 
+Historical first-pass report. The targeted follow-up, current source/CI receipts and revised evaluation results are in [SECOND_PASS_REPORT.md](SECOND_PASS_REPORT.md). Original evaluation artifacts are preserved in `artifacts/eval/baseline-v1`; the results below describe the earlier implementation.
+
 Verified locally and through GitHub Actions on 2026-10-09. All trading systems, clients, incidents and telemetry are synthetic.
 
 > CreditOps AI is an independent portfolio project using entirely synthetic data. It is not affiliated with or connected to any trading venue, broker, financial institution, or employer.

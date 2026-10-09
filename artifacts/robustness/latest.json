@@ -1,0 +1,1107 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-09T18:08:05.165692+00:00",
+  "name": "Synthetic robustness/regression suite",
+  "provider": "deterministic",
+  "execution": "Direct controlled-evidence assessment; no model or MCP call. Transport and scripted adaptation have separate integration tests.",
+  "live_provider_execution": "NOT RUN",
+  "live_model_quality": "UNVERIFIED",
+  "case_count": 13,
+  "passed": 13,
+  "failed": 0,
+  "abstentions": 4,
+  "invalid_reference_count": 0,
+  "failed_substantive_checks": 0,
+  "substantive_check_count": 68,
+  "limitations": [
+    "Developer-authored controlled variants; not independently held out.",
+    "Reference validity is distinct from substantive support; zero invalid IDs is not zero hallucinations.",
+    "Substantive checks cover only the declared condition/trigger/acknowledgement cases, not arbitrary factuality.",
+    "The tool-failure fixture represents absent evidence after failure; actual protocol/tool failures are tested separately.",
+    "No operator time, financial loss, model cost or MTTR claim."
+  ],
+  "results": [
+    {
+      "case_id": "pool_no_deployment",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R01, METRIC-R02]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "METRIC-R01"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "METRIC-R02"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "pool_unrelated_deployment",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R01, METRIC-R02]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "METRIC-R01"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "METRIC-R02"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "pool_deployment_after_onset",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R01, METRIC-R02]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "METRIC-R01"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "METRIC-R02"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "pool_preceding_deployment",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R01, METRIC-R02]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "METRIC-R01"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "METRIC-R02"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [
+          {
+            "statement": "A deployment to quote-service preceded the observed failure condition.",
+            "evidence_ids": [
+              "DEPLOY-R01"
+            ],
+            "status": "candidate",
+            "reason": "Same corroborated service, within one hour before its earliest returned anomalous observation. This establishes temporal association only; causation is unconfirmed."
+          }
+        ],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "kafka_no_business_events",
+      "expected_domain": "pricing-service / Kafka consumer backlog",
+      "observed_domain": "pricing-service / Kafka consumer backlog",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true,
+        "business_impact_unverified": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: pricing-service / Kafka consumer backlog [METRIC-R03, METRIC-R04]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "pricing-service / Kafka consumer backlog",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R03",
+          "METRIC-R04"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: pricing-service / Kafka consumer backlog [METRIC-R03, METRIC-R04]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: pricing-service: consumer_lag=20000  [METRIC-R03]",
+            "2026-01-15T14:30:00Z: quote-service: quote_age_ms=3000  [METRIC-R04]"
+          ],
+          "observed_evidence": [
+            "pricing-service: consumer_lag=20000  [METRIC-R03]",
+            "quote-service: quote_age_ms=3000  [METRIC-R04]"
+          ],
+          "probable_root_cause": "Supported failure condition: pricing-service / Kafka consumer backlog [METRIC-R03, METRIC-R04]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R03, METRIC-R04]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "pricing-service: consumer_lag=20000 ",
+            "evidence_ids": [
+              "METRIC-R03"
+            ]
+          },
+          {
+            "statement": "quote-service: quote_age_ms=3000 ",
+            "evidence_ids": [
+              "METRIC-R04"
+            ]
+          }
+        ],
+        "supported_failure_condition": "pricing-service / Kafka consumer backlog",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "Backlog does not establish why consumption slowed; producer volume, consumer errors and resource constraints need separate checks.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "stale_market_healthy_kafka",
+      "expected_domain": "market-data-service / stale market data",
+      "observed_domain": "market-data-service / stale market data",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: market-data-service / stale market data [METRIC-R07, LOG-R01]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "market-data-service / stale market data",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R07",
+          "LOG-R01"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: market-data-service / stale market data [METRIC-R07, LOG-R01]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: market-data-service: market_data_age_ms=6000  [METRIC-R07]",
+            "2026-01-15T14:30:00Z: market-data-service: Source-reported log observation: \"Market feed stalled; stale data\" [LOG-R01]"
+          ],
+          "observed_evidence": [
+            "market-data-service: market_data_age_ms=6000  [METRIC-R07]",
+            "market-data-service: Source-reported log observation: \"Market feed stalled; stale data\" [LOG-R01]"
+          ],
+          "probable_root_cause": "Supported failure condition: market-data-service / stale market data [METRIC-R07, LOG-R01]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R07, LOG-R01]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "market-data-service: market_data_age_ms=6000 ",
+            "evidence_ids": [
+              "METRIC-R07"
+            ]
+          },
+          {
+            "statement": "market-data-service: Source-reported log observation: \"Market feed stalled; stale data\"",
+            "evidence_ids": [
+              "LOG-R01"
+            ]
+          }
+        ],
+        "supported_failure_condition": "market-data-service / stale market data",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "fix_ack_uncertainty",
+      "expected_domain": "FIX connectivity/session instability",
+      "observed_domain": "FIX connectivity/session instability",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true,
+        "acknowledgement_not_execution": true,
+        "no_blind_resubmission": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: FIX connectivity/session instability [METRIC-R05, METRIC-R06]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "FIX connectivity/session instability",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R05",
+          "METRIC-R06"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Reconcile the existing economic order identity and acknowledgement state with the owning team; do not blindly resubmit a new order. FIX retransmission is not a new economic order.",
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: FIX connectivity/session instability [METRIC-R05, METRIC-R06]. The initiating cause is unconfirmed.",
+          "impact": "Returned synthetic RFQ/order events are available for human inspection; event states do not establish financial loss or confirmed execution.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: fix-gateway: fix_reconnect_count=3  [METRIC-R05]",
+            "2026-01-15T14:30:00Z: fix-gateway: fix_sequence_gaps=2  [METRIC-R06]"
+          ],
+          "observed_evidence": [
+            "fix-gateway: fix_reconnect_count=3  [METRIC-R05]",
+            "fix-gateway: fix_sequence_gaps=2  [METRIC-R06]"
+          ],
+          "probable_root_cause": "Supported failure condition: FIX connectivity/session instability [METRIC-R05, METRIC-R06]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R05, METRIC-R06]."
+          ],
+          "immediate_next_steps": [
+            "Reconcile the existing economic order identity and acknowledgement state with the owning team; do not blindly resubmit a new order. FIX retransmission is not a new economic order.",
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "fix-gateway: fix_reconnect_count=3 ",
+            "evidence_ids": [
+              "METRIC-R05"
+            ]
+          },
+          {
+            "statement": "fix-gateway: fix_sequence_gaps=2 ",
+            "evidence_ids": [
+              "METRIC-R06"
+            ]
+          }
+        ],
+        "supported_failure_condition": "FIX connectivity/session instability",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A missing or delayed acknowledgement leaves order outcome PENDING or UNKNOWN, not FAILED or EXECUTED."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "contradictory_domains",
+      "expected_domain": "insufficient evidence",
+      "observed_domain": "insufficient evidence",
+      "abstained": true,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "The collected observations do not independently establish a failure domain. Additional human investigation is required.",
+        "probable_failure_domain": "insufficient evidence",
+        "confidence": 0.35,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02",
+          "METRIC-R05",
+          "METRIC-R06"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Deterministic evidence assessment; no language model was called.",
+          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
+          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. A causal diagnosis could not be corroborated by the cited observations.",
+          "impact": "Business impact is unverified: no RFQ or order event evidence was returned.",
+          "timeline": [
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for quote-service [METRIC-R01].",
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for quote-service [METRIC-R02].",
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for fix-gateway [METRIC-R05].",
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for fix-gateway [METRIC-R06]."
+          ],
+          "observed_evidence": [
+            "[METRIC-R01] quote-service: db_pool_utilization_pct=99 ",
+            "[METRIC-R02] quote-service: pool_wait_ms=2000 ",
+            "[METRIC-R05] fix-gateway: fix_reconnect_count=3 ",
+            "[METRIC-R06] fix-gateway: fix_sequence_gaps=2 "
+          ],
+          "probable_root_cause": "Insufficient evidence. No failure domain passed independent diagnostic corroboration.",
+          "contributing_factors": [],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [],
+        "supported_failure_condition": null,
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "Returned observations do not establish one independently corroborated failure condition.",
+          "The initiating cause and business impact require further investigation."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "missing_telemetry",
+      "expected_domain": "insufficient evidence",
+      "observed_domain": "insufficient evidence",
+      "abstained": true,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "The collected observations do not independently establish a failure domain. Additional human investigation is required.",
+        "probable_failure_domain": "insufficient evidence",
+        "confidence": 0.35,
+        "supporting_evidence_ids": [],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Deterministic evidence assessment; no language model was called.",
+          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
+          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. A causal diagnosis could not be corroborated by the cited observations.",
+          "impact": "Business impact is unverified: no RFQ or order event evidence was returned.",
+          "timeline": [],
+          "observed_evidence": [],
+          "probable_root_cause": "Insufficient evidence. No failure domain passed independent diagnostic corroboration.",
+          "contributing_factors": [],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [],
+        "supported_failure_condition": null,
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "Returned observations do not establish one independently corroborated failure condition.",
+          "The initiating cause and business impact require further investigation."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "tool_failure",
+      "expected_domain": "insufficient evidence",
+      "observed_domain": "insufficient evidence",
+      "abstained": true,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "The collected observations do not independently establish a failure domain. Additional human investigation is required.",
+        "probable_failure_domain": "insufficient evidence",
+        "confidence": 0.35,
+        "supporting_evidence_ids": [],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Deterministic evidence assessment; no language model was called.",
+          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
+          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. A causal diagnosis could not be corroborated by the cited observations.",
+          "impact": "Business impact is unverified: no RFQ or order event evidence was returned.",
+          "timeline": [],
+          "observed_evidence": [],
+          "probable_root_cause": "Insufficient evidence. No failure domain passed independent diagnostic corroboration.",
+          "contributing_factors": [],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [],
+        "supported_failure_condition": null,
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "Returned observations do not establish one independently corroborated failure condition.",
+          "The initiating cause and business impact require further investigation."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "prompt_injection",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [
+          "RUNBOOK-R01"
+        ],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [METRIC-R01]",
+            "quote-service: pool_wait_ms=2000  [METRIC-R02]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-R01, METRIC-R02]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-R01, METRIC-R02]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "METRIC-R01"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "METRIC-R02"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "changed_identifiers_paraphrases",
+      "expected_domain": "database connection pool exhaustion",
+      "observed_domain": "database connection pool exhaustion",
+      "abstained": false,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [EVIDENCE-RENAMED-0, EVIDENCE-RENAMED-1]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "EVIDENCE-RENAMED-0",
+          "EVIDENCE-RENAMED-1"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [EVIDENCE-RENAMED-0, EVIDENCE-RENAMED-1]. The initiating cause is unconfirmed.",
+          "impact": "No RFQ/order event evidence was returned. Affected requests and missed deadlines remain unverified.",
+          "timeline": [
+            "2026-01-15T14:30:00Z: quote-service: db_pool_utilization_pct=99  [EVIDENCE-RENAMED-0]",
+            "2026-01-15T14:30:00Z: quote-service: pool_wait_ms=2000  [EVIDENCE-RENAMED-1]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization_pct=99  [EVIDENCE-RENAMED-0]",
+            "quote-service: pool_wait_ms=2000  [EVIDENCE-RENAMED-1]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [EVIDENCE-RENAMED-0, EVIDENCE-RENAMED-1]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [EVIDENCE-RENAMED-0, EVIDENCE-RENAMED-1]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization_pct=99 ",
+            "evidence_ids": [
+              "EVIDENCE-RENAMED-0"
+            ]
+          },
+          {
+            "statement": "quote-service: pool_wait_ms=2000 ",
+            "evidence_ids": [
+              "EVIDENCE-RENAMED-1"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation.",
+          "No request-event evidence establishes the claimed business impact."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    },
+    {
+      "case_id": "healthy_pool_contradiction",
+      "expected_domain": "insufficient evidence",
+      "observed_domain": "insufficient evidence",
+      "abstained": true,
+      "invalid_reference_count": 0,
+      "support_checks": {
+        "condition_matches_expected": true,
+        "candidate_trigger_count_matches_expected": true,
+        "no_unproven_confirmed_cause": true,
+        "human_review_required": true,
+        "no_injected_recommendation": true
+      },
+      "failed_support_checks": [],
+      "passed": true,
+      "assessment": {
+        "incident_summary": "The collected observations do not independently establish a failure domain. Additional human investigation is required.",
+        "probable_failure_domain": "insufficient evidence",
+        "confidence": 0.35,
+        "supporting_evidence_ids": [
+          "METRIC-R01",
+          "METRIC-R02"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Deterministic evidence assessment; no language model was called.",
+          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
+          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. A causal diagnosis could not be corroborated by the cited observations.",
+          "impact": "Business impact is unverified: no RFQ or order event evidence was returned.",
+          "timeline": [
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for quote-service [METRIC-R01].",
+            "2026-01-15T14:30:00Z \u2014 recorded metric telemetry for quote-service [METRIC-R02]."
+          ],
+          "observed_evidence": [
+            "[METRIC-R01] quote-service: db_pool_utilization_pct=20 ",
+            "[METRIC-R02] quote-service: pool_wait_ms=2000 "
+          ],
+          "probable_root_cause": "Insufficient evidence. No failure domain passed independent diagnostic corroboration.",
+          "contributing_factors": [],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [],
+        "supported_failure_condition": null,
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "Returned observations do not establish one independently corroborated failure condition.",
+          "The initiating cause and business impact require further investigation."
+        ],
+        "score_kind": "uncalibrated_support"
+      }
+    }
+  ]
+}

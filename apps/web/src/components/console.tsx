@@ -28,6 +28,7 @@ import type {
   Evidence,
   Incident,
   Investigation,
+  InvestigationMode,
   MetricSeries,
   Overview,
   Scenario,
@@ -115,6 +116,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const [library, setLibrary] = useState<Evidence[]>([]);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [investigating, setInvestigating] = useState(false);
+  const [investigationMode, setInvestigationMode] = useState<InvestigationMode>('REPLAY');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
@@ -163,6 +165,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
         generation === investigationGenerationRef.current && !controller.signal.aborted;
       if (!current()) return;
       setInvestigation(value);
+      setInvestigationMode(value.mode === 'MCP_DEMO' ? 'MCP_DEMO' : 'REPLAY');
       if (!['running', 'pending', 'queued'].includes(value.status)) {
         setInvestigating(false);
         return;
@@ -417,7 +420,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     try {
       const created = await api<Investigation>('/investigations', {
         method: 'POST',
-        body: JSON.stringify({ incident_id: active.id, mode: 'REPLAY' }),
+        body: JSON.stringify({ incident_id: active.id, mode: investigationMode }),
         signal: controller.signal,
       });
       if (!current()) return;
@@ -449,6 +452,8 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     topology,
     investigation,
     investigating,
+    investigationMode,
+    onInvestigationMode: setInvestigationMode,
     running: busy,
     onInvestigate: () => void investigate(),
     onEvidence,

@@ -14,10 +14,22 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from pydantic import ValidationError
+
+from .diagnostic_clients import (
+    DiagnosticClient,
+    DiagnosticClientError,
+    DiagnosticConnectionError,
+    DirectDiagnosticClient,
+    MCPDiagnosticClient,
+    safe_arguments,
+)
 from .models import Assessment
 from .providers import (
     ABSTAIN_DOMAIN,
+    AdaptiveDecision,
     AssessmentProvider,
+    DeterministicProvider,
     ProviderUnavailable,
     as_dict,
     create_provider,
@@ -25,6 +37,7 @@ from .providers import (
 )
 from .security import sanitize
 from .settings import Settings
+from .validation import InvalidAssessment, validate_assessment
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REPLAY_DIR = PROJECT_ROOT / "data" / "replay"
@@ -44,105 +57,8 @@ ACTION_LABELS = {
 ALLOWED_TOOLS = frozenset(ACTION_LABELS)
 
 
-class InvalidAssessment(ValueError):
-    pass
-
-
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
-
-
-def _neutralize_abstained_narrative(
-    assessment: Assessment, support: list[dict], rows: dict[str, dict]
-) -> None:
-    """Rebuild factual observations when an assessment cannot substantiate a cause.
-
-    Model-authored causal prose cannot survive by moving into another RCA field.
-    Diagnostic observations are rebuilt from returned evidence; advisory follow-up
-    steps remain intact for human review.
-    """
-    observations = sorted(
-        {item["id"]: item for item in support}.values(), key=lambda item: (item["timestamp"], item["id"])
-    )
-    assessment.incident_summary = "The collected observations do not independently establish a failure domain. Additional human investigation is required."
-    assessment.alternative_hypotheses = []
-    assessment.rca.probable_root_cause = (
-        "Insufficient evidence. No failure domain passed independent diagnostic corroboration."
-    )
-    assessment.rca.executive_summary = "Draft — human review required. A causal diagnosis could not be corroborated by the cited observations."
-    impact = next(
-        (
-            item.get("data", {}).get("client_impact")
-            for item in rows.values()
-            if item.get("kind") == "incident" and isinstance(item.get("data", {}).get("client_impact"), str)
-        ),
-        None,
-    )
-    assessment.rca.impact = (
-        sanitize(impact)
-        if impact
-        else "Client impact requires confirmation against incident metadata, service telemetry and response deadlines."
-    )
-    assessment.rca.timeline = [
-        f"{item['timestamp']} — recorded {item['kind']} telemetry for {item.get('service', 'unknown')} [{item['id']}]."
-        for item in observations
-    ]
-    assessment.rca.contributing_factors = []
-    assessment.rca.observed_evidence = []
-    for item in observations:
-        data = item.get("data", {})
-        detail = (
-            f"{data.get('metric', 'metric')}={data.get('value')} {data.get('unit', '')}"
-            if item["kind"] == "metric"
-            else f"Recorded source text: {json.dumps(sanitize(item.get('summary', '')), ensure_ascii=False)}"
-        )
-        assessment.rca.observed_evidence.append(f"[{item['id']}] {item.get('service', 'unknown')}: {detail}")
-
-
-def validate_assessment(assessment: Assessment, evidence: list[Any]) -> Assessment:
-    rows = {as_dict(item)["id"]: as_dict(item) for item in evidence}
-    referenced = (
-        set(assessment.supporting_evidence_ids)
-        | set(assessment.relevant_runbooks)
-        | set(assessment.similar_incidents)
-    )
-    for hypothesis in assessment.alternative_hypotheses:
-        referenced.update(as_dict(hypothesis).get("evidence_ids", []))
-    # Validate citations embedded in prose as well as structured citation arrays.
-    referenced.update(
-        re.findall(
-            r"\b(?:LOG|METRIC|DEPLOY|RUNBOOK|FIX(?:-EVID)?|KAFKA(?:-EVID)?|DB(?:-EVID)?|INC-(?:HIST|DEMO|EVAL|EVID)|TOPOLOGY)-[A-Za-z0-9_-]+\b",
-            json.dumps(assessment.model_dump(mode="json")),
-        )
-    )
-    missing = referenced - rows.keys()
-    if missing:
-        raise InvalidAssessment("Assessment cited evidence not returned by diagnostic tools")
-    if any(rows[identifier]["kind"] != "runbook" for identifier in assessment.relevant_runbooks):
-        raise InvalidAssessment("Runbook citation has the wrong evidence type")
-    if any(
-        rows[identifier]["kind"] not in ("history", "historical_incident")
-        for identifier in assessment.similar_incidents
-    ):
-        raise InvalidAssessment("Historical incident citation has the wrong evidence type")
-    support = [rows[identifier] for identifier in assessment.supporting_evidence_ids]
-    corroborated_domain, _, _ = diagnose(support)
-    if assessment.probable_failure_domain != ABSTAIN_DOMAIN and (
-        len(set(assessment.supporting_evidence_ids)) < 2
-        or not any(item["kind"] in ("metric", "kafka", "fix", "database") for item in support)
-        or corroborated_domain != assessment.probable_failure_domain
-    ):
-        assessment.probable_failure_domain = ABSTAIN_DOMAIN
-        assessment.confidence = min(assessment.confidence, 0.4)
-        assessment.limitations.append(
-            "The conservative synthetic-domain support gate could not corroborate the proposed domain. Human investigation is required."
-        )
-    if assessment.probable_failure_domain == ABSTAIN_DOMAIN:
-        assessment.confidence = min(assessment.confidence, 0.4)
-        _neutralize_abstained_narrative(assessment, support, rows)
-    if assessment.confidence < 0.7 or assessment.probable_failure_domain == ABSTAIN_DOMAIN:
-        assessment.requires_human_review = True
-    return assessment
 
 
 def merge_usage(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -155,20 +71,38 @@ def merge_usage(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-async def collect_investigation(
+async def collect_adaptive_investigation(
     store: Any,
     session_id: str,
     incident_id: str,
     provider: AssessmentProvider,
     on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+    *,
+    diagnostic_client: DiagnosticClient | None = None,
+    limits: Settings | None = None,
 ) -> dict[str, Any]:
-    from .tools import DiagnosticTools
+    """Bounded observe/choose loop, with real MCP as the application default.
 
-    incident = await store.get_incident(session_id, incident_id)
+    Direct diagnostics require an explicit adapter. Provider plan-only support is
+    deliberately insufficient: this path must observe actual results between turns.
+    """
+    configuration = limits or Settings()
+    if not callable(getattr(provider, "next_action", None)):
+        raise ProviderUnavailable("Configured provider does not support evidence-adaptive diagnostics")
+    cutoff = await store.freeze_snapshot(session_id, incident_id)
+    incident = await store.get_incident(session_id, incident_id, as_of=cutoff)
     if incident is None:
         raise ValueError("Incident not found in this demo session")
-    # Generator tags are UI simulation controls, never diagnostic/model context.
-    incident_context = sanitize({key: value for key, value in as_dict(incident).items() if key != "scenario"})
+    raw = as_dict(incident)
+    # No scenario/title/fixture labels, narrative future impact, or playback timeline.
+    context = sanitize(
+        {
+            key: raw[key]
+            for key in ("id", "summary", "severity", "started_at", "affected_services")
+            if key in raw
+        }
+    )
+    client = diagnostic_client or MCPDiagnosticClient(session_id, incident_id, cutoff)
     result: dict[str, Any] = {
         "id": str(uuid4()),
         "incident_id": incident_id,
@@ -181,8 +115,230 @@ async def collect_investigation(
         "assessment": None,
         "error": None,
         "usage": {},
+        "provenance": {
+            "workflow": "adaptive",
+            "transport": client.transport,
+            "provider": provider.name,
+            "model_called": False,
+            "snapshot_cutoff": cutoff,
+            "snapshot_kind": "frozen_current",
+            "recorded": False,
+        },
     }
-    tools = DiagnosticTools(store, session_id)
+    seen: set[str] = set()
+    requested: set[str] = set()
+    observations: list[dict[str, Any]] = []
+    usages: list[dict[str, Any]] = []
+    no_progress = 0
+    provider_turns = 0
+    stop_reason: str | None = None
+
+    async def publish() -> None:
+        result["usage"] = merge_usage(usages)
+        if on_progress:
+            await on_progress(result)
+
+    async def execute(name: str, arguments: dict[str, Any]) -> None:
+        nonlocal no_progress
+        arguments = safe_arguments(name, arguments)
+        key = json.dumps([name, arguments], sort_keys=True)
+        if key in requested:
+            raise DiagnosticClientError("Duplicate diagnostic request stopped safely")
+        requested.add(key)
+        before = len(seen)
+        started = time.perf_counter()
+        step = {
+            "id": f"STEP-{len(result['steps']) + 1:03d}",
+            "action": ACTION_LABELS[name],
+            "tool": name,
+            "status": "running",
+            "evidence_ids": [],
+            "timestamp": utc_now(),
+            "duration_ms": 0.0,
+            "safe_arguments": arguments,
+            "transport": client.transport,
+            "provider": provider.name,
+            "provider_turn": provider_turns,
+            "recorded": False,
+            "error": None,
+        }
+        result["steps"].append(step)
+        await publish()
+        try:
+            async with asyncio.timeout(configuration.diagnostic_timeout_seconds):
+                returned = await client.call(name, arguments)
+            for item in returned:
+                item = sanitize(as_dict(item))
+                if item["id"] not in seen:
+                    candidate = [*result["evidence"], item]
+                    if len(candidate) > 250 or len(json.dumps(candidate, ensure_ascii=True).encode()) > 90000:
+                        raise DiagnosticClientError("Bounded evidence/context capacity reached")
+                    result["evidence"].append(item)
+                    seen.add(item["id"])
+                step["evidence_ids"].append(item["id"])
+            step["status"] = "complete"
+        except DiagnosticConnectionError:
+            step["status"] = "failed"
+            step["error"] = "MCP connection failed; no direct fallback"
+            raise
+        except asyncio.CancelledError:
+            step["status"] = "failed"
+            step["error"] = "Diagnostic cancelled; no completed result was returned"
+            raise
+        except (DiagnosticClientError, TimeoutError, ValueError, RuntimeError):
+            step["status"] = "failed"
+            step["error"] = "Diagnostic unavailable or invalid; no healthy observation was returned"
+        finally:
+            step["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            observations.append(
+                {key: step[key] for key in ("tool", "safe_arguments", "status", "evidence_ids", "error")}
+            )
+            no_progress = no_progress + 1 if len(seen) == before else 0
+            await publish()
+
+    try:
+        async with asyncio.timeout(configuration.investigation_timeout_seconds), client:
+            result["provenance"].update(client.provenance)
+            await execute("get_incident", {})
+            no_progress = 0  # Initial metadata is context, not a diagnostic attempt.
+            while provider_turns < configuration.max_provider_turns - 1:
+                if no_progress >= configuration.max_no_progress_calls:
+                    stop_reason = (
+                        "Repeated unproductive diagnostics reached the no-progress limit; abstained safely."
+                    )
+                    break
+                provider_turns += 1
+                async with asyncio.timeout(configuration.provider_timeout_seconds):
+                    decision, usage = await provider.next_action(
+                        context,
+                        client.schemas,
+                        observations,
+                        [item for item in result["evidence"] if item["kind"] != "incident"],
+                    )
+                usages.append(usage)
+                result["provenance"]["model_called"] = provider.name in ("openai", "anthropic")
+                try:
+                    decision = AdaptiveDecision.model_validate(as_dict(decision))
+                except ValidationError as error:
+                    raise ValueError("Provider returned an invalid bounded diagnostic action") from error
+                if decision.action == "assess":
+                    break
+                if len(requested) >= configuration.max_diagnostic_calls:
+                    stop_reason = "Finite diagnostic call budget exhausted; abstained safely."
+                    break
+                request = decision.request
+                arguments = {
+                    key: value
+                    for key, value in {"service": request.service, "q": request.q}.items()
+                    if value is not None
+                }
+                key = json.dumps([request.name, arguments], sort_keys=True)
+                if key in requested:
+                    stop_reason = "Duplicate diagnostic request detected; abstained safely."
+                    break
+                await execute(request.name, arguments)
+            else:
+                stop_reason = "Finite provider turn budget exhausted; abstained safely."
+            started = time.perf_counter()
+            if stop_reason:
+                assessment, _ = await DeterministicProvider().assess(
+                    context, [item for item in result["evidence"] if item["kind"] != "incident"]
+                )
+                assessment.probable_failure_domain = ABSTAIN_DOMAIN
+                assessment.limitations.append(stop_reason)
+                result["provenance"]["stop_reason"] = stop_reason
+            else:
+                provider_turns += 1
+                async with asyncio.timeout(configuration.provider_timeout_seconds):
+                    assessment, usage = await provider.assess(
+                        context, [item for item in result["evidence"] if item["kind"] != "incident"]
+                    )
+                usages.append(usage)
+                result["provenance"]["model_called"] = provider.name in ("openai", "anthropic")
+            assessment = validate_assessment(assessment, result["evidence"])
+            if any(step["status"] == "failed" for step in result["steps"]):
+                assessment.requires_human_review = True
+                assessment.confidence = min(assessment.confidence, 0.6)
+                assessment.limitations.append(
+                    "One or more diagnostic tools failed; their state is unknown, not healthy."
+                )
+            assessment.limitations.append(
+                f"Evidence-adaptive {provider.name} investigation through {client.transport}; frozen synthetic cutoff {cutoff}. No operational action was executed."
+            )
+            result["assessment"] = assessment.model_dump(mode="json")
+            result["provenance"]["provider_turns"] = provider_turns
+            result["provenance"]["tool_calls"] = len(requested)
+            result["steps"].append(
+                {
+                    "id": f"STEP-{len(result['steps']) + 1:03d}",
+                    "action": "Validated advisory assessment",
+                    "tool": "assessment_validation",
+                    "status": "complete",
+                    "evidence_ids": assessment.supporting_evidence_ids,
+                    "timestamp": utc_now(),
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 3),
+                    "safe_arguments": {},
+                    "transport": "local_validation",
+                    "provider": provider.name,
+                    "provider_turn": provider_turns,
+                    "recorded": False,
+                    "error": None,
+                }
+            )
+            result["status"] = "complete"
+            await publish()
+            return result
+    except BaseException:
+        result["status"] = "failed"
+        result["error"] = (
+            "Adaptive investigation interrupted, unavailable, or invalid; no successful MCP execution is claimed."
+        )
+        await publish()
+        raise
+
+
+async def collect_investigation(
+    store: Any,
+    session_id: str,
+    incident_id: str,
+    provider: AssessmentProvider,
+    on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+) -> dict[str, Any]:
+    cutoff = await store.freeze_snapshot(session_id, incident_id)
+    incident = await store.get_incident(session_id, incident_id, as_of=cutoff)
+    if incident is None:
+        raise ValueError("Incident not found in this demo session")
+    # Generator tags are UI simulation controls, never diagnostic/model context.
+    incident_context = sanitize(
+        {
+            key: value
+            for key, value in as_dict(incident).items()
+            if key in ("id", "summary", "severity", "started_at", "affected_services")
+        }
+    )
+    result: dict[str, Any] = {
+        "id": str(uuid4()),
+        "incident_id": incident_id,
+        "mode": "PIPELINE",
+        "status": "running",
+        "provider": provider.name,
+        "created_at": utc_now(),
+        "steps": [],
+        "evidence": [],
+        "assessment": None,
+        "error": None,
+        "usage": {},
+        "provenance": {
+            "workflow": "initial_plan",
+            "transport": "direct",
+            "provider": provider.name,
+            "model_called": provider.name in ("openai", "anthropic"),
+            "snapshot_cutoff": cutoff,
+            "snapshot_kind": "frozen_current",
+            "recorded": False,
+        },
+    }
+    tools = DirectDiagnosticClient(store, session_id, incident_id, cutoff)
     seen: set[str] = set()
     usages: list[dict[str, Any]] = []
 
@@ -202,13 +358,15 @@ async def collect_investigation(
             "evidence_ids": [],
             "timestamp": utc_now(),
             "duration_ms": 0.0,
+            "safe_arguments": arguments,
+            "transport": "direct",
+            "provider": provider.name,
+            "recorded": False,
         }
         result["steps"].append(step)
         await publish()
         try:
-            returned = await asyncio.wait_for(
-                tools.call(name, {**arguments, "incident_id": incident_id, "limit": 50}), timeout=10
-            )
+            returned = await asyncio.wait_for(tools.call(name, arguments), timeout=10)
             for raw in returned[:50]:
                 item = sanitize(as_dict(raw))
                 step["evidence_ids"].append(item["id"])
@@ -238,7 +396,9 @@ async def collect_investigation(
             )
         await execute(request.name, arguments)
     started = time.perf_counter()
-    assessment, assessment_usage = await provider.assess(incident_context, result["evidence"])
+    assessment, assessment_usage = await provider.assess(
+        incident_context, [item for item in result["evidence"] if item["kind"] != "incident"]
+    )
     usages.append(assessment_usage)
     assessment = validate_assessment(assessment, result["evidence"])
     if any(step["status"] == "failed" for step in result["steps"]):
@@ -277,13 +437,15 @@ def write_replay_artifact(result: dict[str, Any], directory: Path = REPLAY_DIR) 
         raise ValueError("Unsupported artifact incident ID")
     directory.mkdir(parents=True, exist_ok=True)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": utc_now(),
         "provenance": {
             "pipeline": "creditops.investigator.collect_investigation",
             "provider": result["provider"],
             "model_called": result["provider"] != "deterministic",
             "telemetry_window": "complete synthetic scenario snapshot",
+            "transport": result.get("provenance", {}).get("transport", "unknown"),
+            "snapshot_cutoff": result.get("provenance", {}).get("snapshot_cutoff"),
         },
         "investigation": result,
     }
@@ -305,7 +467,7 @@ def read_replay_artifact(incident_id: str, directory: Path = REPLAY_DIR) -> dict
         raise InvalidAssessment("Replay artifact exceeded size budget")
     envelope = json.loads(path.read_text(encoding="utf-8"))
     payload = envelope["payload"]
-    if envelope["sha256"] != artifact_digest(payload) or payload["schema_version"] != 1:
+    if envelope["sha256"] != artifact_digest(payload) or payload["schema_version"] not in (1, 2):
         raise InvalidAssessment("Replay artifact integrity check failed")
     result = payload["investigation"]
     if result["incident_id"] != incident_id or result["status"] != "complete":
@@ -316,8 +478,8 @@ def read_replay_artifact(incident_id: str, directory: Path = REPLAY_DIR) -> dict
 
 
 async def create_investigation(store: Any, session_id: str, incident_id: str, mode: str) -> dict[str, Any]:
-    if mode not in ("REPLAY", "LIVE_AI"):
-        raise ValueError("Investigation mode must be REPLAY or LIVE_AI")
+    if mode not in ("REPLAY", "MCP_DEMO", "LIVE_AI"):
+        raise ValueError("Investigation mode must be REPLAY, MCP_DEMO or LIVE_AI")
     if await store.get_incident(session_id, incident_id) is None:
         raise ValueError("Run an incident in this session before investigating")
     row = {
@@ -325,13 +487,14 @@ async def create_investigation(store: Any, session_id: str, incident_id: str, mo
         "incident_id": incident_id,
         "mode": mode,
         "status": "running",
-        "provider": "deterministic" if mode == "REPLAY" else Settings().ai_provider,
+        "provider": "deterministic" if mode in ("REPLAY", "MCP_DEMO") else Settings().ai_provider,
         "created_at": utc_now(),
         "steps": [],
         "evidence": [],
         "assessment": None,
         "error": None,
         "usage": {},
+        "provenance": {},
     }
     await store.save_investigation(session_id, row)
     return row
@@ -352,8 +515,27 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
             artifact = payload["investigation"]
             row["provider"] = payload["provenance"]["provider"]
             row["usage"] = artifact["usage"]
+            original_transport = payload["provenance"].get(
+                "transport", artifact.get("provenance", {}).get("transport", "unknown")
+            )
+            row["provenance"] = {
+                "workflow": "recorded_replay",
+                "transport": "recorded_replay",
+                "original_transport": original_transport,
+                "provider": row["provider"],
+                "model_called": False,
+                "generating_model_called": payload["provenance"].get("model_called", False),
+                "snapshot_kind": "complete_scenario",
+                "snapshot_cutoff": payload["provenance"].get("snapshot_cutoff")
+                or max((item["timestamp"] for item in artifact["evidence"]), default=None),
+                "recorded": True,
+                "artifact_schema_version": payload["schema_version"],
+                "artifact_generated_at": payload["generated_at"],
+            }
             for step in artifact["steps"]:
-                row["steps"].append(step)
+                row["steps"].append(
+                    {**step, "transport": "recorded_replay", "provider": row["provider"], "recorded": True}
+                )
                 ids = set(step["evidence_ids"])
                 current = {item["id"] for item in row["evidence"]}
                 row["evidence"].extend(
@@ -370,9 +552,15 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
             row["status"] = "complete"
             await store.save_investigation(session_id, row)
         else:
-            provider = create_provider(Settings().ai_provider)
+            provider = (
+                DeterministicProvider()
+                if row["mode"] == "MCP_DEMO"
+                else create_provider(Settings().ai_provider)
+            )
             try:
-                await collect_investigation(store, session_id, row["incident_id"], provider, persist)
+                if row["mode"] == "LIVE_AI":
+                    provider.enable_budget(Settings().live_max_spend_usd)
+                await collect_adaptive_investigation(store, session_id, row["incident_id"], provider, persist)
             finally:
                 client = getattr(provider, "client", None)
                 if client is not None:

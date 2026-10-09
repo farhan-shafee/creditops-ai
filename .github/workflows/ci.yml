@@ -37,6 +37,7 @@ jobs:
       - run: python -m alembic upgrade head
       - run: python -m pytest --junitxml=artifacts/test-results/python.xml
       - run: python scripts/evaluate.py
+      - run: python scripts/robustness.py
       - run: python -m pip_audit
       - run: python -m bandit -r apps/api/creditops apps/mcp/creditops_mcp -ll
       - uses: actions/upload-artifact@v4
@@ -46,6 +47,7 @@ jobs:
           path: |
             artifacts/test-results
             artifacts/eval
+            artifacts/robustness
   web:
     runs-on: ubuntu-latest
     steps:

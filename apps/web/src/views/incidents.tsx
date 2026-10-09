@@ -1,9 +1,17 @@
 import { ArrowRight, RotateCcw, Play, Clock3 } from 'lucide-react';
-import type { Incident, Investigation, MetricSeries, Scenario, Topology } from '@/lib/types';
+import type {
+  Incident,
+  Investigation,
+  InvestigationMode,
+  MetricSeries,
+  Scenario,
+  Topology,
+} from '@/lib/types';
 import { Badge, Citation, Empty, Panel, Status, time } from '@/components/primitives';
 import { TelemetryChart } from '@/components/telemetry-chart';
 import { ServiceMap } from '@/components/service-map';
 import { Investigator } from '@/components/investigator';
+import { BusinessImpactPanel } from '@/components/business-impact';
 
 export function ScenarioControls({
   scenarios,
@@ -64,6 +72,8 @@ export function IncidentView({
   topology,
   investigation,
   investigating,
+  investigationMode,
+  onInvestigationMode,
   running,
   onInvestigate,
   onEvidence,
@@ -76,6 +86,8 @@ export function IncidentView({
   topology: Topology | null;
   investigation: Investigation | null;
   investigating: boolean;
+  investigationMode: InvestigationMode;
+  onInvestigationMode: (mode: InvestigationMode) => void;
   running: boolean;
   onInvestigate: () => void;
   onEvidence: (id: string) => void;
@@ -141,6 +153,7 @@ export function IncidentView({
               <strong>{Math.floor(incident.simulated_elapsed_seconds)} seconds</strong>
             </div>
           </div>
+          <BusinessImpactPanel incidentId={incident.id} onEvidence={onEvidence} />
           <Panel
             title="Incident telemetry"
             eyebrow="Observe the signal"
@@ -199,6 +212,8 @@ export function IncidentView({
         incident={incident}
         investigation={investigation}
         investigating={investigating}
+        mode={investigationMode}
+        onMode={onInvestigationMode}
         disabled={running}
         onInvestigate={onInvestigate}
         onEvidence={onEvidence}

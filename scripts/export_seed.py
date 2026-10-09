@@ -2,14 +2,17 @@
 
 import json
 
+from creditops.business_seed import make_business_seed
 from creditops.seed import make_seed
 from creditops.settings import PROJECT_ROOT
 
 
 def export():
     fixture = make_seed()
+    business = make_business_seed()
     directories = {
         "incidents": fixture["incidents"],
+        "business": business,
         "logs": [r for r in fixture["evidence"] if r["kind"] == "log"],
         "metrics": [r for r in fixture["evidence"] if r["kind"] == "metric"],
         "topology": {"services": fixture["services"], "dependencies": fixture["dependencies"]},

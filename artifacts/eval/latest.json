@@ -1,8 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "generated",
-  "generated_at": "2026-10-09T16:17:43.187174+00:00",
-  "dataset_version": "synthetic-v1",
+  "generated_at": "2026-10-09T18:08:04.473327+00:00",
+  "dataset_version": "synthetic-v1-unchanged-labels",
+  "historical_baseline": "artifacts/eval/baseline-v1/latest.json",
+  "citation_metric_scope": "Invalid references only. The legacy hallucinated_evidence_count field is a compatibility alias, not a general factuality metric.",
   "case_count": 15,
   "seed": 42,
   "methodology": "15 labeled synthetic cases: 12 diagnosable incidents and 3 insufficient-evidence cases. Labels are available only to the scorer. Complete case telemetry is activated in an isolated evaluation session. Latency measures the synthetic diagnostic pipeline, not human MTTR. The baseline uses first matching log signatures; the investigator requires corroborating independent signals. Deterministic rules are designed for these fixtures; this is an in-distribution functional benchmark, not a generalization study.",
@@ -11,7 +13,11 @@
     "Small synthetic in-distribution dataset; no held-out institutional traffic.",
     "Deterministic confidence scores are not calibrated probabilities.",
     "No live model result is claimed unless provider is openai or anthropic.",
-    "A failure stops artifact generation; existing artifact remains from its recorded timestamp."
+    "A failure stops artifact generation; existing artifact remains from its recorded timestamp.",
+    "Original cases and labels remain unchanged. Legacy database labels include unproven change attribution; corrected condition-only output is scored as a mismatch instead of relabeling the cases.",
+    "Every current draft requires human review; legacy cases expecting no escalation can therefore fail the original escalation metric.",
+    "INC-EVAL-011 retains its original 1840ms risk sample and later 1450ms sample. Current-evidence rules abstain at the complete cutoff because the later value is below the 1500ms threshold; this original-fixture mismatch is preserved.",
+    "Citation existence is not substantive claim support. A separate developer-authored robustness suite tests declared causal/uncertainty checks."
   ],
   "live_ai_status": "not_run",
   "algorithms": [
@@ -19,8 +25,14 @@
       "name": "Deterministic Baseline",
       "provider": "rules-keyword",
       "cases": 15,
-      "top1_accuracy": 1,
-      "top3_accuracy": 1,
+      "top1_correct_count": 12,
+      "top1_mismatch_count": 3,
+      "abstention_count": 3,
+      "expected_abstention_count": 3,
+      "correct_abstention_count": 3,
+      "substantive_claim_support_evaluated": false,
+      "top1_accuracy": 0.8,
+      "top3_accuracy": 0.8,
       "required_evidence_recall": 0.5,
       "invalid_evidence_citations": 0,
       "hallucinated_evidence_count": 0,
@@ -28,7 +40,7 @@
       "escalation_accuracy": 1,
       "runbook_recall": 0.8,
       "tool_error_rate": 0.0,
-      "mean_latency_ms": 10.622906661592424,
+      "mean_latency_ms": 21.253480001663167,
       "total_tokens": null,
       "estimated_cost_usd": null,
       "results": [
@@ -42,6 +54,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -49,7 +62,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 12.943499954417348
+            "latency_ms": 26.20540000498295
           },
           "usage": {}
         },
@@ -63,6 +76,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -70,20 +84,21 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 8.690499933436513
+            "latency_ms": 27.397300000302494
           },
           "usage": {}
         },
         {
           "incident_id": "INC-DEMO-003",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
+            "top1_correct": false,
+            "top3_correct": false,
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -91,7 +106,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 10.084599955007434
+            "latency_ms": 18.634699983522296
           },
           "usage": {}
         },
@@ -105,6 +120,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -112,7 +128,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 9.832100011408329
+            "latency_ms": 20.498500089161098
           },
           "usage": {}
         },
@@ -126,6 +142,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -133,20 +150,21 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 9.712200029753149
+            "latency_ms": 22.256200085394084
           },
           "usage": {}
         },
         {
           "incident_id": "INC-EVAL-006",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
+            "top1_correct": false,
+            "top3_correct": false,
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -154,7 +172,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 11.030199937522411
+            "latency_ms": 20.16169996932149
           },
           "usage": {}
         },
@@ -168,6 +186,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -175,7 +194,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 9.994399966672063
+            "latency_ms": 17.809899989515543
           },
           "usage": {}
         },
@@ -189,6 +208,7 @@
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -196,20 +216,21 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 10.710100061260164
+            "latency_ms": 21.5185999404639
           },
           "usage": {}
         },
         {
           "incident_id": "INC-EVAL-009",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
+            "top1_correct": false,
+            "top3_correct": false,
             "required_evidence_recall": 0.3333333333333333,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -217,7 +238,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 10.013200109824538
+            "latency_ms": 19.769399892538786
           },
           "usage": {}
         },
@@ -231,6 +252,7 @@
             "required_evidence_recall": 0.5,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -238,7 +260,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 11.71510003041476
+            "latency_ms": 16.24160003848374
           },
           "usage": {}
         },
@@ -252,6 +274,7 @@
             "required_evidence_recall": 0.5,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -259,7 +282,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 13.436299981549382
+            "latency_ms": 23.569799959659576
           },
           "usage": {}
         },
@@ -273,6 +296,7 @@
             "required_evidence_recall": 0.5,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
             "escalation_correct": true,
@@ -280,7 +304,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 11.763900052756071
+            "latency_ms": 31.866100034676492
           },
           "usage": {}
         },
@@ -294,6 +318,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -301,7 +326,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 9.613599977456033
+            "latency_ms": 17.04439998138696
           },
           "usage": {}
         },
@@ -315,6 +340,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -322,7 +348,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 8.356499951332808
+            "latency_ms": 18.787500099278986
           },
           "usage": {}
         },
@@ -336,6 +362,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -343,7 +370,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 2,
-            "latency_ms": 11.447399971075356
+            "latency_ms": 17.04109995625913
           },
           "usage": {}
         }
@@ -353,16 +380,22 @@
       "name": "Orchestrated Investigator (deterministic provider)",
       "provider": "deterministic",
       "cases": 15,
-      "top1_accuracy": 1,
-      "top3_accuracy": 1,
-      "required_evidence_recall": 1.0,
+      "top1_correct_count": 11,
+      "top1_mismatch_count": 4,
+      "abstention_count": 4,
+      "expected_abstention_count": 3,
+      "correct_abstention_count": 3,
+      "substantive_claim_support_evaluated": false,
+      "top1_accuracy": 0.7333333333333333,
+      "top3_accuracy": 0.7333333333333333,
+      "required_evidence_recall": 0.7999999999999999,
       "invalid_evidence_citations": 0,
       "hallucinated_evidence_count": 0,
       "correct_abstention_rate": 1,
-      "escalation_accuracy": 1,
+      "escalation_accuracy": 0.2,
       "runbook_recall": 1,
       "tool_error_rate": 0.0,
-      "mean_latency_ms": 58.47737332805991,
+      "mean_latency_ms": 113.34051999729127,
       "total_tokens": null,
       "estimated_cost_usd": null,
       "results": [
@@ -373,17 +406,18 @@
           "score": {
             "top1_correct": true,
             "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 53.48270002286881
+            "latency_ms": 184.71750000026077
           },
           "usage": {
             "input_tokens": null,
@@ -402,14 +436,15 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 49.26770005840808
+            "latency_ms": 108.49020001478493
           },
           "usage": {
             "input_tokens": null,
@@ -420,22 +455,23 @@
         },
         {
           "incident_id": "INC-DEMO-003",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "top1_correct": false,
+            "top3_correct": false,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 52.40350007079542
+            "latency_ms": 115.94539997167885
           },
           "usage": {
             "input_tokens": null,
@@ -451,17 +487,18 @@
           "score": {
             "top1_correct": true,
             "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 48.862399999052286
+            "latency_ms": 89.81140004470944
           },
           "usage": {
             "input_tokens": null,
@@ -480,14 +517,15 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 49.24399999435991
+            "latency_ms": 121.43890000879765
           },
           "usage": {
             "input_tokens": null,
@@ -498,22 +536,23 @@
         },
         {
           "incident_id": "INC-EVAL-006",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "top1_correct": false,
+            "top3_correct": false,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 52.89609997998923
+            "latency_ms": 118.45159996300936
           },
           "usage": {
             "input_tokens": null,
@@ -529,17 +568,18 @@
           "score": {
             "top1_correct": true,
             "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 53.08749992400408
+            "latency_ms": 97.46100008487701
           },
           "usage": {
             "input_tokens": null,
@@ -558,14 +598,15 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 58.81509999744594
+            "latency_ms": 95.39000003132969
           },
           "usage": {
             "input_tokens": null,
@@ -576,22 +617,23 @@
         },
         {
           "incident_id": "INC-EVAL-009",
-          "predicted_domain": "database connection pool exhaustion following application change",
+          "predicted_domain": "database connection pool exhaustion",
           "ground_truth": "database connection pool exhaustion following application change",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "top1_correct": false,
+            "top3_correct": false,
+            "required_evidence_recall": 0.6666666666666666,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 62.137399916537106
+            "latency_ms": 114.77159999776632
           },
           "usage": {
             "input_tokens": null,
@@ -610,14 +652,15 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 69.73009998910129
+            "latency_ms": 114.1780000180006
           },
           "usage": {
             "input_tokens": null,
@@ -628,22 +671,23 @@
         },
         {
           "incident_id": "INC-EVAL-011",
-          "predicted_domain": "risk-service / upstream dependency timeout",
+          "predicted_domain": "insufficient evidence",
           "ground_truth": "risk-service / upstream dependency timeout",
           "score": {
-            "top1_correct": true,
-            "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "top1_correct": false,
+            "top3_correct": false,
+            "required_evidence_recall": 0.5,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 68.88419995084405
+            "latency_ms": 102.21399995498359
           },
           "usage": {
             "input_tokens": null,
@@ -659,17 +703,18 @@
           "score": {
             "top1_correct": true,
             "top3_correct": true,
-            "required_evidence_recall": 1.0,
+            "required_evidence_recall": 0.5,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": false,
             "correct_abstention": false,
-            "escalation_correct": true,
+            "escalation_correct": false,
             "expected_runbook_retrieved": true,
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 63.44649998936802
+            "latency_ms": 116.14179995376617
           },
           "usage": {
             "input_tokens": null,
@@ -688,6 +733,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -695,7 +741,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 60.001300065778196
+            "latency_ms": 103.67769992444664
           },
           "usage": {
             "input_tokens": null,
@@ -714,6 +760,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -721,7 +768,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 67.545700003393
+            "latency_ms": 100.61249998398125
           },
           "usage": {
             "input_tokens": null,
@@ -740,6 +787,7 @@
             "required_evidence_recall": 1.0,
             "invalid_evidence_citations": 0,
             "hallucinated_evidence_count": 0,
+            "substantive_claim_support_evaluated": false,
             "abstention_case": true,
             "correct_abstention": true,
             "escalation_correct": true,
@@ -747,7 +795,7 @@
             "tool_error_rate": 0.0,
             "tool_errors": 0,
             "tool_calls": 10,
-            "latency_ms": 67.35639995895326
+            "latency_ms": 116.80620000697672
           },
           "usage": {
             "input_tokens": null,

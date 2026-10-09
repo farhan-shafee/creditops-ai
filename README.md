@@ -13,13 +13,13 @@ CreditOps AI correlates logs, metrics, Kafka consumer state, FIX sessions, datab
 1. Open Overview and select **Run Incident Demo**.
 2. Choose **Kafka pricing lag**, **FIX connectivity**, or **Database pool exhaustion**, then **Run Incident**.
 3. Observe changing telemetry on a clearly labeled simulated clock: one real second represents twelve synthetic seconds.
-4. Open the detected incident and select **Investigate with AI**. The public path is explicitly labeled **Replay · deterministic provider**.
-5. Watch the read-only tool trace, review the proposed failure domain and alternate hypotheses, and click evidence IDs to inspect the exact supporting records.
+4. Open the incident and select **MCP · adaptive deterministic** to execute new read-only checks through the real MCP connection. **Replay · deterministic provider** plays a recorded complete scenario snapshot.
+5. Review the **Business impact / affected requests** timeline, supported failure condition, candidate triggers and unknowns. Click evidence IDs to inspect the returned records.
 6. Open **Evaluations** to inspect generated results and their limitations. Reset the scenario and repeat.
 
-Replay artifacts are produced by the actual diagnostic collection, assessment and evidence-validation pipeline. The checked-in artifacts use a deterministic provider, and **no model call is claimed**. Protected `LIVE_AI` uses configurable official OpenAI or Anthropic SDKs for diagnostic query selection and structured assessment. Live AI evaluation remains ungenerated until a real provider run is performed.
+Replay artifacts are produced by the direct diagnostic collection and validation pipeline, with original timestamps and a complete-snapshot cutoff. The keyless MCP mode makes fresh protocol calls and adapts using deterministic rules. Neither path calls a model. Protected `LIVE_AI` implements the same bounded adaptive loop through official OpenAI or Anthropic SDKs; live provider execution is **NOT RUN**, and live-model quality is **UNVERIFIED**.
 
-![Evidence-backed investigation](docs/screenshots/assessment-kafka-pricing-lag.png)
+![Event-derived synthetic RFQ and order impact](docs/screenshots/second-pass-impact-fix-connectivity.png)
 
 [Watch the recorded demo](docs/screenshots/demo.webm) or follow the [two-minute interview script](docs/DEMO_SCRIPT.md).
 
@@ -29,7 +29,7 @@ Replay artifacts are produced by the actual diagnostic collection, assessment an
 |---|---|---|
 | RFQ latency | Pricing consumer backlog, stale prices, quote age and upstream latency; healthy negative controls | Pricing service / Kafka consumer backlog |
 | Acknowledgement delays | FIX heartbeat failures, reconnects, sequence gaps, uncertain synthetic orders; healthy DB/Kafka | FIX session instability |
-| Request timeouts after change | Saturated connection pool, waiters, pool timeout logs, preceding release, normal CPU | Connection pool exhaustion following application change |
+| Request timeouts | Saturated connection pool, waiters and pool timeout logs, normal CPU | Connection pool exhaustion; a relevant preceding release is only a candidate trigger |
 
 Twelve further labeled cases include stale market data, risk dependency timeouts, CPU pressure and three deliberately insufficient-evidence cases. Evaluation labels never enter diagnostic tools or model context.
 
@@ -40,8 +40,10 @@ flowchart LR
   User[Human operator] --> Web[Next.js operations console]
   Web --> API[FastAPI session-scoped API]
   API --> Agent[Bounded AI investigation]
-  Agent --> Tools[Read-only diagnostic allowlist]
-  MCP[Official MCP server: stdio / protected HTTP] --> Tools
+  Agent --> Client[Official MCP Client: owned stdio connection]
+  Client --> MCP[Diagnostic-only MCP server]
+  MCP --> Callback[Fixed GET callback into async API]
+  Callback --> Tools[Read-only diagnostic allowlist]
   Tools --> DB[(PostgreSQL + optional pgvector)]
   API --> Sim[Synthetic clock and FIX simulator]
   Sim --> Kafka[Local Redpanda]
@@ -51,7 +53,9 @@ flowchart LR
   Tools --> Retrieval[Runbooks and historical retrieval]
 ```
 
-The MCP HTTP bridge calls the same diagnostic API used by the investigator. SQLite supports a lightweight development path; Docker exercises PostgreSQL and a real Kafka-compatible broker. The frontend uses a server-side same-origin proxy; credentials remain on the server. The [architecture document](docs/ARCHITECTURE.md) describes persistence, trust boundaries and public-demo adaptations.
+The MCP-backed worker uses the official client, discovers and checks schemas, then receives diagnostic evidence through an owned stdio server and fixed API callback. Local evaluation explicitly uses a direct adapter. There is no silent transport fallback. SQLite supports lightweight development; Docker exercises PostgreSQL and a real Kafka-compatible broker. The [architecture document](docs/ARCHITECTURE.md) describes the boundaries.
+
+Three fictional corporate bonds and event-derived RFQ/quote/order timelines connect telemetry to affected requests. Par amounts and clean prices use decimal strings with explicit currency and per-100-par units. They are not revenue, P&L or settlement values. Missing FIX acknowledgements remain PENDING/UNKNOWN until reconciled; the application never infers execution or creates a replacement order.
 
 ## Start locally
 
@@ -67,6 +71,7 @@ pnpm install --frozen-lockfile
 python -m alembic upgrade head
 python scripts/seed.py
 python scripts/evaluate.py
+python scripts/robustness.py
 pnpm dev
 ```
 
@@ -104,7 +109,8 @@ All host ports bind to loopback. Disposable local credentials in Compose are int
 | `pnpm test:lifecycle` | Real Playwright/Linux launcher shutdown and descendant cleanup; explicit Unix-proof skip on Windows |
 | `pnpm e2e` | Playwright all-scenario and responsive checks |
 | `make seed` | Idempotent seed |
-| `make eval` | Generate benchmark and replay artifacts |
+| `make eval` | Generate the unchanged 15-case benchmark and versioned replay artifacts |
+| `python scripts/robustness.py` | Separate 13-case synthetic robustness/regression report |
 | `make reset-demo` | Reset a selected local demo session |
 
 Python packages are pinned in `requirements.lock`; pnpm dependencies are pinned in `pnpm-lock.yaml`. CI runs tests, lint, typecheck, E2E, dependency audits, Bandit and secret scanning.
@@ -122,17 +128,19 @@ AI accelerates evidence collection and diagnosis while human engineers retain op
 - **Replay for public demos:** persisted pipeline artifacts cap spending and work without keys. Replay provenance, generation timestamps and deterministic assessment are visible.
 - **Local Kafka, inexpensive cloud:** Redpanda supports real event publication/consumption locally. The public path uses persisted synthetic telemetry without a paid Kafka cluster.
 - **Provider abstraction:** official SDKs, server-side configuration, validated tool plans, structured output, request deadlines and no automatic retries that could multiply costs.
-- **Confidence and escalation:** rule scores are transparent and uncalibrated. Failed tools or weak evidence lower confidence and require review.
+- **Support and uncertainty:** scores are uncalibrated rule support, not probabilities. Every assessment requires human review. Valid references do not establish causality; the known-domain rule gate is not a general factuality verifier.
 
 See [tradeoffs](docs/TRADEOFFS.md) for institutional-scale limitations.
 
 ## Evaluation methodology
 
-The harness evaluates 15 labeled synthetic incidents using **Deterministic Baseline** and **Orchestrated Investigator (deterministic provider)**. It measures top-1/top-3 domain accuracy, required-evidence recall, invalid/hallucinated citations, abstention, escalation, runbook retrieval, tool errors and pipeline latency. Model tokens and estimated costs remain unavailable unless a model supplies usage and explicit pricing is configured.
+The original 15-case labels remain unchanged, and their original results are preserved under [baseline-v1](artifacts/eval/baseline-v1/latest.md). Current output measures literal label accuracy, evidence recall, invalid references, abstention, escalation and latency. Legacy DB labels include an unsupported causal qualifier and expect some drafts to omit human review, so the corrected implementation reports those mismatches instead of relabeling for a perfect score. The legacy `hallucinated_evidence_count` field means invalid IDs only.
 
 Actual results are in [generated JSON](artifacts/eval/latest.json), [generated report](artifacts/eval/latest.md) and the Evaluations page. These are small, in-distribution fixtures designed alongside the rules. They do not prove generalization, guaranteed AI accuracy, actual customer usage or real production MTTR reduction.
 
-Run `python scripts/evaluate.py --provider openai` or `--provider anthropic` only after configuring a server-side key, explicit model and desired pricing. These commands make real paid model calls. The default makes none.
+The separate [13-case robustness report](artifacts/robustness/latest.md) checks declared condition/trigger/uncertainty expectations, including missing and contradictory evidence. It is developer-authored and not independently held out. Scripted adaptation, real MCP transport and offline provider-SDK tests have separate receipts in the [second-pass report](docs/SECOND_PASS_REPORT.md). Zero invalid references does not mean zero hallucinations.
+
+`scripts/evaluate.py` is offline only. Prepare a future live check with `python scripts/verify_live.py --provider openai --model MODEL --case-count 1 --max-tool-calls 8 --max-provider-turns 8 --max-spend-usd 0.25 --timeout-seconds 45`. This defaults to a credential-free **dry run**. A separately authorized paid run additionally requires `--execute-paid`, server-side credentials and positive input/output price ceilings covering the selected model. No paid calls or embeddings were made in this pass.
 
 ## MCP
 
@@ -160,7 +168,7 @@ The [version-controlled investigator prompt](apps/api/creditops/prompts/investig
 
 ## Deployment
 
-Target: Vercel frontend, container-hosted FastAPI, Neon PostgreSQL. Docker and Render configuration are included. The cloud demo uses replay, persisted telemetry and no paid Kafka/Grafana. See [exact deployment steps](docs/DEPLOYMENT.md). External deployment status, actual tests, scans, browser checks and limitations are recorded in [the final report](docs/FINAL_REPORT.md). A local build or connector login is never described as a verified cloud deployment.
+Target: Vercel frontend, container-hosted FastAPI, Neon PostgreSQL. Docker and Render configuration are included; no cloud deployment was performed in this pass. See [deployment steps](docs/DEPLOYMENT.md), the historical [first-pass report](docs/FINAL_REPORT.md), and the current [second-pass report](docs/SECOND_PASS_REPORT.md). A local build is not a verified cloud deployment.
 
 ## Interview materials
 

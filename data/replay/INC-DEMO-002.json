@@ -1,21 +1,23 @@
 {
-  "sha256": "69b1982fee67b2d9763d8345f95956fa49b73f29f708b3f7f120879986c36a58",
+  "sha256": "9802ce82b37cf7863e4f68454fc9fe8eff9e0abf4936d3fd109ed64dd0162f8c",
   "payload": {
-    "schema_version": 1,
-    "generated_at": "2026-10-09T16:17:42.192131+00:00",
+    "schema_version": 2,
+    "generated_at": "2026-10-09T18:08:02.647234+00:00",
     "provenance": {
       "pipeline": "creditops.investigator.collect_investigation",
       "provider": "deterministic",
       "model_called": false,
-      "telemetry_window": "complete synthetic scenario snapshot"
+      "telemetry_window": "complete synthetic scenario snapshot",
+      "transport": "direct",
+      "snapshot_cutoff": "2026-10-09T15:00:00Z"
     },
     "investigation": {
-      "id": "0fbabfa8-45cc-49f8-98c2-2430f90cfd9e",
+      "id": "fab11fb0-e9bd-49d3-bb44-6e7b0b98ded6",
       "incident_id": "INC-DEMO-002",
       "mode": "PIPELINE",
       "status": "complete",
       "provider": "deterministic",
-      "created_at": "2026-10-09T16:17:42.145429+00:00",
+      "created_at": "2026-10-09T18:08:02.551681+00:00",
       "steps": [
         {
           "id": "STEP-001",
@@ -25,8 +27,12 @@
           "evidence_ids": [
             "INC-DEMO-002"
           ],
-          "timestamp": "2026-10-09T16:17:42.145453+00:00",
-          "duration_ms": 6.481
+          "timestamp": "2026-10-09T18:08:02.552886+00:00",
+          "duration_ms": 29.715,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-002",
@@ -85,8 +91,12 @@
             "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
             "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4"
           ],
-          "timestamp": "2026-10-09T16:17:42.151973+00:00",
-          "duration_ms": 6.612
+          "timestamp": "2026-10-09T18:08:02.582631+00:00",
+          "duration_ms": 7.776,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-003",
@@ -96,8 +106,12 @@
           "evidence_ids": [
             "KAFKA-002-HEALTH"
           ],
-          "timestamp": "2026-10-09T16:17:42.158613+00:00",
-          "duration_ms": 3.61
+          "timestamp": "2026-10-09T18:08:02.590418+00:00",
+          "duration_ms": 3.933,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-004",
@@ -109,8 +123,12 @@
             "FIX-002-001",
             "FIX-002-002"
           ],
-          "timestamp": "2026-10-09T16:17:42.162237+00:00",
-          "duration_ms": 3.959
+          "timestamp": "2026-10-09T18:08:02.594359+00:00",
+          "duration_ms": 4.201,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-005",
@@ -120,8 +138,12 @@
           "evidence_ids": [
             "DB-002-CPU"
           ],
-          "timestamp": "2026-10-09T16:17:42.166206+00:00",
-          "duration_ms": 3.54
+          "timestamp": "2026-10-09T18:08:02.598567+00:00",
+          "duration_ms": 3.397,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-006",
@@ -129,12 +151,32 @@
           "tool": "search_logs",
           "status": "complete",
           "evidence_ids": [
+            "BUSINESS-002-001",
             "LOG-002-001",
+            "BUSINESS-002-002",
+            "BUSINESS-002-003",
+            "BUSINESS-002-009",
+            "BUSINESS-002-004",
+            "BUSINESS-002-010",
+            "BUSINESS-002-011",
+            "BUSINESS-002-005",
+            "BUSINESS-002-012",
+            "BUSINESS-002-006",
+            "BUSINESS-002-013",
+            "BUSINESS-002-014",
+            "BUSINESS-002-007",
             "LOG-002-002",
+            "BUSINESS-002-008",
+            "BUSINESS-002-015",
+            "BUSINESS-002-016",
             "LOG-002-003"
           ],
-          "timestamp": "2026-10-09T16:17:42.169761+00:00",
-          "duration_ms": 4.239
+          "timestamp": "2026-10-09T18:08:02.601970+00:00",
+          "duration_ms": 6.314,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-007",
@@ -142,8 +184,12 @@
           "tool": "get_recent_deployments",
           "status": "complete",
           "evidence_ids": [],
-          "timestamp": "2026-10-09T16:17:42.174010+00:00",
-          "duration_ms": 3.065
+          "timestamp": "2026-10-09T18:08:02.608291+00:00",
+          "duration_ms": 3.292,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-008",
@@ -153,8 +199,12 @@
           "evidence_ids": [
             "TOPOLOGY-001"
           ],
-          "timestamp": "2026-10-09T16:17:42.177085+00:00",
-          "duration_ms": 3.539
+          "timestamp": "2026-10-09T18:08:02.611592+00:00",
+          "duration_ms": 5.032,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-009",
@@ -164,8 +214,14 @@
           "evidence_ids": [
             "INC-HIST-002"
           ],
-          "timestamp": "2026-10-09T16:17:42.180975+00:00",
-          "duration_ms": 4.752
+          "timestamp": "2026-10-09T18:08:02.617048+00:00",
+          "duration_ms": 12.802,
+          "safe_arguments": {
+            "q": "FIX connectivity/session instability"
+          },
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-010",
@@ -175,8 +231,14 @@
           "evidence_ids": [
             "RUNBOOK-002"
           ],
-          "timestamp": "2026-10-09T16:17:42.186066+00:00",
-          "duration_ms": 5.033
+          "timestamp": "2026-10-09T18:08:02.630268+00:00",
+          "duration_ms": 15.026,
+          "safe_arguments": {
+            "q": "FIX connectivity/session instability"
+          },
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-011",
@@ -185,19 +247,16 @@
           "status": "complete",
           "evidence_ids": [
             "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
-            "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
-            "FIX-002-001",
             "FIX-002-002",
             "LOG-002-002",
             "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
-            "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
-            "FIX-002-HEALTH",
             "METRIC-002-ACK",
             "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
-            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4"
+            "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+            "FIX-002-001"
           ],
-          "timestamp": "2026-10-09T16:17:42.191741+00:00",
-          "duration_ms": 0.65
+          "timestamp": "2026-10-09T18:08:02.646914+00:00",
+          "duration_ms": 1.626
         }
       ],
       "evidence": [
@@ -206,15 +265,75 @@
           "kind": "incident",
           "service": "execution-service",
           "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Synthetic alert: execution acknowledgements delayed. Correlate independent telemetry before assigning a failure domain.",
+          "summary": "Current incident observation context",
           "data": {
-            "title": "Execution acknowledgements delayed",
+            "incident_id": "INC-DEMO-002",
             "severity": "SEV2",
+            "started_at": "2026-10-09T14:00:00Z",
             "affected_services": [
               "execution-service",
               "fix-gateway"
             ],
-            "client_impact": "CLIENT-DEMO-002 faces delayed synthetic RFQ or order responses; no real trading occurs."
+            "symptoms": "Observed operational degradation; determine the condition from timestamped evidence.",
+            "as_of": "2026-10-09T15:00:00Z",
+            "timeline": [
+              {
+                "timestamp": "2026-10-09T14:00:00Z",
+                "label": "Alert threshold crossed",
+                "evidence_ids": [
+                  "INC-DEMO-002",
+                  "LOG-002-001",
+                  "METRIC-002-BASE-0",
+                  "METRIC-002-BASE-1",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-ERROR_RATE_PERCENT-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-CPU_PERCENT-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-MEMORY_MB-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-ERROR_RATE_PERCENT-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-CPU_PERCENT-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-MEMORY_MB-0",
+                  "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+                  "METRIC-002-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+                  "METRIC-002-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+                  "METRIC-002-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+                  "METRIC-002-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+                  "METRIC-002-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+                  "METRIC-002-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+                  "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+                  "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:00Z",
+                "label": "Dependency health samples available",
+                "evidence_ids": [
+                  "FIX-002-001"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:24Z",
+                "label": "Correlated warning and error logs captured",
+                "evidence_ids": [
+                  "LOG-002-002"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:02:12Z",
+                "label": "Upstream impact observed",
+                "evidence_ids": [
+                  "LOG-002-003"
+                ]
+              }
+            ]
           }
         },
         {
@@ -952,6 +1071,28 @@
           }
         },
         {
+          "id": "BUSINESS-002-001",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Fictional RFQ-DEMO-002-001: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-002-001: rfq requested"
+          }
+        },
+        {
           "id": "LOG-002-001",
           "kind": "log",
           "service": "execution-service",
@@ -966,6 +1107,287 @@
           }
         },
         {
+          "id": "BUSINESS-002-002",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-002-001: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-002-001: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-002-003",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-002-001: quote published",
+          "data": {
+            "event_type": "QUOTE_PUBLISHED",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "quote_id": "QUOTE-DEMO-002-001",
+            "clean_price_per_100_par": "101.125",
+            "source_timestamp": "2026-10-09T14:00:12Z",
+            "quote_expires_at": "2026-10-09T14:01:12Z",
+            "message": "Fictional RFQ-DEMO-002-001: quote published"
+          }
+        },
+        {
+          "id": "BUSINESS-002-009",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-002-002: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-002-002: rfq requested"
+          }
+        },
+        {
+          "id": "BUSINESS-002-004",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:24Z",
+          "summary": "Fictional RFQ-DEMO-002-001: quote accepted",
+          "data": {
+            "event_type": "QUOTE_ACCEPTED",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "quote_id": "QUOTE-DEMO-002-001",
+            "message": "Fictional RFQ-DEMO-002-001: quote accepted"
+          }
+        },
+        {
+          "id": "BUSINESS-002-010",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:24Z",
+          "summary": "Fictional RFQ-DEMO-002-002: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-002-002: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-002-011",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:24Z",
+          "summary": "Fictional RFQ-DEMO-002-002: quote published",
+          "data": {
+            "event_type": "QUOTE_PUBLISHED",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "quote_id": "QUOTE-DEMO-002-002",
+            "clean_price_per_100_par": "101.125",
+            "source_timestamp": "2026-10-09T14:00:24Z",
+            "quote_expires_at": "2026-10-09T14:01:24Z",
+            "message": "Fictional RFQ-DEMO-002-002: quote published"
+          }
+        },
+        {
+          "id": "BUSINESS-002-005",
+          "kind": "business_event",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Fictional RFQ-DEMO-002-001: order submitted",
+          "data": {
+            "event_type": "ORDER_SUBMITTED",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-001",
+            "quote_id": "QUOTE-DEMO-002-001",
+            "message": "Fictional RFQ-DEMO-002-001: order submitted"
+          }
+        },
+        {
+          "id": "BUSINESS-002-012",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Fictional RFQ-DEMO-002-002: quote accepted",
+          "data": {
+            "event_type": "QUOTE_ACCEPTED",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "quote_id": "QUOTE-DEMO-002-002",
+            "message": "Fictional RFQ-DEMO-002-002: quote accepted"
+          }
+        },
+        {
+          "id": "BUSINESS-002-006",
+          "kind": "business_event",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Fictional RFQ-DEMO-002-001: ack pending",
+          "data": {
+            "event_type": "ACK_PENDING",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-001",
+            "message": "Fictional RFQ-DEMO-002-001: ack pending"
+          }
+        },
+        {
+          "id": "BUSINESS-002-013",
+          "kind": "business_event",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Fictional RFQ-DEMO-002-002: order submitted",
+          "data": {
+            "event_type": "ORDER_SUBMITTED",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-002",
+            "quote_id": "QUOTE-DEMO-002-002",
+            "message": "Fictional RFQ-DEMO-002-002: order submitted"
+          }
+        },
+        {
+          "id": "BUSINESS-002-014",
+          "kind": "business_event",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:00Z",
+          "summary": "Fictional RFQ-DEMO-002-002: ack pending",
+          "data": {
+            "event_type": "ACK_PENDING",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-002",
+            "message": "Fictional RFQ-DEMO-002-002: ack pending"
+          }
+        },
+        {
+          "id": "BUSINESS-002-007",
+          "kind": "business_event",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:24Z",
+          "summary": "Fictional RFQ-DEMO-002-001: ack uncertain",
+          "data": {
+            "event_type": "ACK_UNCERTAIN",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "WARN",
+            "order_id": "ORDER-DEMO-002-001",
+            "message": "Fictional RFQ-DEMO-002-001: ack uncertain"
+          }
+        },
+        {
           "id": "LOG-002-002",
           "kind": "log",
           "service": "fix-gateway",
@@ -975,6 +1397,79 @@
             "severity": "ERROR",
             "trace_id": "TRACE-DEMO-002",
             "message": "FIX heartbeat timeout disconnect sequence gap expected=12083 received=12090"
+          }
+        },
+        {
+          "id": "BUSINESS-002-008",
+          "kind": "business_event",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "Fictional RFQ-DEMO-002-001: fix retransmission",
+          "data": {
+            "event_type": "FIX_RETRANSMISSION",
+            "rfq_id": "RFQ-DEMO-002-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-001",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-001",
+            "retransmission": true,
+            "economic_order_id": "ORDER-DEMO-002-001",
+            "message": "Fictional RFQ-DEMO-002-001: fix retransmission"
+          }
+        },
+        {
+          "id": "BUSINESS-002-015",
+          "kind": "business_event",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "Fictional RFQ-DEMO-002-002: ack uncertain",
+          "data": {
+            "event_type": "ACK_UNCERTAIN",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "WARN",
+            "order_id": "ORDER-DEMO-002-002",
+            "message": "Fictional RFQ-DEMO-002-002: ack uncertain"
+          }
+        },
+        {
+          "id": "BUSINESS-002-016",
+          "kind": "business_event",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Fictional RFQ-DEMO-002-002: fix retransmission",
+          "data": {
+            "event_type": "FIX_RETRANSMISSION",
+            "rfq_id": "RFQ-DEMO-002-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-002",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-002-RFQ-002",
+            "severity": "INFO",
+            "order_id": "ORDER-DEMO-002-002",
+            "retransmission": true,
+            "economic_order_id": "ORDER-DEMO-002-002",
+            "message": "Fictional RFQ-DEMO-002-002: fix retransmission"
           }
         },
         {
@@ -1115,21 +1610,18 @@
         }
       ],
       "assessment": {
-        "incident_summary": "Execution acknowledgements delayed. Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
+        "incident_summary": "Synthetic operational observations. Supported failure condition: FIX connectivity/session instability [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, FIX-002-002, LOG-002-002, METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]. The initiating cause is unconfirmed.",
         "probable_failure_domain": "FIX connectivity/session instability",
         "confidence": 0.84,
         "supporting_evidence_ids": [
           "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
-          "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
-          "FIX-002-001",
           "FIX-002-002",
           "LOG-002-002",
           "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
-          "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
-          "FIX-002-HEALTH",
           "METRIC-002-ACK",
           "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
-          "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4"
+          "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+          "FIX-002-001"
         ],
         "alternative_hypotheses": [
           {
@@ -1140,14 +1632,15 @@
             ]
           },
           {
-            "domain": "database subsystem",
-            "reason": "Considered separately; returned health snapshot [DB-002-CPU] does not establish the primary failure.",
+            "domain": "fix subsystem",
+            "reason": "Considered separately; returned health snapshot [FIX-002-HEALTH] does not establish the primary failure.",
             "evidence_ids": [
-              "DB-002-CPU"
+              "FIX-002-HEALTH"
             ]
           }
         ],
         "recommended_next_steps": [
+          "Reconcile the existing economic order identity and acknowledgement state with the owning team; do not blindly resubmit a new order. FIX retransmission is not a new economic order.",
           "Compare the affected service time window with its upstream and downstream dependencies.",
           "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
           "Escalate to the owning service team before considering any configuration change."
@@ -1156,50 +1649,106 @@
           "RUNBOOK-002"
         ],
         "similar_incidents": [],
-        "requires_human_review": false,
+        "requires_human_review": true,
         "limitations": [
-          "Deterministic evidence assessment; no language model was called.",
-          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
-          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
         ],
         "rca": {
-          "executive_summary": "Draft \u2014 human review required. Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
-          "impact": "CLIENT-DEMO-002 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: FIX connectivity/session instability [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, FIX-002-002, LOG-002-002, METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]. The initiating cause is unconfirmed.",
+          "impact": "Returned synthetic RFQ/order events are available for human inspection; event states do not establish financial loss or confirmed execution.",
           "timeline": [
-            "2026-10-09T14:01:36Z: Execution acknowledgement latency breached deadline [METRIC-002-ACK]",
-            "2026-10-09T14:02:24Z: Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
-            "2026-10-09T14:02:24Z: Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
-            "2026-10-09T14:02:24Z: Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
-            "2026-10-09T14:01:48Z: Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]"
+            "2026-10-09T14:01:36Z: execution-service: execution_ack_latency_ms=4650.0 ms [METRIC-002-ACK]",
+            "2026-10-09T14:02:24Z: execution-service: execution_ack_latency_ms=4900.0 ms [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
+            "2026-10-09T14:02:24Z: fix-gateway: fix_reconnect_count=14.0 count [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
+            "2026-10-09T14:02:24Z: fix-gateway: fix_sequence_gaps=7.0 count [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
+            "2026-10-09T14:01:48Z: execution-service: execution_ack_latency_ms=3936.0 ms [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]"
           ],
           "observed_evidence": [
-            "Execution acknowledgement latency breached deadline [METRIC-002-ACK]",
-            "Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
-            "Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
-            "Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
-            "Synthetic execution_ack_latency_ms sample [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]",
-            "Synthetic fix_reconnect_count sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4]",
-            "Synthetic fix_sequence_gaps sample [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4]",
-            "Synthetic FIX baseline session heartbeat observed [FIX-002-HEALTH]",
-            "FIX session disconnected after missed heartbeats [FIX-002-001]",
-            "Session reconnect increased with unresolved sequence gap [FIX-002-002]",
-            "Heartbeat timeout; repeated disconnect and reconnect attempts [LOG-002-002]"
+            "execution-service: execution_ack_latency_ms=4650.0 ms [METRIC-002-ACK]",
+            "execution-service: execution_ack_latency_ms=4900.0 ms [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5]",
+            "fix-gateway: fix_reconnect_count=14.0 count [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5]",
+            "fix-gateway: fix_sequence_gaps=7.0 count [METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]",
+            "execution-service: execution_ack_latency_ms=3936.0 ms [METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4]",
+            "fix-gateway: Source-reported fix observation: \"FIX session disconnected after missed heartbeats\" [FIX-002-001]",
+            "fix-gateway: Source-reported fix observation: \"Session reconnect increased with unresolved sequence gap\" [FIX-002-002]",
+            "fix-gateway: Source-reported log observation: \"Heartbeat timeout; repeated disconnect and reconnect attempts\" [LOG-002-002]"
           ],
-          "probable_root_cause": "Probable failure domain: FIX connectivity/session instability. Corroborating diagnostics: [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002].",
+          "probable_root_cause": "Supported failure condition: FIX connectivity/session instability [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, FIX-002-002, LOG-002-002, METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]. The initiating cause is unconfirmed.",
           "contributing_factors": [
-            "Service dependency propagation needs human confirmation [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4, FIX-002-001, FIX-002-002]."
+            "Service dependency propagation needs human confirmation [METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5, FIX-002-002, LOG-002-002, METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5]."
           ],
           "immediate_next_steps": [
+            "Reconcile the existing economic order identity and acknowledgement state with the owning team; do not blindly resubmit a new order. FIX retransmission is not a new economic order.",
             "Compare the affected service time window with its upstream and downstream dependencies.",
             "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
             "Escalate to the owning service team before considering any configuration change."
           ],
           "follow_up_work": [
             "Validate alert coverage and collect a longer diagnostic window.",
-            "Review the application change and capacity assumptions with its owner.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
             "Add the verified incident outcome to the synthetic regression dataset."
           ]
-        }
+        },
+        "observations": [
+          {
+            "statement": "execution-service: execution_ack_latency_ms=4650.0 ms",
+            "evidence_ids": [
+              "METRIC-002-ACK"
+            ]
+          },
+          {
+            "statement": "execution-service: execution_ack_latency_ms=4900.0 ms",
+            "evidence_ids": [
+              "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5"
+            ]
+          },
+          {
+            "statement": "fix-gateway: fix_reconnect_count=14.0 count",
+            "evidence_ids": [
+              "METRIC-002-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5"
+            ]
+          },
+          {
+            "statement": "fix-gateway: fix_sequence_gaps=7.0 count",
+            "evidence_ids": [
+              "METRIC-002-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5"
+            ]
+          },
+          {
+            "statement": "execution-service: execution_ack_latency_ms=3936.0 ms",
+            "evidence_ids": [
+              "METRIC-002-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4"
+            ]
+          },
+          {
+            "statement": "fix-gateway: Source-reported fix observation: \"FIX session disconnected after missed heartbeats\"",
+            "evidence_ids": [
+              "FIX-002-001"
+            ]
+          },
+          {
+            "statement": "fix-gateway: Source-reported fix observation: \"Session reconnect increased with unresolved sequence gap\"",
+            "evidence_ids": [
+              "FIX-002-002"
+            ]
+          },
+          {
+            "statement": "fix-gateway: Source-reported log observation: \"Heartbeat timeout; repeated disconnect and reconnect attempts\"",
+            "evidence_ids": [
+              "LOG-002-002"
+            ]
+          }
+        ],
+        "supported_failure_condition": "FIX connectivity/session instability",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A missing or delayed acknowledgement leaves order outcome PENDING or UNKNOWN, not FAILED or EXECUTED."
+        ],
+        "score_kind": "uncalibrated_support"
       },
       "error": null,
       "usage": {
@@ -1207,6 +1756,15 @@
         "output_tokens": null,
         "total_tokens": null,
         "estimated_cost_usd": null
+      },
+      "provenance": {
+        "workflow": "initial_plan",
+        "transport": "direct",
+        "provider": "deterministic",
+        "model_called": false,
+        "snapshot_cutoff": "2026-10-09T15:00:00Z",
+        "snapshot_kind": "frozen_current",
+        "recorded": false
       }
     }
   }

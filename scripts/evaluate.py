@@ -26,4 +26,8 @@ if __name__ == "__main__":
         "--provider", choices=["deterministic", "openai", "anthropic"], default="deterministic"
     )
     args = parser.parse_args()
+    if args.provider != "deterministic":
+        parser.error(
+            "This command preserves the offline 15-case evaluation. Use the bounded live-verification command with explicit provider/model, case/turn/call limits and approved spend for a separately authorized provider run."
+        )
     asyncio.run(main(args.provider))

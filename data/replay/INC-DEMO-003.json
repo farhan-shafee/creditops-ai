@@ -1,21 +1,23 @@
 {
-  "sha256": "8e2664a5bf88a9230268f5bbd2e0d335ac4d42d5d4cdde57cbe56529b622fc79",
+  "sha256": "0c21b65e4ced65bf9f780668e100a44fd6875b8bfa5960bab949b2f16ef19578",
   "payload": {
-    "schema_version": 1,
-    "generated_at": "2026-10-09T16:17:42.261330+00:00",
+    "schema_version": 2,
+    "generated_at": "2026-10-09T18:08:02.793530+00:00",
     "provenance": {
       "pipeline": "creditops.investigator.collect_investigation",
       "provider": "deterministic",
       "model_called": false,
-      "telemetry_window": "complete synthetic scenario snapshot"
+      "telemetry_window": "complete synthetic scenario snapshot",
+      "transport": "direct",
+      "snapshot_cutoff": "2026-10-09T15:00:00Z"
     },
     "investigation": {
-      "id": "f2af81b6-f292-4bb0-aa8b-e64ac1b049f4",
+      "id": "26860bc1-f07d-410a-936c-6c845379bee5",
       "incident_id": "INC-DEMO-003",
       "mode": "PIPELINE",
       "status": "complete",
       "provider": "deterministic",
-      "created_at": "2026-10-09T16:17:42.211335+00:00",
+      "created_at": "2026-10-09T18:08:02.687586+00:00",
       "steps": [
         {
           "id": "STEP-001",
@@ -25,8 +27,12 @@
           "evidence_ids": [
             "INC-DEMO-003"
           ],
-          "timestamp": "2026-10-09T16:17:42.211351+00:00",
-          "duration_ms": 6.842
+          "timestamp": "2026-10-09T18:08:02.688343+00:00",
+          "duration_ms": 26.133,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-002",
@@ -85,8 +91,12 @@
             "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-4",
             "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-4"
           ],
-          "timestamp": "2026-10-09T16:17:42.218249+00:00",
-          "duration_ms": 6.957
+          "timestamp": "2026-10-09T18:08:02.714508+00:00",
+          "duration_ms": 8.775,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-003",
@@ -96,8 +106,12 @@
           "evidence_ids": [
             "KAFKA-003-HEALTH"
           ],
-          "timestamp": "2026-10-09T16:17:42.225228+00:00",
-          "duration_ms": 4.496
+          "timestamp": "2026-10-09T18:08:02.723298+00:00",
+          "duration_ms": 3.919,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-004",
@@ -107,8 +121,12 @@
           "evidence_ids": [
             "FIX-003-HEALTH"
           ],
-          "timestamp": "2026-10-09T16:17:42.229734+00:00",
-          "duration_ms": 4.023
+          "timestamp": "2026-10-09T18:08:02.727222+00:00",
+          "duration_ms": 3.75,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-005",
@@ -119,8 +137,12 @@
             "DB-003-CPU",
             "DB-003-001"
           ],
-          "timestamp": "2026-10-09T16:17:42.233773+00:00",
-          "duration_ms": 3.767
+          "timestamp": "2026-10-09T18:08:02.730979+00:00",
+          "duration_ms": 5.19,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-006",
@@ -128,12 +150,26 @@
           "tool": "search_logs",
           "status": "complete",
           "evidence_ids": [
+            "BUSINESS-003-001",
             "LOG-003-001",
+            "BUSINESS-003-002",
+            "BUSINESS-003-006",
+            "BUSINESS-003-007",
+            "BUSINESS-003-003",
+            "BUSINESS-003-008",
+            "BUSINESS-003-004",
             "LOG-003-002",
-            "LOG-003-003"
+            "BUSINESS-003-009",
+            "BUSINESS-003-005",
+            "LOG-003-003",
+            "BUSINESS-003-010"
           ],
-          "timestamp": "2026-10-09T16:17:42.237549+00:00",
-          "duration_ms": 3.517
+          "timestamp": "2026-10-09T18:08:02.736183+00:00",
+          "duration_ms": 6.983,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-007",
@@ -143,8 +179,12 @@
           "evidence_ids": [
             "DEPLOY-003-001"
           ],
-          "timestamp": "2026-10-09T16:17:42.241085+00:00",
-          "duration_ms": 3.584
+          "timestamp": "2026-10-09T18:08:02.743172+00:00",
+          "duration_ms": 5.031,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-008",
@@ -154,8 +194,12 @@
           "evidence_ids": [
             "TOPOLOGY-001"
           ],
-          "timestamp": "2026-10-09T16:17:42.244678+00:00",
-          "duration_ms": 4.13
+          "timestamp": "2026-10-09T18:08:02.748213+00:00",
+          "duration_ms": 6.668,
+          "safe_arguments": {},
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-009",
@@ -163,11 +207,16 @@
           "tool": "find_similar_incidents",
           "status": "complete",
           "evidence_ids": [
-            "INC-HIST-003",
-            "INC-HIST-001"
+            "INC-HIST-003"
           ],
-          "timestamp": "2026-10-09T16:17:42.249161+00:00",
-          "duration_ms": 5.034
+          "timestamp": "2026-10-09T18:08:02.755278+00:00",
+          "duration_ms": 17.246,
+          "safe_arguments": {
+            "q": "database connection pool exhaustion"
+          },
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-010",
@@ -175,15 +224,16 @@
           "tool": "search_runbooks",
           "status": "complete",
           "evidence_ids": [
-            "RUNBOOK-003",
-            "RUNBOOK-001",
-            "RUNBOOK-004",
-            "RUNBOOK-005",
-            "RUNBOOK-006",
-            "RUNBOOK-002"
+            "RUNBOOK-003"
           ],
-          "timestamp": "2026-10-09T16:17:42.254544+00:00",
-          "duration_ms": 5.779
+          "timestamp": "2026-10-09T18:08:02.773341+00:00",
+          "duration_ms": 18.118,
+          "safe_arguments": {
+            "q": "database connection pool exhaustion"
+          },
+          "transport": "direct",
+          "provider": "deterministic",
+          "recorded": false
         },
         {
           "id": "STEP-011",
@@ -191,18 +241,14 @@
           "tool": "assessment_validation",
           "status": "complete",
           "evidence_ids": [
-            "METRIC-003-POOL",
             "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
             "DB-003-001",
             "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
             "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
-            "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
-            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
-            "LOG-003-002",
-            "DEPLOY-003-001"
+            "LOG-003-002"
           ],
-          "timestamp": "2026-10-09T16:17:42.261007+00:00",
-          "duration_ms": 0.694
+          "timestamp": "2026-10-09T18:08:02.793184+00:00",
+          "duration_ms": 1.735
         }
       ],
       "evidence": [
@@ -211,15 +257,76 @@
           "kind": "incident",
           "service": "quote-service",
           "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Synthetic alert: rfq requests timing out after change. Correlate independent telemetry before assigning a failure domain.",
+          "summary": "Current incident observation context",
           "data": {
-            "title": "RFQ requests timing out after change",
+            "incident_id": "INC-DEMO-003",
             "severity": "SEV2",
+            "started_at": "2026-10-09T14:00:00Z",
             "affected_services": [
               "quote-service",
               "rfq-gateway"
             ],
-            "client_impact": "CLIENT-DEMO-003 faces delayed synthetic RFQ or order responses; no real trading occurs."
+            "symptoms": "Observed operational degradation; determine the condition from timestamped evidence.",
+            "as_of": "2026-10-09T15:00:00Z",
+            "timeline": [
+              {
+                "timestamp": "2026-10-09T14:00:00Z",
+                "label": "Alert threshold crossed",
+                "evidence_ids": [
+                  "INC-DEMO-003",
+                  "LOG-003-001",
+                  "METRIC-003-BASE-0",
+                  "METRIC-003-BASE-1",
+                  "DEPLOY-003-001",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:00Z",
+                "label": "Dependency health samples available",
+                "evidence_ids": [
+                  "DB-003-001"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:24Z",
+                "label": "Correlated warning and error logs captured",
+                "evidence_ids": [
+                  "LOG-003-002"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:02:12Z",
+                "label": "Upstream impact observed",
+                "evidence_ids": [
+                  "LOG-003-003"
+                ]
+              }
+            ]
           }
         },
         {
@@ -934,6 +1041,28 @@
           }
         },
         {
+          "id": "BUSINESS-003-001",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Fictional RFQ-DEMO-003-001: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: rfq requested"
+          }
+        },
+        {
           "id": "LOG-003-001",
           "kind": "log",
           "service": "quote-service",
@@ -945,6 +1074,141 @@
             "rfq_id": "RFQ-DEMO-000003",
             "message": "RFQ requests timing out after change",
             "environment": "synthetic"
+          }
+        },
+        {
+          "id": "BUSINESS-003-002",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-003-001: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-003-006",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-003-002: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: rfq requested"
+          }
+        },
+        {
+          "id": "BUSINESS-003-007",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:24Z",
+          "summary": "Fictional RFQ-DEMO-003-002: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-003-003",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Fictional RFQ-DEMO-003-001: db wait",
+          "data": {
+            "event_type": "DB_WAIT",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-001: db wait"
+          }
+        },
+        {
+          "id": "BUSINESS-003-008",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Fictional RFQ-DEMO-003-002: db wait",
+          "data": {
+            "event_type": "DB_WAIT",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-002: db wait"
+          }
+        },
+        {
+          "id": "BUSINESS-003-004",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:24Z",
+          "summary": "Fictional RFQ-DEMO-003-001: processing timeout",
+          "data": {
+            "event_type": "PROCESSING_TIMEOUT",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "WARN",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-001: processing timeout"
           }
         },
         {
@@ -960,6 +1224,51 @@
           }
         },
         {
+          "id": "BUSINESS-003-009",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "Fictional RFQ-DEMO-003-002: processing timeout",
+          "data": {
+            "event_type": "PROCESSING_TIMEOUT",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "WARN",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-002: processing timeout"
+          }
+        },
+        {
+          "id": "BUSINESS-003-005",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:00Z",
+          "summary": "Fictional RFQ-DEMO-003-001: rfq expired",
+          "data": {
+            "event_type": "RFQ_EXPIRED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: rfq expired"
+          }
+        },
+        {
           "id": "LOG-003-003",
           "kind": "log",
           "service": "rfq-gateway",
@@ -969,6 +1278,28 @@
             "severity": "ERROR",
             "trace_id": "TRACE-DEMO-003",
             "message": "quote-service upstream timeout elapsed_ms=2500"
+          }
+        },
+        {
+          "id": "BUSINESS-003-010",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Fictional RFQ-DEMO-003-002: rfq expired",
+          "data": {
+            "event_type": "RFQ_EXPIRED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: rfq expired"
           }
         },
         {
@@ -1076,56 +1407,14 @@
             "environment": "synthetic",
             "retrieval": {
               "method": "lexical_bm25",
-              "score": 7.9868,
+              "score": 6.1013,
               "matching_terms": [
-                "application",
                 "connection",
                 "database",
                 "pool"
               ],
               "overlapping_services": [],
-              "explanation": "Matched application, connection, database, pool"
-            }
-          }
-        },
-        {
-          "id": "INC-HIST-001",
-          "kind": "history",
-          "service": "pricing-service",
-          "timestamp": "2026-10-08T14:00:00Z",
-          "summary": "Synthetic pricing consumer imbalance",
-          "data": {
-            "title": "Synthetic pricing consumer imbalance",
-            "symptoms": "consumer backlog stale pricing quote age",
-            "resolution": "Human review found partition skew and a slow consumer; capacity change reviewed separately",
-            "affected_services": [
-              "pricing-service"
-            ],
-            "duration_minutes": 19,
-            "root_cause": "Human review found partition skew and a slow consumer; capacity change reviewed separately",
-            "tags": [
-              "consumer",
-              "backlog",
-              "stale",
-              "pricing",
-              "quote",
-              "age"
-            ],
-            "timeline": [
-              "Synthetic alert detected",
-              "Independent telemetry compared",
-              "Human operator reviewed failure domain",
-              "Follow-up monitoring verified"
-            ],
-            "environment": "synthetic",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 1.8197,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
+              "explanation": "Matched connection, database, pool"
             }
           }
         },
@@ -1141,140 +1430,29 @@
             "content": "# PostgreSQL Connection Pool Saturation\n\n## Symptoms\ndatabase connection pool exhaustion pool_timeout deployment.\n\n## Checks\nCompare active connections, waiting requests and pool capacity. Correlate query waits with recent application changes and normal CPU.\n\n## Safe diagnostic commands\n```text\nSELECT state, wait_event_type, count(*) FROM pg_stat_activity GROUP BY 1,2;\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
             "retrieval": {
               "method": "lexical_bm25",
-              "score": 10.7908,
+              "score": 9.1862,
               "matching_terms": [
-                "application",
-                "change",
                 "connection",
                 "database",
                 "exhaustion",
                 "pool"
               ],
               "overlapping_services": [],
-              "explanation": "Matched application, change, connection, database, exhaustion, pool"
-            }
-          }
-        },
-        {
-          "id": "RUNBOOK-001",
-          "kind": "runbook",
-          "service": "pricing-service",
-          "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Kafka Consumer Lag Investigation",
-          "data": {
-            "title": "Kafka Consumer Lag Investigation",
-            "tags": "kafka consumer backlog pricing stale quote",
-            "content": "# Kafka Consumer Lag Investigation\n\n## Symptoms\nkafka consumer backlog pricing stale quote.\n\n## Checks\nCompare ingress with consume rate, inspect partition skew, correlate quote age and consumer error timestamps.\n\n## Safe diagnostic commands\n```text\nkafka-consumer-groups --bootstrap-server redpanda:9092 --describe --group pricing-credit-demo\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 0.075,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
-            }
-          }
-        },
-        {
-          "id": "RUNBOOK-004",
-          "kind": "runbook",
-          "service": "quote-service",
-          "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Elevated Quote Latency",
-          "data": {
-            "title": "Elevated Quote Latency",
-            "tags": "quote latency cpu saturation request queue",
-            "content": "# Elevated Quote Latency\n\n## Symptoms\nquote latency cpu saturation request queue.\n\n## Checks\nCompare CPU, worker queue length, pricing freshness and pre-trade dependency latency before isolating the failure domain.\n\n## Safe diagnostic commands\n```text\ncurl -fsS 'http://localhost:8000/api/metrics/query?service=quote-service'\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 0.0748,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
-            }
-          }
-        },
-        {
-          "id": "RUNBOOK-005",
-          "kind": "runbook",
-          "service": "market-data-service",
-          "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Stale Market Data Investigation",
-          "data": {
-            "title": "Stale Market Data Investigation",
-            "tags": "market data stale feed heartbeat age",
-            "content": "# Stale Market Data Investigation\n\n## Symptoms\nmarket data stale feed heartbeat age.\n\n## Checks\nInspect feed heartbeat age and downstream quote freshness. Distinguish publisher staleness from consumer backlog.\n\n## Safe diagnostic commands\n```text\ncurl -fsS 'http://localhost:8000/api/logs/search?service=market-data-service'\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 0.0746,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
-            }
-          }
-        },
-        {
-          "id": "RUNBOOK-006",
-          "kind": "runbook",
-          "service": "risk-service",
-          "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "Upstream Dependency Timeout Investigation",
-          "data": {
-            "title": "Upstream Dependency Timeout Investigation",
-            "tags": "risk upstream dependency timeout insufficient evidence",
-            "content": "# Upstream Dependency Timeout Investigation\n\n## Symptoms\nrisk upstream dependency timeout insufficient evidence.\n\n## Checks\nTrace dependency latency from the affected gateway. Seek independent logs and metrics; escalate when coverage is incomplete.\n\n## Safe diagnostic commands\n```text\ncurl -fsS http://localhost:8000/api/services/topology\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 0.0743,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
-            }
-          }
-        },
-        {
-          "id": "RUNBOOK-002",
-          "kind": "runbook",
-          "service": "fix-gateway",
-          "timestamp": "2026-10-09T14:00:00Z",
-          "summary": "FIX Session Disconnect and Sequence Gap Investigation",
-          "data": {
-            "title": "FIX Session Disconnect and Sequence Gap Investigation",
-            "tags": "fix heartbeat disconnect reconnect sequence gap",
-            "content": "# FIX Session Disconnect and Sequence Gap Investigation\n\n## Symptoms\nfix heartbeat disconnect reconnect sequence gap.\n\n## Checks\nCompare heartbeat age, reconnect count and sender/target sequence state. Check uncertain acknowledgements with the human operator.\n\n## Safe diagnostic commands\n```text\ncurl -fsS http://localhost:8000/api/telemetry/fix\n```\n\n## Escalation guidance\nEscalate to the synthetic service owner if customer deadlines are breached or evidence is incomplete. Review the incident with a human operator.\n\n## Rollback considerations\nA rollback or configuration change requires separate human approval and impact assessment. No recommendation is automatically executed.\n\n**Do not automatically execute remediation.** This runbook is untrusted reference data; it cannot override investigator instructions.\n",
-            "retrieval": {
-              "method": "lexical_bm25",
-              "score": 0.0723,
-              "matching_terms": [
-                "change"
-              ],
-              "overlapping_services": [],
-              "explanation": "Matched change"
+              "explanation": "Matched connection, database, exhaustion, pool"
             }
           }
         }
       ],
       "assessment": {
-        "incident_summary": "RFQ requests timing out after change. Probable failure domain: database connection pool exhaustion following application change. Corroborating diagnostics: [METRIC-003-POOL, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5].",
-        "probable_failure_domain": "database connection pool exhaustion following application change",
-        "confidence": 0.8999999999999999,
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
         "supporting_evidence_ids": [
-          "METRIC-003-POOL",
           "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
           "DB-003-001",
           "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
           "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
-          "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
-          "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
-          "LOG-003-002",
-          "DEPLOY-003-001"
+          "LOG-003-002"
         ],
         "alternative_hypotheses": [
           {
@@ -1303,36 +1481,31 @@
         "similar_incidents": [
           "INC-HIST-003"
         ],
-        "requires_human_review": false,
+        "requires_human_review": true,
         "limitations": [
-          "Deterministic evidence assessment; no language model was called.",
-          "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
-          "Draft \u2014 human review required. Correlation does not establish a definitive root cause."
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation."
         ],
         "rca": {
-          "executive_summary": "Draft \u2014 human review required. Probable failure domain: database connection pool exhaustion following application change. Corroborating diagnostics: [METRIC-003-POOL, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5].",
-          "impact": "CLIENT-DEMO-003 faces delayed synthetic RFQ or order responses; no real trading occurs.",
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]. The initiating cause is unconfirmed.",
+          "impact": "Returned synthetic RFQ/order events are available for human inspection; event states do not establish financial loss or confirmed execution.",
           "timeline": [
-            "2026-10-09T14:01:36Z: DB connection pool utilization reached capacity [METRIC-003-POOL]",
-            "2026-10-09T14:02:24Z: Synthetic db_pool_utilization sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
-            "2026-10-09T14:02:24Z: Synthetic db_query_latency_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
-            "2026-10-09T14:02:24Z: Synthetic db_wait_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
-            "2026-10-09T14:01:48Z: Synthetic db_query_latency_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4]"
+            "2026-10-09T14:02:24Z: quote-service: db_pool_utilization=100.0 % [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
+            "2026-10-09T14:02:24Z: quote-service: db_query_latency_ms=870.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
+            "2026-10-09T14:02:24Z: quote-service: db_wait_ms=2400.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
+            "2026-10-09T14:01:00Z: quote-service: Source-reported database observation: \"Connection pool saturated with waiters; CPU remains normal\" [DB-003-001]",
+            "2026-10-09T14:01:24Z: quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\" [LOG-003-002]"
           ],
           "observed_evidence": [
-            "DB connection pool utilization reached capacity [METRIC-003-POOL]",
-            "Synthetic db_pool_utilization sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
-            "Synthetic db_query_latency_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
-            "Synthetic db_wait_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
-            "Synthetic db_query_latency_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4]",
-            "Synthetic db_wait_ms sample [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4]",
-            "Connection pool saturated with waiters; CPU remains normal [DB-003-001]",
-            "Database connection pool timeout after 2000 ms [LOG-003-002]",
-            "Synthetic quote-service release precedes pool wait symptoms [DEPLOY-003-001]"
+            "quote-service: db_pool_utilization=100.0 % [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
+            "quote-service: db_query_latency_ms=870.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
+            "quote-service: db_wait_ms=2400.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
+            "quote-service: Source-reported database observation: \"Connection pool saturated with waiters; CPU remains normal\" [DB-003-001]",
+            "quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\" [LOG-003-002]"
           ],
-          "probable_root_cause": "Probable failure domain: database connection pool exhaustion following application change. Corroborating diagnostics: [METRIC-003-POOL, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5].",
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]. The initiating cause is unconfirmed.",
           "contributing_factors": [
-            "Service dependency propagation needs human confirmation [METRIC-003-POOL, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]."
+            "Service dependency propagation needs human confirmation [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, DB-003-001, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]."
           ],
           "immediate_next_steps": [
             "Compare the affected service time window with its upstream and downstream dependencies.",
@@ -1341,10 +1514,60 @@
           ],
           "follow_up_work": [
             "Validate alert coverage and collect a longer diagnostic window.",
-            "Review the application change and capacity assumptions with its owner.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
             "Add the verified incident outcome to the synthetic regression dataset."
           ]
-        }
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization=100.0 %",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+            ]
+          },
+          {
+            "statement": "quote-service: db_query_latency_ms=870.0 ms",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5"
+            ]
+          },
+          {
+            "statement": "quote-service: db_wait_ms=2400.0 ms",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5"
+            ]
+          },
+          {
+            "statement": "quote-service: Source-reported database observation: \"Connection pool saturated with waiters; CPU remains normal\"",
+            "evidence_ids": [
+              "DB-003-001"
+            ]
+          },
+          {
+            "statement": "quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\"",
+            "evidence_ids": [
+              "LOG-003-002"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [
+          {
+            "statement": "A deployment to quote-service preceded the observed failure condition.",
+            "evidence_ids": [
+              "DEPLOY-003-001"
+            ],
+            "status": "candidate",
+            "reason": "Same corroborated service, within one hour before its earliest returned anomalous observation. This establishes temporal association only; causation is unconfirmed."
+          }
+        ],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation."
+        ],
+        "score_kind": "uncalibrated_support"
       },
       "error": null,
       "usage": {
@@ -1352,6 +1575,15 @@
         "output_tokens": null,
         "total_tokens": null,
         "estimated_cost_usd": null
+      },
+      "provenance": {
+        "workflow": "initial_plan",
+        "transport": "direct",
+        "provider": "deterministic",
+        "model_called": false,
+        "snapshot_cutoff": "2026-10-09T15:00:00Z",
+        "snapshot_kind": "frozen_current",
+        "recorded": false
       }
     }
   }

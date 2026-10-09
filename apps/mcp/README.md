@@ -73,6 +73,10 @@ The listener defaults to `127.0.0.1`. If hosted behind HTTPS, supply `--host 0.0
 
 ## Verification
 
+The application mode `MCP_DEMO` opens an official `Client` with `StdioServerParameters`, discovers/verifies all ten contracts and sends every diagnostic through this server. The application binds `MCP_INCIDENT_ID`, `MCP_AS_OF` and its session; providers cannot override them. `LIVE_AI` uses the same client with a protected adaptive provider, but no paid calls were executed in this pass. Original offline evaluation uses an explicit direct adapter and replay retains that generating provenance.
+
+The adaptive worker awaits protocol I/O while this bridge calls back into the same asynchronous API. `test_investigation_protocol.py` launches this actual arrangement for all three incidents, compares returned evidence and forces child exit to ensure failure cannot become a successful MCP receipt. Scripted-provider tests separately prove different follow-up tools after different results. These are transport/orchestration proofs, not real-model intelligence measurements.
+
 ```sh
 python -m pytest apps/mcp/tests
 ```

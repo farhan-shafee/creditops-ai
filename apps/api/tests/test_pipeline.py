@@ -36,7 +36,7 @@ async def pipeline_store():
     [
         ("INC-DEMO-001", "pricing-service / Kafka consumer backlog"),
         ("INC-DEMO-002", "FIX connectivity/session instability"),
-        ("INC-DEMO-003", "database connection pool exhaustion following application change"),
+        ("INC-DEMO-003", "database connection pool exhaustion"),
     ],
 )
 async def test_pipeline_discovers_three_incidents_and_replays_exact_evidence(

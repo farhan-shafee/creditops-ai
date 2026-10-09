@@ -30,3 +30,11 @@ test('metric citations retain the entire persisted identifier including undersco
   );
   assert.match(markup, new RegExp(`<button[^>]*>${id}</button>`));
 });
+
+test('business event references open exact evidence identifiers rather than becoming inert prose', () => {
+  const id = 'BUSINESS-001-RFQ-DEMO-001-QUOTE_STALE';
+  const markup = renderToStaticMarkup(
+    <EvidenceText text={`Quote freshness changed [${id}].`} onEvidence={() => {}} />,
+  );
+  assert.match(markup, new RegExp(`<button[^>]*>${id}</button>`));
+});

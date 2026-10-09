@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "description": "Synthetic robustness/regression expectations authored before second-pass rule changes. Developer-authored, not independently held out. Expected labels are scorer-only.",
+  "cases": [
+    {"id":"pool_no_deployment","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":0},
+    {"id":"pool_unrelated_deployment","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":0},
+    {"id":"pool_deployment_after_onset","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":0},
+    {"id":"pool_preceding_deployment","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":1},
+    {"id":"kafka_no_business_events","expected_domain":"pricing-service / Kafka consumer backlog","expected_candidate_triggers":0},
+    {"id":"stale_market_healthy_kafka","expected_domain":"market-data-service / stale market data","expected_candidate_triggers":0},
+    {"id":"fix_ack_uncertainty","expected_domain":"FIX connectivity/session instability","expected_candidate_triggers":0},
+    {"id":"contradictory_domains","expected_domain":"insufficient evidence","expected_candidate_triggers":0},
+    {"id":"missing_telemetry","expected_domain":"insufficient evidence","expected_candidate_triggers":0},
+    {"id":"tool_failure","expected_domain":"insufficient evidence","expected_candidate_triggers":0},
+    {"id":"prompt_injection","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":0},
+    {"id":"changed_identifiers_paraphrases","expected_domain":"database connection pool exhaustion","expected_candidate_triggers":0},
+    {"id":"healthy_pool_contradiction","expected_domain":"insufficient evidence","expected_candidate_triggers":0}
+  ]
+}

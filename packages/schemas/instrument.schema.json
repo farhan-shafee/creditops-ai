@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "coupon_percent": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "title": "Coupon Percent"
+    },
+    "coupon_unit": {
+      "default": "percent per annum",
+      "title": "Coupon Unit",
+      "type": "string"
+    },
+    "currency": {
+      "const": "USD",
+      "default": "USD",
+      "title": "Currency",
+      "type": "string"
+    },
+    "fictional": {
+      "const": true,
+      "default": true,
+      "title": "Fictional",
+      "type": "boolean"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "instrument_type": {
+      "const": "CORPORATE_BOND",
+      "default": "CORPORATE_BOND",
+      "title": "Instrument Type",
+      "type": "string"
+    },
+    "issuer": {
+      "title": "Issuer",
+      "type": "string"
+    },
+    "maturity": {
+      "title": "Maturity",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "issuer",
+    "coupon_percent",
+    "maturity"
+  ],
+  "title": "Instrument",
+  "type": "object"
+}

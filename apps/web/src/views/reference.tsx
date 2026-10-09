@@ -124,7 +124,7 @@ export function ArchitectureView() {
       {
         icon: <Sparkles />,
         title: 'AI investigator',
-        text: 'Read-only allowlist · provider abstraction · citation validation',
+        text: 'Evidence-adaptive loop · explicit MCP / direct adapters · bounded claim validation',
       },
     ],
     [
@@ -207,6 +207,7 @@ export function ArchitectureView() {
             <li>Persisted synthetic telemetry adapter</li>
             <li>Accelerated deterministic incident clock</li>
             <li>Replay artifacts from the actual pipeline</li>
+            <li>Fresh adaptive MCP stdio diagnostics at a frozen cutoff</li>
             <li>Deterministic assessment provider clearly labeled</li>
           </ul>
         </Panel>
@@ -252,13 +253,14 @@ export function AboutView() {
             giving an engineer a reviewable starting point for triage.
           </p>
         </Panel>
-        <Panel title="Evidence before confidence" eyebrow="The engineering principle">
+        <Panel title="Evidence before certainty" eyebrow="The engineering principle">
           <p className="prose">
-            The investigator retrieves focused evidence, validates every citation, compares
-            alternative hypotheses, and lowers confidence when the available observations are
-            insufficient. Its public replay runs without external AI credentials and describes its
-            provenance accurately. Synthetic evaluations measure the implemented pipeline rather
-            than inventing business outcomes.
+            The investigator separates observations, supported failure conditions, candidate
+            triggers and unknown causes. Its support score is uncalibrated, and its domain-specific
+            checks do not establish arbitrary claim truth. Recorded replay and fresh adaptive MCP
+            diagnostics run without paid model calls; the console shows which path produced each
+            result. Synthetic evaluations measure the implemented pipeline without estimating
+            financial losses or production outcomes.
           </p>
         </Panel>
         <Panel title="Why production mutation is excluded" eyebrow="Deliberate safety boundary">

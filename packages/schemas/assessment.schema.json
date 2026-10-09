@@ -27,6 +27,28 @@
       "title": "AlternativeHypothesis",
       "type": "object"
     },
+    "EvidenceClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "statement",
+        "evidence_ids"
+      ],
+      "title": "EvidenceClaim",
+      "type": "object"
+    },
     "RCA": {
       "additionalProperties": false,
       "properties": {
@@ -90,6 +112,39 @@
       ],
       "title": "RCA",
       "type": "object"
+    },
+    "TriggerHypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "status": {
+          "const": "candidate",
+          "default": "candidate",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "statement",
+        "evidence_ids",
+        "reason"
+      ],
+      "title": "TriggerHypothesis",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -107,6 +162,17 @@
       "title": "Confidence",
       "type": "number"
     },
+    "confirmed_cause": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvidenceClaim"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "incident_summary": {
       "title": "Incident Summary",
       "type": "string"
@@ -116,6 +182,20 @@
         "type": "string"
       },
       "title": "Limitations",
+      "type": "array"
+    },
+    "observations": {
+      "items": {
+        "$ref": "#/$defs/EvidenceClaim"
+      },
+      "title": "Observations",
+      "type": "array"
+    },
+    "possible_triggers": {
+      "items": {
+        "$ref": "#/$defs/TriggerHypothesis"
+      },
+      "title": "Possible Triggers",
       "type": "array"
     },
     "probable_failure_domain": {
@@ -143,6 +223,12 @@
       "title": "Requires Human Review",
       "type": "boolean"
     },
+    "score_kind": {
+      "const": "uncalibrated_support",
+      "default": "uncalibrated_support",
+      "title": "Score Kind",
+      "type": "string"
+    },
     "similar_incidents": {
       "items": {
         "type": "string"
@@ -150,11 +236,30 @@
       "title": "Similar Incidents",
       "type": "array"
     },
+    "supported_failure_condition": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supported Failure Condition"
+    },
     "supporting_evidence_ids": {
       "items": {
         "type": "string"
       },
       "title": "Supporting Evidence Ids",
+      "type": "array"
+    },
+    "unknowns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unknowns",
       "type": "array"
     }
   },

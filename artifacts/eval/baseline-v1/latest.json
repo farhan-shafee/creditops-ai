@@ -1,0 +1,762 @@
+{
+  "schema_version": 1,
+  "status": "generated",
+  "generated_at": "2026-10-09T16:17:43.187174+00:00",
+  "dataset_version": "synthetic-v1",
+  "case_count": 15,
+  "seed": 42,
+  "methodology": "15 labeled synthetic cases: 12 diagnosable incidents and 3 insufficient-evidence cases. Labels are available only to the scorer. Complete case telemetry is activated in an isolated evaluation session. Latency measures the synthetic diagnostic pipeline, not human MTTR. The baseline uses first matching log signatures; the investigator requires corroborating independent signals. Deterministic rules are designed for these fixtures; this is an in-distribution functional benchmark, not a generalization study.",
+  "limitations": [
+    "No real operator study or production MTTR measurement.",
+    "Small synthetic in-distribution dataset; no held-out institutional traffic.",
+    "Deterministic confidence scores are not calibrated probabilities.",
+    "No live model result is claimed unless provider is openai or anthropic.",
+    "A failure stops artifact generation; existing artifact remains from its recorded timestamp."
+  ],
+  "live_ai_status": "not_run",
+  "algorithms": [
+    {
+      "name": "Deterministic Baseline",
+      "provider": "rules-keyword",
+      "cases": 15,
+      "top1_accuracy": 1,
+      "top3_accuracy": 1,
+      "required_evidence_recall": 0.5,
+      "invalid_evidence_citations": 0,
+      "hallucinated_evidence_count": 0,
+      "correct_abstention_rate": 1,
+      "escalation_accuracy": 1,
+      "runbook_recall": 0.8,
+      "tool_error_rate": 0.0,
+      "mean_latency_ms": 10.622906661592424,
+      "total_tokens": null,
+      "estimated_cost_usd": null,
+      "results": [
+        {
+          "incident_id": "INC-DEMO-001",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 12.943499954417348
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-DEMO-002",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 8.690499933436513
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-DEMO-003",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 10.084599955007434
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-004",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 9.832100011408329
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-005",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 9.712200029753149
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-006",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 11.030199937522411
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-007",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 9.994399966672063
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-008",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 10.710100061260164
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-009",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.3333333333333333,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 10.013200109824538
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-010",
+          "predicted_domain": "market-data-service / stale market data",
+          "ground_truth": "market-data-service / stale market data",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.5,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 11.71510003041476
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-011",
+          "predicted_domain": "risk-service / upstream dependency timeout",
+          "ground_truth": "risk-service / upstream dependency timeout",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.5,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 13.436299981549382
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-012",
+          "predicted_domain": "quote-service / CPU saturation",
+          "ground_truth": "quote-service / CPU saturation",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 0.5,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 11.763900052756071
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-013",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": false,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 9.613599977456033
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-014",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": false,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 8.356499951332808
+          },
+          "usage": {}
+        },
+        {
+          "incident_id": "INC-EVAL-015",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": false,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 2,
+            "latency_ms": 11.447399971075356
+          },
+          "usage": {}
+        }
+      ]
+    },
+    {
+      "name": "Orchestrated Investigator (deterministic provider)",
+      "provider": "deterministic",
+      "cases": 15,
+      "top1_accuracy": 1,
+      "top3_accuracy": 1,
+      "required_evidence_recall": 1.0,
+      "invalid_evidence_citations": 0,
+      "hallucinated_evidence_count": 0,
+      "correct_abstention_rate": 1,
+      "escalation_accuracy": 1,
+      "runbook_recall": 1,
+      "tool_error_rate": 0.0,
+      "mean_latency_ms": 58.47737332805991,
+      "total_tokens": null,
+      "estimated_cost_usd": null,
+      "results": [
+        {
+          "incident_id": "INC-DEMO-001",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 53.48270002286881
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-DEMO-002",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 49.26770005840808
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-DEMO-003",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 52.40350007079542
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-004",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 48.862399999052286
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-005",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 49.24399999435991
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-006",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 52.89609997998923
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-007",
+          "predicted_domain": "pricing-service / Kafka consumer backlog",
+          "ground_truth": "pricing-service / Kafka consumer backlog",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 53.08749992400408
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-008",
+          "predicted_domain": "FIX connectivity/session instability",
+          "ground_truth": "FIX connectivity/session instability",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 58.81509999744594
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-009",
+          "predicted_domain": "database connection pool exhaustion following application change",
+          "ground_truth": "database connection pool exhaustion following application change",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 62.137399916537106
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-010",
+          "predicted_domain": "market-data-service / stale market data",
+          "ground_truth": "market-data-service / stale market data",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 69.73009998910129
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-011",
+          "predicted_domain": "risk-service / upstream dependency timeout",
+          "ground_truth": "risk-service / upstream dependency timeout",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 68.88419995084405
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-012",
+          "predicted_domain": "quote-service / CPU saturation",
+          "ground_truth": "quote-service / CPU saturation",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": false,
+            "correct_abstention": false,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 63.44649998936802
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-013",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 60.001300065778196
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-014",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 67.545700003393
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        },
+        {
+          "incident_id": "INC-EVAL-015",
+          "predicted_domain": "insufficient evidence",
+          "ground_truth": "insufficient evidence",
+          "score": {
+            "top1_correct": true,
+            "top3_correct": true,
+            "required_evidence_recall": 1.0,
+            "invalid_evidence_citations": 0,
+            "hallucinated_evidence_count": 0,
+            "abstention_case": true,
+            "correct_abstention": true,
+            "escalation_correct": true,
+            "expected_runbook_retrieved": true,
+            "tool_error_rate": 0.0,
+            "tool_errors": 0,
+            "tool_calls": 10,
+            "latency_ms": 67.35639995895326
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null,
+            "estimated_cost_usd": null
+          }
+        }
+      ]
+    }
+  ]
+}

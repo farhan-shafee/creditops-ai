@@ -13,7 +13,9 @@
 | No remediation agent | Prevents an untrusted telemetry instruction from obtaining operational power | Humans still perform verification, change management and mitigation |
 | Lexical retrieval fallback | No external embeddings dependency or API spend | Optional vectors need independently evaluated embeddings and retrieval quality |
 | Session demo state | Visitors can independently run/reset fictional scenarios | UUID capabilities are not institutional customer identity or access control |
-| Small bounded tool plan | Predictable cost and reviewable trace | Complex incidents may need iterative, durable workflows and richer causal models |
+| Bounded adaptive loop | Actual results can change the next diagnostic action; finite calls, turns, context and deadlines | Keyless adaptation uses explicit rules; live SDK behavior remains unverified with real models; durable jobs needed at scale |
+| Limited known-domain support gate | Separates condition from trigger and neutralizes unsupported causal prose | Not a general factuality verifier or calibrated uncertainty model |
+| Three fictional bonds and event-derived request states | Inspectable impact with Decimal units and separate quote/RFQ/ack states | No exchange, valuation, yield, P&L, fees, accrued interest or settlement engine |
 | Synthetic benchmark | Reproducible functional measurements, explicit distractors and abstention | Does not measure human MTTR, operator usefulness or real-world incident coverage |
 
 At institutional scale, put real observability data behind entitlement-aware query services, deduplicate events, maintain immutable audit trails, version tools/prompts/evaluation datasets, evaluate held-out incident families, calibrate confidence, perform human usability studies, and integrate existing incident/change management. The diagnostic-only principle should remain intact even when data and integrations become real.
