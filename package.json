@@ -10,6 +10,7 @@
     "typecheck": "pnpm --filter @creditops/web typecheck",
     "test": "node scripts/check.mjs test",
     "e2e": "pnpm --filter @creditops/web e2e",
-    "test:dependencies": "node --test scripts/check-lint-dependencies.mjs"
+    "test:dependencies": "node --test scripts/check-lint-dependencies.mjs",
+    "test:lifecycle": "node --test scripts/check-webserver-lifecycle.mjs"
   }
 }

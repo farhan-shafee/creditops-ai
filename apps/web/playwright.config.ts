@@ -20,6 +20,8 @@ export default defineConfig({
         url: 'http://127.0.0.1:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
+        // Let the root launcher terminate its detached API and Next process groups.
+        gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
         env: { API_BASE_URL: process.env.API_BASE_URL ?? 'http://127.0.0.1:8000' },
       },
 });
