@@ -1,6 +1,6 @@
 # CreditOps AI final verification report
 
-Verified locally on 2026-10-09. All trading systems, clients, incidents and telemetry are synthetic.
+Verified locally and through GitHub Actions on 2026-10-09. All trading systems, clients, incidents and telemetry are synthetic.
 
 > CreditOps AI is an independent portfolio project using entirely synthetic data. It is not affiliated with or connected to any trading venue, broker, financial institution, or employer.
 
@@ -26,6 +26,8 @@ Lexical retrieval works without keys. Optional pgvector support and cosine order
 | Scoped dependency compatibility tests | **2 passed, 0 failed** |
 | Development Playwright suite | **14 passed, 0 failed** |
 | Production Docker Playwright suite | **14 passed, 0 failed**, 35.4 seconds |
+| Real Linux Playwright server-lifecycle regression | **1 passed, 0 failed**; output pipes closed in 56.4 ms and all four controlled children stopped. The Unix proof is explicitly skipped on Windows. |
+| Hosted Linux GitHub Actions | **4/4 jobs succeeded**: 70 Python, 8 frontend, 2 compatibility, 1 lifecycle and 14 browser tests passed, with zero failures or skips. Browser suite completed in 1.9 minutes, including real stack shutdown. |
 | Python Ruff, frontend ESLint, strict TypeScript | Passed |
 | Next.js optimized production build and Docker API/web builds | Passed |
 | Fresh PostgreSQL migrations, deterministic seed, restart persistence, filters and pgvector ordering | Passed |
@@ -65,6 +67,8 @@ A fresh independent review found no critical security issue and identified defec
 
 Important earlier failures also exposed PostgreSQL seed ordering, strict HTTP query parsing, fractional time filtering, unsupported citation prefixes and pending-scenario selection races. They were fixed and the final suites passed. Two parallel browser runs initially shared an artifact directory, causing a trace-file deletion failure; final verification uses isolated outputs. An E2E hardcoded localhost URL was corrected to follow the configured host. These earlier failures are not hidden by the final counts.
 
+The first hosted CI run passed all 14 browser assertions, then hung during Linux server teardown. Playwright's default hard termination bypassed the development launcher's cleanup of detached API and frontend process groups; surviving children retained output pipes. The run was cancelled to obtain the logs. A regression using the actual Playwright server plugin reproduced the hang with four live controlled descendants. Explicit SIGTERM shutdown then closed the pipes and stopped them. CI now runs this Linux lifecycle regression and bounds the browser job to 20 minutes; the successful replacement run is identified in the publication receipt.
+
 A SELECT-only PostgreSQL diagnostic role was provisioned and its write denial verified. The demo API still uses a writer role for simulation and investigation persistence; the tool facade enforces diagnostic-only methods. MCP has no database or model-provider credentials. Session UUIDs are capabilities for synthetic demo state, not institutional authentication.
 
 ## Browser assets and documentation
@@ -77,10 +81,18 @@ The hiring-manager README, architecture, security, tradeoffs, deployment command
 
 The local console is available at [localhost:3000](http://localhost:3000); the production Docker console is [localhost:13000](http://localhost:13000). Both use a real backend. The full Docker stack has been validated. No cloud deployment URL is claimed.
 
-Vercel and Neon connectors were accessible, but no dedicated CreditOps resources existed and container-host credentials were unavailable. No unrelated project or paid resource was created. Render/Railway Docker configuration, Neon-compatible migrations/TLS and Vercel frontend configuration are prepared. The remaining external actions are to provision an approved dedicated Neon database and container service, apply migrations/seed, configure server-side database/backend URLs, deploy the dedicated Vercel project and smoke-test all three flows. [Exact steps and commands](DEPLOYMENT.md) are documented.
+Vercel and Neon connectors were accessible, but no dedicated CreditOps resources existed and container-host credentials were unavailable. No unrelated project or paid resource was created. The Render blueprint, tested API Dockerfile, Neon-compatible migrations/TLS and Railway/Vercel deployment instructions are prepared. The remaining external actions are to provision an approved dedicated Neon database and container service, apply migrations/seed, configure server-side database/backend URLs, deploy the dedicated Vercel project and smoke-test all three flows. [Exact steps and commands](DEPLOYMENT.md) are documented. Final documentation review corrected Vercel CLI invocation to the monorepo root and made Railway's custom Dockerfile selection explicit.
 
 Other material limits: in-memory rate budgets and in-process workers require shared budgets/durable jobs for multiple replicas; no institutional identity or entitlements are implemented; no real FIX/venue integration exists; deterministic confidence is uncalibrated; no live embedding/provider benchmark or human operator study has been performed. Recommendations remain advisory and every RCA requires human review.
 
 ## Publication receipt
 
-Target remote: `https://github.com/farhan-shafee/creditops-ai.git`. Branch: `main`. Repository privacy was verified as **private** before publication. The exact source commit and push/CI receipt are added after creating the implementation commit; a Git commit cannot embed its own resulting SHA.
+Implementation commit: [`b8778d02b3237406735ac1967395666197b266af`](https://github.com/farhan-shafee/creditops-ai/commit/b8778d02b3237406735ac1967395666197b266af), `feat: build CreditOps AI incident intelligence platform`.
+
+Pushed successfully to `https://github.com/farhan-shafee/creditops-ai.git`, branch `main`. `git ls-remote origin refs/heads/main` matched that exact SHA. `gh repo view` confirmed `isPrivate: true`; visibility was not changed. The working tree was clean after the implementation push. Both source and actual Git-history Gitleaks scans found zero leaks.
+
+Verification fix: [`1cd26037b218ad73561a0a29d6c0bbda7bbf33f8`](https://github.com/farhan-shafee/creditops-ai/commit/1cd26037b218ad73561a0a29d6c0bbda7bbf33f8), `fix: shut down Linux browser test servers gracefully`. Its exact SHA matched the remote `main` after push, and a fresh actual-history scan found zero leaks across both source commits.
+
+The first [CI run 37959051575](https://github.com/farhan-shafee/creditops-ai/actions/runs/37959051575) was cancelled after all 14 browser assertions passed but Linux teardown hung; it is not counted as a successful workflow. Replacement [CI run 37962032702](https://github.com/farhan-shafee/creditops-ai/actions/runs/37962032702) completed with **success for all four jobs** (`python`, `web`, `e2e`, `secrets`) on source SHA `1cd26037b218ad73561a0a29d6c0bbda7bbf33f8`. Its logs confirm 70 Python tests in 16.10 seconds, 8 frontend tests, 2 dependency checks, 1 Linux lifecycle test (50.3 ms pipe closure; all four children stopped) and 14 browser tests in 1.9 minutes. The browser command exited normally and verification artifacts uploaded successfully.
+
+This publication receipt, developer-command documentation and corrected deployment instructions are delivered in a subsequent documentation-only commit with `[skip ci]`; runtime and test source are unchanged from the successful CI SHA. A Git commit cannot embed its own resulting SHA. The final response provides the enclosing delivery commit SHA after verifying push, repository privacy and a clean working tree.

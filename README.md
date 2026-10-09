@@ -101,6 +101,7 @@ All host ports bind to loopback. Disposable local credentials in Compose are int
 | `pnpm lint` / `make lint` | Python and frontend lint |
 | `pnpm typecheck` | Strict frontend TypeScript |
 | `pnpm test:dependencies` | Scoped lint dependency compatibility and active rule checks |
+| `pnpm test:lifecycle` | Real Playwright/Linux launcher shutdown and descendant cleanup; explicit Unix-proof skip on Windows |
 | `pnpm e2e` | Playwright all-scenario and responsive checks |
 | `make seed` | Idempotent seed |
 | `make eval` | Generate benchmark and replay artifacts |

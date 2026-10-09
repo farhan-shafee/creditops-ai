@@ -7,7 +7,7 @@ At implementation time Vercel and Neon connectors were accessible and searches f
 ## Backend first
 
 1. Create a dedicated Neon project/database for CreditOps AI within an approved plan. Enable pgvector with `CREATE EXTENSION IF NOT EXISTS vector;`. Obtain the connection string through the platform's secret UI; never paste it into Git or the frontend.
-2. Use the Render blueprint at `infra/render.yaml`, or Railway's `infra/railway.toml` with `infra/docker/api.Dockerfile`. Point it at the existing private GitHub repository and select the dedicated CreditOps service. Plans/resources need explicit cost review; configuration is not an instruction to purchase a paid plan automatically.
+2. Use the Render blueprint at `infra/render.yaml` with `infra/docker/api.Dockerfile`. Point it at the existing private GitHub repository and select the dedicated CreditOps service. For Railway, keep the service source at the repository root, set `RAILWAY_DOCKERFILE_PATH=/infra/docker/api.Dockerfile`, and configure health path `/health`, timeout 120 seconds and an on-failure restart policy in the dedicated service settings. These follow [Railway's custom Dockerfile instructions](https://docs.railway.com/builds/dockerfiles). Do not assume the optional `infra/railway.toml` is discovered automatically; its absolute config path must be selected explicitly in a service that supports it. See [Railway's monorepo settings](https://docs.railway.com/deployments/monorepo). Plans/resources need explicit cost review; configuration is not an instruction to purchase a paid plan automatically.
 3. Set server-side `DATABASE_URL` using PostgreSQL connection parameters and `DATABASE_REQUIRE_SSL=true`. Set `TELEMETRY_MODE=persisted`, `PUBLIC_DEMO=true`, and configure CORS only for the eventual console origin. Leave provider keys and `ADMIN_API_KEY` unset for public replay. Public demo mode blocks paid query embeddings even if optional embedding settings are present.
 4. Run migrations and idempotent seed in the dedicated service environment:
 
@@ -19,11 +19,10 @@ python scripts/seed.py
 5. Ensure `data/replay/INC-DEMO-001.json` through `003.json` and `artifacts/eval/latest.json` are included in the image. The committed artifacts are ready for keyless replay. To regenerate, run `python scripts/evaluate.py` in an isolated development/evaluation store and deploy the reviewed artifacts.
 6. The container entrypoint honors `PORT`; health check `/health` must return 200 and actual database connectivity.
 
-Optional CLI workflow, after authenticating directly with the hosting provider and linking a dedicated service:
+Optional Railway CLI workflow, run from the repository root after creating and configuring the dedicated service as above:
 
 ```sh
 railway login
-railway init
 railway link
 railway up
 # Or use Render's reviewed blueprint from the dashboard.
@@ -33,15 +32,15 @@ Verify the exact selected project before `railway up`. Do not modify unrelated e
 
 ## Vercel frontend
 
-Import the existing private repository in Vercel as a dedicated CreditOps project. Set **Root Directory** to `apps/web`, framework Next.js, and keep the repository private. pnpm discovers the workspace lockfile. The tracked frontend Vercel configuration supplements the project settings; `rootDirectory` is not a valid `vercel.json` property.
+Import the existing private repository in Vercel as a dedicated CreditOps project. Set **Root Directory** to `apps/web`, framework Next.js, and keep the repository private. pnpm discovers the workspace lockfile. Configure these settings in the dedicated Vercel project; no `vercel.json` is required.
 
-Set server-side `API_BASE_URL=https://YOUR-DEDICATED-BACKEND` for the deployment environment. No model key or admin key belongs in `NEXT_PUBLIC_*` configuration.
+Set server-side `API_BASE_URL=https://YOUR-DEDICATED-BACKEND` for the deployment environment. No model key or admin key belongs in `NEXT_PUBLIC_*` configuration. Run the following commands from the repository root so the workspace lockfile, overrides and patches remain available, following [Vercel's monorepo CLI instructions](https://vercel.com/docs/monorepos):
 
 ```sh
 pnpm dlx vercel login
-pnpm dlx vercel link --cwd apps/web
-pnpm dlx vercel env add API_BASE_URL production --cwd apps/web
-pnpm dlx vercel deploy --prod --cwd apps/web
+pnpm dlx vercel link
+pnpm dlx vercel env add API_BASE_URL production
+pnpm dlx vercel deploy --prod
 ```
 
 Enter the backend URL at the environment prompt. Review the selected scope/project before deploying. A standalone frontend with an unreachable backend is not a completed deployment.

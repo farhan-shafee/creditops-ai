@@ -40,4 +40,4 @@ Session isolation; concurrent reset/run/investigation behavior; corrupt or inven
 - [x] Review all subsystem contracts; fix failures and run the complete check suite.
 - [x] Create screenshots, hiring-manager README, interview/demo/tradeoff/portfolio documentation and final report.
 - [x] Perform independent security/correctness review and address findings.
-- [ ] Commit intended files, push to existing private remote, verify commit/visibility/clean tree and update report with exact receipt.
+- [x] Commit intended files, push to existing private remote, verify commit/visibility/clean tree and update report with exact receipt.
