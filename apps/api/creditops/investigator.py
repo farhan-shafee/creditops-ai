@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import hashlib
 import json
 import logging
@@ -37,7 +38,7 @@ from .providers import (
 )
 from .security import sanitize
 from .settings import Settings
-from .validation import InvalidAssessment, validate_assessment
+from .validation import InvalidAssessment, validate_assessment, validate_assessment_with_outcome
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REPLAY_DIR = PROJECT_ROOT / "data" / "replay"
@@ -63,12 +64,73 @@ def utc_now() -> str:
 
 def merge_usage(records: list[dict[str, Any]]) -> dict[str, Any]:
     keys = ("input_tokens", "output_tokens", "total_tokens", "estimated_cost_usd")
-    return {
+    totals = {
+        key: sum(record[key] for record in records)
+        if records and all(record.get(key) is not None for record in records)
+        else None
+        for key in keys
+    }
+    totals["known_subtotals"] = {
         key: sum(record[key] for record in records if record.get(key) is not None)
         if any(record.get(key) is not None for record in records)
         else None
         for key in keys
     }
+    totals["usage_status"] = (
+        "known"
+        if records and all(record.get("total_tokens") is not None for record in records)
+        else "partial_unknown"
+        if any(record.get("total_tokens") is not None for record in records)
+        else "unknown"
+    )
+    return totals
+
+
+def _record_validation(result: dict[str, Any], assessment: Assessment, source: dict[str, Any]) -> Assessment:
+    result["provenance"]["assessment_source"] = source
+    try:
+        final, proposal, outcome = validate_assessment_with_outcome(assessment, result["evidence"])
+    except InvalidAssessment as error:
+        result["provider_proposal"] = error.provider_proposal
+        result["validation_outcome"] = error.validation_outcome
+        result["validation_outcome"]["assessment_source"] = source
+        raise
+    result["provider_proposal"] = None if source["kind"] == "orchestrator_fallback" else proposal
+    result["validation_outcome"] = outcome
+    outcome["assessment_source"] = source
+    if source["kind"] == "orchestrator_fallback":
+        outcome.update(status="fallback_abstained", structurally_parsed=False, proposed_domain=None)
+    return final
+
+
+def _snapshot_provider_calls(
+    result: dict[str, Any], provider: AssessmentProvider, usages: list[dict[str, Any]], start_index: int
+) -> None:
+    calls = copy.deepcopy(getattr(provider, "execution_receipts", [])[start_index:])
+    result["provider_calls"] = calls
+    if calls:
+        result["provenance"]["model_called"] = any(call.get("request_started") for call in calls)
+        result["usage"] = merge_usage([call.get("usage") or {} for call in calls])
+        outcome = result.get("validation_outcome")
+        if outcome and outcome["status"] == "not_validated":
+            outcome["provider_response"] = calls[-1]["status"]
+    else:
+        result["usage"] = merge_usage(usages)
+
+
+def _assessment_source(provider: AssessmentProvider) -> dict[str, str]:
+    kind = (
+        "deterministic"
+        if provider.name == "deterministic"
+        else ("live_provider" if provider.name in ("openai", "anthropic") else "scripted_provider")
+    )
+    return {"kind": kind, "provider": provider.name}
+
+
+def _record_orchestration_change(result: dict[str, Any], field: str, reason: str) -> None:
+    result["validation_outcome"]["changed_fields"].append(
+        {"field": field, "reason": reason, "stage": "orchestration"}
+    )
 
 
 async def collect_adaptive_investigation(
@@ -87,6 +149,7 @@ async def collect_adaptive_investigation(
     deliberately insufficient: this path must observe actual results between turns.
     """
     configuration = limits or Settings()
+    initial_receipt_index = len(getattr(provider, "execution_receipts", []))
     if not callable(getattr(provider, "next_action", None)):
         raise ProviderUnavailable("Configured provider does not support evidence-adaptive diagnostics")
     cutoff = await store.freeze_snapshot(session_id, incident_id)
@@ -113,6 +176,9 @@ async def collect_adaptive_investigation(
         "steps": [],
         "evidence": [],
         "assessment": None,
+        "provider_proposal": None,
+        "validation_outcome": None,
+        "provider_calls": [],
         "error": None,
         "usage": {},
         "provenance": {
@@ -134,7 +200,7 @@ async def collect_adaptive_investigation(
     stop_reason: str | None = None
 
     async def publish() -> None:
-        result["usage"] = merge_usage(usages)
+        _snapshot_provider_calls(result, provider, usages, initial_receipt_index)
         if on_progress:
             await on_progress(result)
 
@@ -216,7 +282,6 @@ async def collect_adaptive_investigation(
                         [item for item in result["evidence"] if item["kind"] != "incident"],
                     )
                 usages.append(usage)
-                result["provenance"]["model_called"] = provider.name in ("openai", "anthropic")
                 try:
                     decision = AdaptiveDecision.model_validate(as_dict(decision))
                 except ValidationError as error:
@@ -247,6 +312,11 @@ async def collect_adaptive_investigation(
                 assessment.probable_failure_domain = ABSTAIN_DOMAIN
                 assessment.limitations.append(stop_reason)
                 result["provenance"]["stop_reason"] = stop_reason
+                assessment_source = {
+                    "kind": "orchestrator_fallback",
+                    "provider": "deterministic",
+                    "reason": stop_reason,
+                }
             else:
                 provider_turns += 1
                 async with asyncio.timeout(configuration.provider_timeout_seconds):
@@ -254,18 +324,22 @@ async def collect_adaptive_investigation(
                         context, [item for item in result["evidence"] if item["kind"] != "incident"]
                     )
                 usages.append(usage)
-                result["provenance"]["model_called"] = provider.name in ("openai", "anthropic")
-            assessment = validate_assessment(assessment, result["evidence"])
+                assessment_source = _assessment_source(provider)
+            assessment = _record_validation(result, assessment, assessment_source)
             if any(step["status"] == "failed" for step in result["steps"]):
                 assessment.requires_human_review = True
+                if assessment.confidence > 0.6:
+                    _record_orchestration_change(result, "confidence", "diagnostic_failure_confidence_cap")
                 assessment.confidence = min(assessment.confidence, 0.6)
                 assessment.limitations.append(
                     "One or more diagnostic tools failed; their state is unknown, not healthy."
                 )
+                _record_orchestration_change(result, "limitations", "diagnostic_failure_limitation")
             assessment.limitations.append(
-                f"Evidence-adaptive {provider.name} investigation through {client.transport}; frozen synthetic cutoff {cutoff}. No operational action was executed."
+                f"Evidence-adaptive {provider.name} investigation through {client.transport}; final assessment source {assessment_source['provider']} ({assessment_source['kind']}); frozen synthetic cutoff {cutoff}. No operational action was executed."
             )
-            result["assessment"] = assessment.model_dump(mode="json")
+            _record_orchestration_change(result, "limitations", "execution_provenance_limitation")
+            result["assessment"] = sanitize(assessment.model_dump(mode="json"))
             result["provenance"]["provider_turns"] = provider_turns
             result["provenance"]["tool_calls"] = len(requested)
             result["steps"].append(
@@ -293,6 +367,16 @@ async def collect_adaptive_investigation(
         result["error"] = (
             "Adaptive investigation interrupted, unavailable, or invalid; no successful MCP execution is claimed."
         )
+        if result["validation_outcome"] is None:
+            result["validation_outcome"] = {
+                "status": "not_validated",
+                "structurally_parsed": False,
+                "provider_response": "missing_or_interrupted",
+                "assessment_source": _assessment_source(provider),
+                "original_claims_independently_verified": False,
+                "changed_fields": [],
+                "rejected_fields": [],
+            }
         await publish()
         raise
 
@@ -304,6 +388,7 @@ async def collect_investigation(
     provider: AssessmentProvider,
     on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
 ) -> dict[str, Any]:
+    initial_receipt_index = len(getattr(provider, "execution_receipts", []))
     cutoff = await store.freeze_snapshot(session_id, incident_id)
     incident = await store.get_incident(session_id, incident_id, as_of=cutoff)
     if incident is None:
@@ -326,13 +411,16 @@ async def collect_investigation(
         "steps": [],
         "evidence": [],
         "assessment": None,
+        "provider_proposal": None,
+        "validation_outcome": None,
+        "provider_calls": [],
         "error": None,
         "usage": {},
         "provenance": {
             "workflow": "initial_plan",
             "transport": "direct",
             "provider": provider.name,
-            "model_called": provider.name in ("openai", "anthropic"),
+            "model_called": False,
             "snapshot_cutoff": cutoff,
             "snapshot_kind": "frozen_current",
             "recorded": False,
@@ -343,6 +431,7 @@ async def collect_investigation(
     usages: list[dict[str, Any]] = []
 
     async def publish() -> None:
+        _snapshot_provider_calls(result, provider, usages, initial_receipt_index)
         if on_progress:
             await on_progress(result)
 
@@ -400,14 +489,23 @@ async def collect_investigation(
         incident_context, [item for item in result["evidence"] if item["kind"] != "incident"]
     )
     usages.append(assessment_usage)
-    assessment = validate_assessment(assessment, result["evidence"])
+    try:
+        assessment = _record_validation(result, assessment, _assessment_source(provider))
+    except InvalidAssessment:
+        result["status"] = "failed"
+        result["error"] = "Provider assessment failed conservative diagnostic validation."
+        await publish()
+        raise
     if any(step["status"] == "failed" for step in result["steps"]):
         assessment.requires_human_review = True
+        if assessment.confidence > 0.6:
+            _record_orchestration_change(result, "confidence", "diagnostic_failure_confidence_cap")
         assessment.confidence = min(assessment.confidence, 0.6)
         assessment.limitations.append(
             "One or more diagnostic tools failed; additional human investigation is required."
         )
-    result["assessment"] = assessment.model_dump(mode="json")
+        _record_orchestration_change(result, "limitations", "diagnostic_failure_limitation")
+    result["assessment"] = sanitize(assessment.model_dump(mode="json"))
     result["usage"] = merge_usage(usages)
     result["steps"].append(
         {
@@ -440,12 +538,26 @@ def write_replay_artifact(result: dict[str, Any], directory: Path = REPLAY_DIR) 
         "schema_version": 2,
         "generated_at": utc_now(),
         "provenance": {
-            "pipeline": "creditops.investigator.collect_investigation",
+            "pipeline": "creditops.investigator.collect_adaptive_investigation"
+            if result.get("provenance", {}).get("workflow") == "adaptive"
+            else "creditops.investigator.collect_investigation",
             "provider": result["provider"],
-            "model_called": result["provider"] != "deterministic",
-            "telemetry_window": "complete synthetic scenario snapshot",
+            "model_called": result.get("provenance", {}).get("model_called", False),
+            "telemetry_window": "frozen synthetic evidence cutoff"
+            if result.get("provenance", {}).get("snapshot_kind") == "frozen_current"
+            else "complete synthetic scenario snapshot",
+            "snapshot_kind": result.get("provenance", {}).get("snapshot_kind", "complete_scenario"),
             "transport": result.get("provenance", {}).get("transport", "unknown"),
             "snapshot_cutoff": result.get("provenance", {}).get("snapshot_cutoff"),
+            "original_created_at": result.get("created_at"),
+            "original_model": next(
+                (
+                    call.get("returned_model") or call.get("requested_model")
+                    for call in result.get("provider_calls", [])
+                    if call.get("request_started")
+                ),
+                None,
+            ),
         },
         "investigation": result,
     }
@@ -492,6 +604,9 @@ async def create_investigation(store: Any, session_id: str, incident_id: str, mo
         "steps": [],
         "evidence": [],
         "assessment": None,
+        "provider_proposal": None,
+        "validation_outcome": None,
+        "provider_calls": [],
         "error": None,
         "usage": {},
         "provenance": {},
@@ -515,6 +630,8 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
             artifact = payload["investigation"]
             row["provider"] = payload["provenance"]["provider"]
             row["usage"] = artifact["usage"]
+            for field in ("provider_proposal", "validation_outcome", "provider_calls"):
+                row[field] = copy.deepcopy(artifact.get(field, [] if field == "provider_calls" else None))
             original_transport = payload["provenance"].get(
                 "transport", artifact.get("provenance", {}).get("transport", "unknown")
             )
@@ -525,12 +642,17 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
                 "provider": row["provider"],
                 "model_called": False,
                 "generating_model_called": payload["provenance"].get("model_called", False),
-                "snapshot_kind": "complete_scenario",
+                "snapshot_kind": payload["provenance"].get("snapshot_kind", "complete_scenario"),
                 "snapshot_cutoff": payload["provenance"].get("snapshot_cutoff")
                 or max((item["timestamp"] for item in artifact["evidence"]), default=None),
                 "recorded": True,
                 "artifact_schema_version": payload["schema_version"],
                 "artifact_generated_at": payload["generated_at"],
+                "original_created_at": payload["provenance"].get(
+                    "original_created_at", artifact.get("created_at")
+                ),
+                "original_model": payload["provenance"].get("original_model"),
+                "playback_model_calls": 0,
             }
             for step in artifact["steps"]:
                 row["steps"].append(
@@ -547,7 +669,7 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
             row["assessment"] = artifact["assessment"]
             row["assessment"]["limitations"] = [
                 *row["assessment"]["limitations"],
-                "Replay uses a persisted complete scenario snapshot. Step timestamps are artifact generation times; this is not a live model call.",
+                "Recorded investigation playback uses the original persisted evidence and timestamps. No new model calls occur during playback; original provider, run time and cutoff are recorded in provenance.",
             ]
             row["status"] = "complete"
             await store.save_investigation(session_id, row)

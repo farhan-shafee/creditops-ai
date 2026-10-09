@@ -471,6 +471,27 @@
       "title": "Provider",
       "type": "string"
     },
+    "provider_calls": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Provider Calls",
+      "type": "array"
+    },
+    "provider_proposal": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Proposal"
+    },
     "status": {
       "title": "Status",
       "type": "string"
@@ -486,6 +507,19 @@
       "additionalProperties": true,
       "title": "Usage",
       "type": "object"
+    },
+    "validation_outcome": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Validation Outcome"
     }
   },
   "required": [

@@ -235,6 +235,7 @@ def create_app(
                 "kafka": adapter.health(),
                 "environment": "synthetic",
                 "diagnostic_capabilities": "read-only",
+                "embeddings_enabled": get_settings().embeddings_enabled,
             },
             status_code=200 if database_ok else 503,
         )

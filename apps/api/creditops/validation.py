@@ -1,5 +1,6 @@
 """Citation checks and a limited synthetic-domain support gate."""
 
+import copy
 import json
 import re
 from typing import Any
@@ -10,7 +11,138 @@ from .security import sanitize
 
 
 class InvalidAssessment(ValueError):
-    pass
+    """Rejected assessments retain a sanitized comparison for partial receipts."""
+
+    provider_proposal: dict[str, Any] | None = None
+    validation_outcome: dict[str, Any] | None = None
+
+
+EVIDENCE_REFERENCE = re.compile(
+    r"\b(?:BUSINESS|LOG|METRIC|DEPLOY|RUNBOOK|FIX(?:-EVID)?|KAFKA(?:-EVID)?|DB(?:-EVID)?|INC-(?:HIST|DEMO|EVAL|EVID)|TOPOLOGY)-[A-Za-z0-9_-]+\b"
+)
+
+
+def _reference_fields(proposal: dict[str, Any]) -> dict[str, set[str]]:
+    """Locate both structured citations and identifiers embedded in prose."""
+    fields: dict[str, set[str]] = {}
+
+    def visit(value: Any, path: str) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                visit(item, f"{path}.{key}" if path else key)
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                visit(item, f"{path}[{index}]")
+        elif isinstance(value, str):
+            found = set(EVIDENCE_REFERENCE.findall(value))
+            # Structured reference arrays must reject arbitrary invented IDs too.
+            if any(field in path for field in ("evidence_ids[", "relevant_runbooks[", "similar_incidents[")):
+                found.add(value)
+            if found:
+                fields[path] = found
+
+    visit(proposal, "")
+    return fields
+
+
+def _changed_fields(before: Any, after: Any, reason: str, path: str = "") -> list[dict[str, str]]:
+    if before == after:
+        return []
+    if isinstance(before, dict) and isinstance(after, dict):
+        return [
+            change
+            for key in sorted(before.keys() | after.keys())
+            for change in _changed_fields(
+                before.get(key), after.get(key), reason, f"{path}.{key}" if path else key
+            )
+        ]
+    return [
+        {
+            "field": path,
+            "reason": "mandatory_human_review" if path == "requires_human_review" else reason,
+            "stage": "diagnostic_validation",
+        }
+    ]
+
+
+def validate_assessment_with_outcome(
+    assessment: Assessment, evidence: list[Any]
+) -> tuple[Assessment, dict[str, Any], dict[str, Any]]:
+    """Observe the existing in-place gate without treating rewrites as model claims.
+
+    Only public structured advisory fields are retained, sanitized as untrusted data.
+    This deliberately leaves the diagnostic rules in validate_assessment unchanged.
+    """
+    proposal = sanitize(copy.deepcopy(assessment.model_dump(mode="json")))
+    references = _reference_fields(proposal)
+    rows = {as_dict(item)["id"]: as_dict(item) for item in evidence}
+    missing = sorted(set().union(*references.values()) - rows.keys()) if references else []
+    outcome: dict[str, Any] = {
+        "status": "pending",
+        "structurally_parsed": True,
+        "proposal_sanitized": True,
+        "proposed_domain": proposal["probable_failure_domain"],
+        "final_domain": None,
+        "diagnostic_domain_supported": None,
+        "original_claims_independently_verified": False,
+        "scope": "Citation validity and conservative known synthetic-domain support only; normalized fields are rule-authored and do not independently confirm every original claim.",
+        "invalid_evidence_ids": missing,
+        "invalid_citation_count": len(missing),
+        "changed_fields": [],
+        "rejected_fields": [],
+    }
+    try:
+        final = validate_assessment(assessment, evidence)
+    except InvalidAssessment as error:
+        rejected = [
+            {"field": field, "reason": "evidence_not_returned", "evidence_ids": sorted(ids & set(missing))}
+            for field, ids in references.items()
+            if ids & set(missing)
+        ]
+        if not rejected:
+            for field, expected in (
+                ("relevant_runbooks", {"runbook"}),
+                ("similar_incidents", {"history", "historical_incident"}),
+            ):
+                ids = [
+                    identifier
+                    for identifier in proposal[field]
+                    if identifier in rows and rows[identifier]["kind"] not in expected
+                ]
+                if ids:
+                    rejected.append({"field": field, "reason": "wrong_evidence_type", "evidence_ids": ids})
+        outcome.update(status="rejected", rejected_fields=rejected)
+        error.provider_proposal = proposal
+        error.validation_outcome = outcome
+        raise
+    downgraded = (
+        proposal["probable_failure_domain"] != ABSTAIN_DOMAIN
+        and final.probable_failure_domain == ABSTAIN_DOMAIN
+    )
+    reason = (
+        "unsupported_domain_abstention"
+        if downgraded
+        else (
+            "abstention_narrative_normalization"
+            if final.probable_failure_domain == ABSTAIN_DOMAIN
+            else "known_domain_rule_normalization"
+        )
+    )
+    changed = _changed_fields(proposal, sanitize(final.model_dump(mode="json")), reason)
+    outcome.update(
+        status="downgraded"
+        if downgraded
+        else (
+            "abstained"
+            if final.probable_failure_domain == ABSTAIN_DOMAIN
+            else ("accepted_normalized" if changed else "accepted")
+        ),
+        final_domain=final.probable_failure_domain,
+        diagnostic_domain_supported=final.probable_failure_domain != ABSTAIN_DOMAIN
+        and final.probable_failure_domain == proposal["probable_failure_domain"],
+        changed_fields=changed,
+    )
+    return final, proposal, outcome
 
 
 def _neutralize_abstained_narrative(

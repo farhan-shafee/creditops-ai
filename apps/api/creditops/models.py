@@ -136,6 +136,9 @@ class Investigation(Contract):
     error: str | None
     usage: dict[str, Any]
     provenance: dict[str, Any] = Field(default_factory=dict)
+    provider_proposal: dict[str, Any] | None = None
+    validation_outcome: dict[str, Any] | None = None
+    provider_calls: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class InvestigationRequest(Contract):

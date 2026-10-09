@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     admin_api_key: SecretStr | None = None
     investigation_timeout_seconds: float = Field(default=45, ge=1, le=300)
     diagnostic_timeout_seconds: float = Field(default=10, ge=0.1, le=30)
-    provider_timeout_seconds: float = Field(default=20, ge=0.1, le=60)
+    provider_timeout_seconds: float = Field(default=20, ge=0.1, le=120)
     max_provider_turns: int = Field(default=12, ge=2, le=16)
     max_diagnostic_calls: int = Field(default=12, ge=2, le=16)
     max_no_progress_calls: int = Field(default=2, ge=1, le=3)
