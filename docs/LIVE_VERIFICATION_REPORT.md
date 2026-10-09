@@ -103,6 +103,17 @@ request occurred in this repair. Independent code/security review found no block
 Normal hosted CI for the repair source is pending publication; its exact SHA/run
 will be recorded in a subsequent documentation receipt.
 
+[Initial repair CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/37993269522)
+on `f935412eeb617f77aae4e0a350ffab3935effa11` passed web/browser/Linux lifecycle,
+but Python service initialization and the secret scanner were blocked by Docker
+Hub pull limits before application checks/scanning. One failed-job rerun confirmed
+the registry failure. CI now pins the exact locally tested pg17/pgvector digest
+from [Google's Docker Hub cache](https://docs.cloud.google.com/artifact-registry/docs/pull-cached-dockerhub-images)
+and the same Gitleaks 8.30.1 from its [official registry](https://github.com/gitleaks/gitleaks/pkgs/container/gitleaks/).
+Digest equality and the complete redacted history scan were verified locally;
+no test, scanner rule, migration or assertion was weakened. Cache availability
+remains an external dependency. New source CI must complete before success is claimed.
+
 Three database label mismatches retain removal of unsupported change attribution.
 The original risk case still has earlier 1,840 ms and later 1,450 ms observations
 against a 1,500 ms current-state threshold. Current diagnosis differs from historical

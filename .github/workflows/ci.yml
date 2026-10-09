@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        # Same tested pg17 image; avoid Docker Hub's shared-runner pull quota.
+        image: mirror.gcr.io/pgvector/pgvector@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
         env:
           POSTGRES_DB: creditops_ci
           POSTGRES_USER: creditops
@@ -97,4 +98,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: Scan tracked source and Git history
-        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1 detect --source /repo --config /repo/.gitleaks.toml --redact --exit-code 1
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb detect --source /repo --config /repo/.gitleaks.toml --redact --exit-code 1
