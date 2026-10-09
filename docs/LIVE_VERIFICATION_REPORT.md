@@ -155,7 +155,7 @@ not establish generalization, production reliability or MTTR savings.
 
 | Executed check | Result |
 |---|---|
-| Full Python API/MCP suite, existing local synthetic PostgreSQL enabled | 193 passed, no skips, 54.82 s; `artifacts/test-results/live-preparation-python.xml` |
+| Full final Python API/MCP suite, existing local synthetic PostgreSQL enabled | 194 passed, no skips, 55.00 s; `artifacts/test-results/live-preparation-python-final.xml` |
 | Final provider metadata / runner subset after the last metadata additions | 32 passed, 7.15 s; installed SDKs use offline HTTP transports |
 | Frontend unit / dependency compatibility tests | 13 / 2 passed |
 | Production Chromium lifecycle / business-state / replay / MCP tests | 19 passed, 47.8 s, against the current local API and production build |
@@ -166,9 +166,17 @@ not establish generalization, production reliability or MTTR savings.
 
 The original labels, archived baseline, tracked evaluation/robustness results and
 deterministic replay files are unchanged. Only additive investigation contracts
-were regenerated. The final provider subset includes one additional failed-response
-regression beyond the 193-test full-suite run; hosted CI must run the complete
-final source before this preparation is considered published and verified.
+were regenerated. The final full suite includes the added failed-response
+regression. Hosted CI must run the complete final source before this preparation
+is considered published and verified.
+
+The first hosted run [37975936137](https://github.com/farhan-shafee/creditops-ai/actions/runs/37975936137)
+on `c03d2edbd42dddda4f4f8d00fa2787c52c76ea45` failed four new runner tests because
+mock executions inherited CI's unrelated test-database URL. The local-only guard
+correctly stopped them. The test fixtures now explicitly set the intended local
+database/API and disable embeddings; no guard or assertion was weakened. The exact
+CI environment reproduced the four failures and then passed all 12 runner tests.
+The other three hosted jobs passed. A new complete CI run is required for the fix.
 
 Private-main commit/push and hosted CI receipt: pending publication. Paid execution
 remains unauthorized and the server-side OpenAI credential is absent.

@@ -122,6 +122,11 @@ async def test_interrupted_attempt_retains_usage_cost_and_closes_resources(
     monkeypatch, tmp_path, write_failure, reported_cost
 ):
     """Only the network/orchestrator is substituted; durable runner code is real."""
+    monkeypatch.setenv(
+        "DATABASE_URL", f"sqlite+aiosqlite:///{(PROJECT_ROOT / 'artifacts/creditops.db').as_posix()}"
+    )
+    monkeypatch.setenv("MCP_API_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("EMBEDDINGS_ENABLED", "false")
     closed = []
 
     class OfflineClient:
