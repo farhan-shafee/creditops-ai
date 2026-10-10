@@ -398,7 +398,12 @@ Final local verification: 295 Python tests passed with no skips (137.88 s;
 `artifacts/test-results/evidence-first-python-final.xml`), 20 frontend tests, two
 dependency checks and 19 Chromium regressions (45.96 s). Lint/types/build,
 pip/pnpm audits, Bandit and redacted Git-history/staged-source Gitleaks passed.
-Linux lifecycle skips locally on Windows; hosted CI will verify the final source.
+Linux lifecycle skips locally on Windows. [Normal CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/38015266511)
+passed all four jobs on source `00d777b63aa052769bf8189ab688f865ed9f66e8`:
+295 Python tests (no skips, 104.55 s), 20 frontend tests, two dependency checks,
+19 Chromium tests (3.4 min) and one Linux lifecycle test, plus lint/types/build,
+PostgreSQL migrations, original evaluation/robustness, audits, Bandit and full
+Git-history secret scanning. This later CI receipt changes documentation only.
 The credential-free dry-run records the four-call workflow and strict policy,
 with no Store, experiment ID, ledger or provider request.
 
