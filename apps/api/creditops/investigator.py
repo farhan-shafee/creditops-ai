@@ -115,7 +115,8 @@ def _snapshot_provider_calls(
         if (
             outcome
             and outcome["status"] == "not_validated"
-            and outcome.get("provider_response") != "not_requested_due_to_diagnostic_failure"
+            and outcome.get("provider_response")
+            not in {"not_requested_due_to_diagnostic_failure", "not_requested_due_to_guard_stop"}
         ):
             outcome["provider_response"] = calls[-1]["status"]
     else:
@@ -201,6 +202,7 @@ async def collect_adaptive_investigation(
     }
     seen: set[str] = set()
     requested: set[str] = set()
+    completed_singletons: set[str] = set()
     observations: list[dict[str, Any]] = []
     usages: list[dict[str, Any]] = []
     no_progress = 0
@@ -213,28 +215,58 @@ async def collect_adaptive_investigation(
         if on_progress:
             await on_progress(result)
 
-    async def reject_action(stage: str) -> None:
+    async def reject_action(stage: str, action: dict[str, Any] | None = None) -> None:
         # Malformed provider text is not trusted or persisted. SDK receipts retain
         # safely parsed output separately when available; this records the guard.
-        result["provenance"]["action_rejections"].append(
-            {
-                "stage": stage,
-                "reason": "invalid_tool_contract",
-                "provider_turn": provider_turns,
-                "mcp_dispatched": False,
-            }
-        )
+        rejection = {
+            "stage": stage,
+            "reason": "invalid_tool_contract",
+            "provider_turn": provider_turns,
+            "mcp_dispatched": False,
+        }
+        if action is not None:
+            rejection["action"] = sanitize(action)
+        result["provenance"]["action_rejections"].append(rejection)
+        if stop_on_tool_error:
+            result["provenance"].update(
+                guard_stop="invalid_tool_contract",
+                stop_reason="Invalid diagnostic action blocked; no assessment was requested.",
+            )
         await publish()
+
+    async def stop_guard(reason: str, message: str, action: dict[str, Any] | None = None) -> None:
+        result["provenance"].update(guard_stop=reason, stop_reason=message)
+        if action is not None:
+            result["provenance"]["action_rejections"].append(
+                {
+                    "stage": "investigation_guard",
+                    "reason": reason,
+                    "provider_turn": provider_turns,
+                    "mcp_dispatched": False,
+                    "action": sanitize(action),
+                }
+            )
+        await publish()
+        raise DiagnosticClientError("Strict verification stopped after investigation control guard")
 
     async def execute(name: str, arguments: dict[str, Any]) -> None:
         nonlocal no_progress
         try:
             arguments = safe_arguments(name, arguments)
         except DiagnosticClientError:
-            await reject_action("argument_guard")
+            await reject_action(
+                "argument_guard",
+                {"name": name, "arguments": arguments} if stop_on_tool_error and provider_turns else None,
+            )
             raise
         key = json.dumps([name, arguments], sort_keys=True)
         if key in requested:
+            if stop_on_tool_error:
+                await stop_guard(
+                    "duplicate_diagnostic_request",
+                    "Duplicate diagnostic request blocked; no assessment was requested.",
+                    {"name": name, "arguments": arguments},
+                )
             raise DiagnosticClientError("Duplicate diagnostic request stopped safely")
         requested.add(key)
         before = len(seen)
@@ -269,6 +301,8 @@ async def collect_adaptive_investigation(
                     seen.add(item["id"])
                 step["evidence_ids"].append(item["id"])
             step["status"] = "complete"
+            if name == "get_service_topology":
+                completed_singletons.add(name)
         except DiagnosticConnectionError:
             step["status"] = "failed"
             step["error"] = "MCP connection failed; no direct fallback"
@@ -306,6 +340,11 @@ async def collect_adaptive_investigation(
             no_progress = 0  # Initial metadata is context, not a diagnostic attempt.
             while provider_turns < configuration.max_provider_turns - 1:
                 if no_progress >= configuration.max_no_progress_calls:
+                    if stop_on_tool_error:
+                        await stop_guard(
+                            "no_progress_limit",
+                            "No-progress limit reached; no assessment was requested.",
+                        )
                     stop_reason = (
                         "Repeated unproductive diagnostics reached the no-progress limit; abstained safely."
                     )
@@ -315,7 +354,11 @@ async def collect_adaptive_investigation(
                     async with asyncio.timeout(configuration.provider_timeout_seconds):
                         decision, usage = await provider.next_action(
                             context,
-                            client.schemas,
+                            [
+                                schema
+                                for schema in client.schemas
+                                if schema.get("name") not in completed_singletons
+                            ],
                             observations,
                             [item for item in result["evidence"] if item["kind"] != "incident"],
                         )
@@ -330,17 +373,35 @@ async def collect_adaptive_investigation(
                     raise ValueError("Provider returned an invalid bounded diagnostic action") from error
                 if decision.action == "assess":
                     break
-                if len(requested) >= configuration.max_diagnostic_calls:
-                    stop_reason = "Finite diagnostic call budget exhausted; abstained safely."
-                    break
                 request = decision.request
                 arguments = request.model_dump(exclude={"name"}, exclude_none=True)
+                proposed_action = {"name": request.name, "arguments": arguments}
+                if len(requested) >= configuration.max_diagnostic_calls:
+                    if stop_on_tool_error:
+                        await stop_guard(
+                            "diagnostic_call_limit",
+                            "Finite diagnostic call limit reached; no assessment was requested.",
+                            proposed_action,
+                        )
+                    stop_reason = "Finite diagnostic call budget exhausted; abstained safely."
+                    break
                 key = json.dumps([request.name, arguments], sort_keys=True)
                 if key in requested:
+                    if stop_on_tool_error:
+                        await stop_guard(
+                            "duplicate_diagnostic_request",
+                            "Duplicate diagnostic request blocked; no assessment was requested.",
+                            proposed_action,
+                        )
                     stop_reason = "Duplicate diagnostic request detected; abstained safely."
                     break
                 await execute(request.name, arguments)
             else:
+                if stop_on_tool_error:
+                    await stop_guard(
+                        "provider_turn_limit",
+                        "Finite provider turn limit reached; no assessment was requested.",
+                    )
                 stop_reason = "Finite provider turn budget exhausted; abstained safely."
             started = time.perf_counter()
             if stop_reason:
@@ -412,9 +473,17 @@ async def collect_adaptive_investigation(
                 "provider_response": (
                     "not_requested_due_to_diagnostic_failure"
                     if result["provenance"].get("diagnostic_failure")
-                    else "missing_or_interrupted"
+                    else (
+                        "not_requested_due_to_guard_stop"
+                        if result["provenance"].get("guard_stop")
+                        else "missing_or_interrupted"
+                    )
                 ),
-                "assessment_source": _assessment_source(provider),
+                "assessment_source": (
+                    None
+                    if result["provenance"].get("guard_stop") or result["provenance"].get("diagnostic_failure")
+                    else _assessment_source(provider)
+                ),
                 "original_claims_independently_verified": False,
                 "changed_fields": [],
                 "rejected_fields": [],

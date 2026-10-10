@@ -5,7 +5,10 @@ result limits are supplied by the application. Remote descriptions are not used.
 """
 
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from functools import reduce
+from operator import or_
+from types import NoneType, UnionType
+from typing import Annotated, Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
@@ -171,6 +174,19 @@ DiagnosticRequestType = (
     | DatabaseRequest
 )
 REQUEST_ADAPTER = TypeAdapter(DiagnosticRequestType)
+# Availability narrows these same typed request contracts; there is no second
+# field list and a filtered catalog never changes application-owned authority.
+REQUEST_MODELS = {
+    get_args(request.model_fields["name"].annotation)[0]: request
+    for request in get_args(DiagnosticRequestType)
+}
+
+
+def available_request_type(names: tuple[str, ...]) -> type[BaseModel] | UnionType | type[None]:
+    """The nested request union for the application-supplied available catalog."""
+    if len(names) != len(set(names)) or any(name not in REQUEST_MODELS for name in names):
+        raise ValueError("Available diagnostic tools must use unique reviewed local contracts")
+    return reduce(or_, (REQUEST_MODELS[name] for name in names)) if names else NoneType
 
 
 def DiagnosticRequest(**values) -> DiagnosticRequestType:

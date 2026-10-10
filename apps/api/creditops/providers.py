@@ -10,11 +10,12 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 
 from .diagnostics import (
     ABSTAIN_DOMAIN,
@@ -33,7 +34,13 @@ from .diagnostics import (
 from .models import Assessment
 from .security import sanitize
 from .settings import Settings
-from .tool_contracts import DiagnosticRequest, DiagnosticRequestType
+from .tool_contracts import (
+    DiagnosticRequest,
+    DiagnosticRequestType,
+    _documented_literal_schema,
+    available_request_type,
+    model_catalog_entry,
+)
 
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "investigator.md").read_text(encoding="utf-8")
 
@@ -83,7 +90,7 @@ class DiagnosticPlan(BaseModel):
 class AdaptiveDecision(BaseModel):
     """Only visible diagnostic actions; no private reasoning or model-set limits."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", json_schema_extra=_documented_literal_schema)
     action: Literal["tool", "assess"]
     request: DiagnosticRequestType | None
 
@@ -92,6 +99,16 @@ class AdaptiveDecision(BaseModel):
         if (self.action == "tool") != (self.request is not None):
             raise ValueError("Tool actions require a request; assessment actions must omit it")
         return self
+
+
+@lru_cache(maxsize=512)
+def available_decision_type(names: tuple[str, ...]) -> type[AdaptiveDecision]:
+    """Keep the SDK's supported object root while narrowing its nested union."""
+    request_type = available_request_type(names)
+    fields = {"request": (request_type | None, ...)}
+    if not names:
+        fields["action"] = (Literal["assess"], ...)
+    return create_model("AvailableAdaptiveDecision", __base__=AdaptiveDecision, **fields)
 
 
 class ProviderUnavailable(RuntimeError):
@@ -398,12 +415,20 @@ class AdaptiveProviderMixin:
     async def next_action(
         self, incident: dict[str, Any], schemas: list[dict], observations: list[dict], evidence: list[dict]
     ) -> tuple[AdaptiveDecision, dict[str, Any]]:
+        try:
+            names = tuple(sorted(entry["name"] for entry in schemas))
+            decision_type = available_decision_type(names)
+            # The MCP client verifies the local contracts. Descriptions remain
+            # locally authored even if a caller supplies additional catalog text.
+            available_tools = [model_catalog_entry(name) for name in names]
+        except (KeyError, TypeError, ValueError) as error:
+            raise ProviderUnavailable("Invalid application-owned diagnostic catalog") from error
         return await self._parse(
-            AdaptiveDecision,
+            decision_type,
             "Choose ONE next read-only diagnostic action from the supplied locally reviewed descriptions and verified schemas based on actual returned observations and errors. Use only that tool's typed filters. Supported nullable filters left null retain the bounded application scope. Do not repeat the same request; after no matches, a distinct broader filter may be useful within remaining limits. No matches and tool failures are unknown, never healthy evidence. If evidence is sufficient, contradictory after checks, or exhausted, choose assess with null request. Do not output reasoning, invented results, or change session/incident/snapshot/limits.",
             {
                 "incident": incident,
-                "available_tools": schemas,
+                "available_tools": available_tools,
                 "observations": observations,
                 "evidence": evidence,
             },

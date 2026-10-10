@@ -1,6 +1,6 @@
-# Live verification and offline tool-contract repair
+# Live verification and offline investigation repairs
 
-**LIVE RETRY NOT RUN — OWNER APPROVAL REQUIRED.**
+**OFFLINE REPAIR — NO LIVE REQUESTS IN THIS PASS. LIVE-MODEL QUALITY UNVERIFIED.**
 
 ## Failed first attempt
 
@@ -176,7 +176,7 @@ presence check and existing local-only preflight before its first paid request.
 The model selects diagnostic actions and proposes an assessment. MCP provides
 controlled access to evidence. A separate conservative rule layer checks and may
 normalize the output. Model proposals and final system outputs are evaluated
-separately. **LIVE RETRY NOT RUN — OWNER APPROVAL REQUIRED.**
+separately. **OFFLINE REPAIR — NO LIVE REQUESTS IN THIS PASS. LIVE-MODEL QUALITY UNVERIFIED.**
 
 ## Strict verification stopping correction
 
@@ -248,3 +248,71 @@ and existing local-only identity preflight:
 ```
 
 **LIVE RETRY NOT RUN — REVISED SOURCE REQUIRES OWNER APPROVAL.**
+
+## Investigation control and outcome integrity repair
+
+This is a new offline repair of the action loop and its future outcome records.
+The earlier sections describe historical preparation; their unused-attempt and
+approval statements do not describe current readiness. Both allocated experiments
+are now STOPPED. No paid request, model change, deployment or replacement attempt
+occurred in this pass, and previous approvals do not authorize this repaired source.
+
+Root causes: the provider always received the full `AdaptiveDecision` request union,
+even when the catalog could exclude an action; strict duplicate/no-progress/limit
+branches broke into deterministic fallback; and deterministic assessment wording
+denied earlier decision calls. The repair is limited to those boundaries:
+
+- Successful topology retrieval removes that singleton from subsequent catalogs
+  within the same frozen investigation. Its evidence remains available. Failed
+  topology and genuinely different parameterized queries retain their existing
+  recovery/filter behavior; runtime duplicate and scope guards remain enforced.
+- `available_decision_type` narrows the actual SDK `text_format` to the catalog's
+  existing typed request contracts. The root remains a closed object with a nested
+  union, documented enums and nullable fields. Descriptions are locally authored.
+  The model still cannot set session, incident, cutoff, limits or strict policy.
+- Strict control guards publish a sanitized reason and rejected parsed action,
+  when one exists, then raise before any further decision, diagnostic, assessment
+  or deterministic fallback. Partial status is failed, runner/ledger STOPPED,
+  assessment/proposal/source absent, and validation explicitly not requested.
+  Earlier decision success cannot overwrite assessment absence. Persistence and
+  cleanup failures remain fatal. Default normal recovery/fallback stays available.
+- Deterministic wording now identifies assessment generation only; decision calls
+  retain their separate provider receipts. Old receipt text is not rewritten.
+
+RED regressions reproduced topology acceptance in the outgoing SDK schema after
+catalog omission, strict guard fallthrough into a complete fallback, and misleading
+provenance. GREEN tests capture actual OpenAI and Anthropic SDK requests using
+external-network-free transports; topology is absent from schema and catalog after
+removal, while the other eight tool types and different filters remain accepted.
+Real local MCP/runner tests prove duplicate rejection with two scripted decisions,
+zero assessments and two actual dispatches; STOPPED partial receipts, reservations,
+unknown usage, retained evidence and teardown. A separate real-MCP path preserves
+literal OR/no-match semantics and permits a broader log query. These are scripted
+integration tests, not live-model quality results.
+
+Final local `pnpm test`: 267 Python passed (no skips, 102.35 s), 13 frontend tests
+and two dependency checks. Lint/types/build, dependency audits and Bandit passed;
+Linux lifecycle skips locally on Windows and must pass in hosted CI. Independent
+code review found no blockers. Separate-output evaluation remains baseline 12/15
+and pipeline 11/15, zero invalid citations; developer-authored robustness remains
+13/13 with four abstentions. Labels, diagnosis thresholds and archived outputs
+are unchanged. Hosted CI for the repaired source is pending publication; its
+verified SHA/run will be recorded in a later docs-only receipt.
+
+Before/after checks cover 19 files: the original protected history, both stopped
+receipts/ledgers, approval notes/addendum, latest live pointer and `.env`. Retained
+reservations are USD 0.12633525 + USD 0.10088100 = USD 0.22721625; no reset, reopen
+or refund. Manifests stay local under
+`artifacts/test-results/investigation-control-preservation-{before,after}.json`;
+credential fingerprints are not published. `.env` remains ignored and untracked.
+Cross-ledger aggregation still requires local review. Offline schema captures are
+local at `artifacts/test-results/investigation-control-sdk-schemas.json`: initial
+raw/wire sizes 6,989/6,858 bytes, after topology 6,737/6,606. The unchanged byte
+ceiling formula gives 147,527 input tokens, USD 0.13314525/call and USD 1.597743
+for twelve calls, excluding retained reservations. Calculation is local at
+`artifacts/test-results/investigation-control-reservations.json`; these are bounds,
+not usage/billing or execution approval. No prices, spend/time/call/context/output
+limits or retry policy were raised.
+
+**LIVE RETRY NOT RUN IN THIS PASS — REPAIRED SOURCE REQUIRES FRESH OWNER APPROVAL.
+LIVE-MODEL QUALITY REMAINS UNVERIFIED.**

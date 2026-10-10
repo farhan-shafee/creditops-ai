@@ -6,6 +6,7 @@ orchestrator, MCP SDK/server and diagnostic HTTP boundary are real.
 """
 
 import asyncio
+import copy
 import importlib.util
 import json
 import os
@@ -25,7 +26,9 @@ from creditops.store import Store
 from mcp import Client
 from mcp.client.stdio import StdioServerParameters
 
-SPEC = importlib.util.spec_from_file_location("strict_runner_fixture", PROJECT_ROOT / "scripts/verify_live.py")
+SPEC = importlib.util.spec_from_file_location(
+    "strict_runner_fixture", PROJECT_ROOT / "scripts/verify_live.py"
+)
 runner = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runner)
 
@@ -95,8 +98,7 @@ async def isolated_failure_api(tmp_path):
     requests_path = tmp_path / "diagnostic-requests.jsonl"
     bootstrap = tmp_path / "isolated_api.py"
     bootstrap.write_text(
-        OFFLINE_CHILD_BOUNDARY
-        + "\nimport json, uvicorn\nfrom pathlib import Path\n"
+        OFFLINE_CHILD_BOUNDARY + "\nimport json, uvicorn\nfrom pathlib import Path\n"
         "from starlette.responses import JSONResponse\n"
         "from creditops.main import create_app\n"
         "app = create_app(settings=Settings(_env_file=None))\n"
@@ -114,7 +116,7 @@ async def isolated_failure_api(tmp_path):
     environment = {
         key: value
         for key, value in os.environ.items()
-        if key.upper() not in {"OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ADMIN_API_KEY"}
+        if key.upper() in {"PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "COMSPEC", "PATHEXT"}
     }
     environment.update(
         DATABASE_URL=database_url,
@@ -163,8 +165,7 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     marker = tmp_path / "owned-mcp.pid"
     bootstrap = tmp_path / "isolated_mcp.py"
     bootstrap.write_text(
-        OFFLINE_CHILD_BOUNDARY
-        + "\nimport os\nfrom pathlib import Path\n"
+        OFFLINE_CHILD_BOUNDARY + "\nimport os\nfrom pathlib import Path\n"
         "from creditops_mcp.server import HttpDiagnosticClient, create_server\n"
         f"Path({str(marker)!r}).write_text(str(os.getpid()), encoding='utf-8')\n"
         "create_server(HttpDiagnosticClient(os.environ['CREDITOPS_API_URL'], os.environ['MCP_DEMO_SESSION'], incident_id=os.environ['MCP_INCIDENT_ID'], as_of=os.environ['MCP_AS_OF'])).run()\n",
@@ -264,13 +265,37 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     output = tmp_path / "scripted-offline-receipts"
     arguments = runner.parse_args(
         [
-            "--provider", "openai", "--model", "gpt-5.4-mini-2026-03-17",
-            "--case-count", "1", "--max-tool-calls", "12", "--max-provider-turns", "12",
-            "--max-spend-usd", "2", "--timeout-seconds", "30",
-            "--provider-timeout-seconds", "5", "--diagnostic-timeout-seconds", "10",
-            "--total-timeout-seconds", "33", "--input-price-ceiling", "0.75",
-            "--output-price-ceiling", "4.50", "--experiment-id", str(uuid4()),
-            "--stage", "first", "--execute-paid", "--output-directory", str(output),
+            "--provider",
+            "openai",
+            "--model",
+            "gpt-5.4-mini-2026-03-17",
+            "--case-count",
+            "1",
+            "--max-tool-calls",
+            "12",
+            "--max-provider-turns",
+            "12",
+            "--max-spend-usd",
+            "2",
+            "--timeout-seconds",
+            "30",
+            "--provider-timeout-seconds",
+            "5",
+            "--diagnostic-timeout-seconds",
+            "10",
+            "--total-timeout-seconds",
+            "33",
+            "--input-price-ceiling",
+            "0.75",
+            "--output-price-ceiling",
+            "4.50",
+            "--experiment-id",
+            str(uuid4()),
+            "--stage",
+            "first",
+            "--execute-paid",
+            "--output-directory",
+            str(output),
         ]
     )
     # execute-paid enters the real runner branch only. create_provider above is
@@ -291,7 +316,9 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     assert receipt["local_identity"]["verified"] is True
     assert receipt["error_category"] == "DiagnosticClientError"
     assert ledger["attempts"][0]["status"] == "interrupted_or_failed"
-    assert Decimal(receipt["reserved_spend_usd"]) == Decimal(ledger["reserved_spend_usd"]) == FIXTURE_RESERVATION
+    assert (
+        Decimal(receipt["reserved_spend_usd"]) == Decimal(ledger["reserved_spend_usd"]) == FIXTURE_RESERVATION
+    )
     assert receipt["estimated_cost_usd"] is None and receipt["known_cost_subtotal_usd"] is None
     assert receipt["provider_calls"] == provider.execution_receipts
     assert receipt["provider_calls"][0]["input_tokens_ceiling"] == FIXTURE_INPUT_CEILING
@@ -304,7 +331,9 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     assert partial["provenance"]["provider_turns"] == 1
     assert partial["provenance"]["tool_calls"] == 2
     assert partial["provenance"]["diagnostic_failure"] == {
-        "tool": "query_metrics", "category": "error", "error_category": "DiagnosticClientError"
+        "tool": "query_metrics",
+        "category": "error",
+        "error_category": "DiagnosticClientError",
     }
     assert partial["provenance"]["stop_reason"]
     assert partial["validation_outcome"]["status"] == "not_validated"
@@ -321,8 +350,281 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     assert saved["provider_calls"] == receipt["provider_calls"]
     requests = [json.loads(line) for line in requests_path.read_text(encoding="utf-8").splitlines()]
     assert [item["path"] for item in requests] == [
-        "/api/diagnostics/get_incident", "/api/diagnostics/query_metrics"
+        "/api/diagnostics/get_incident",
+        "/api/diagnostics/query_metrics",
     ]
     assert all(item["session"] == partial["provenance"]["session_id"] for item in requests)
     assert all(item["arguments"]["incident_id"] == "INC-DEMO-001" for item in requests)
     assert all(item["arguments"]["as_of"] == partial["provenance"]["snapshot_cutoff"] for item in requests)
+
+
+class ScriptedRunnerActions(DeterministicProvider):
+    """Offline decisions; fixture reservations are not real provider charges."""
+
+    name = "scripted_outcome_integrity_fixture"
+
+    def __init__(self, actions):
+        self.actions = iter(actions)
+        self.decisions = 0
+        self.assessments = 0
+        self.execution_receipts = []
+        self.inputs = []
+        self.closed = False
+        self.client = self
+
+    def enable_budget(self, maximum, *, reserved_spend, reservation_callback):
+        assert maximum == 2 and reserved_spend == 0
+        self.reserve = reservation_callback
+
+    async def next_action(self, incident, schemas, observations, evidence):
+        self.decisions += 1
+        self.inputs.append(
+            copy.deepcopy({"schemas": schemas, "observations": observations, "evidence": evidence})
+        )
+        self.reserve(FIXTURE_RESERVATION * self.decisions)
+        self.execution_receipts.append(
+            {
+                "provider": self.name,
+                "status": "scripted_offline_fixture",
+                "request_started": False,
+                "input_tokens_ceiling": FIXTURE_INPUT_CEILING,
+                "reserved_cost_usd": str(FIXTURE_RESERVATION),
+                "usage": {
+                    "input_tokens": None,
+                    "output_tokens": None,
+                    "total_tokens": None,
+                    "estimated_cost_usd": None,
+                },
+                "fixture_only": True,
+            }
+        )
+        request = next(self.actions, None)
+        return AdaptiveDecision.model_validate(
+            {"action": "tool" if request else "assess", "request": request}
+        ), {}
+
+    async def assess(self, incident, evidence):
+        self.assessments += 1
+        return await super().assess(incident, evidence)
+
+    async def close(self):
+        self.closed = True
+
+
+def owned_runner_path(resources, provider, monkeypatch, tmp_path):
+    """Keep real runner/Store/MCP; replace only live-provider and resource ownership."""
+    _, database_url, url, _, environment = resources
+    marker = tmp_path / "outcome-owned-mcp.pid"
+    bootstrap = tmp_path / "outcome_owned_mcp.py"
+    bootstrap.write_text(
+        OFFLINE_CHILD_BOUNDARY + "\nimport os\nfrom pathlib import Path\n"
+        "from creditops_mcp.server import HttpDiagnosticClient, create_server\n"
+        f"Path({str(marker)!r}).write_text(str(os.getpid()), encoding='utf-8')\n"
+        "create_server(HttpDiagnosticClient(os.environ['CREDITOPS_API_URL'], os.environ['MCP_DEMO_SESSION'], incident_id=os.environ['MCP_INCIDENT_ID'], as_of=os.environ['MCP_AS_OF'])).run()\n",
+        encoding="utf-8",
+    )
+    adapters, closed_stores = [], []
+
+    class OwnedRunnerStore(Store):
+        async def close(self):
+            await super().close()
+            closed_stores.append(True)
+
+    def owned_resources(configuration):
+        assert configuration.database_url == database_url
+        assert configuration.mcp_api_url == url and url.startswith("http://127.0.0.1:")
+        assert configuration.embeddings_enabled is False
+        return {"database": "isolated synthetic SQLite fixture", "api": url, "embeddings_enabled": False}
+
+    def real_owned_mcp(session, incident, cutoff):
+        parameters = StdioServerParameters(
+            command=sys.executable,
+            args=[str(bootstrap)],
+            cwd=PROJECT_ROOT,
+            env={
+                **environment,
+                "CREDITOPS_API_URL": url,
+                "MCP_DEMO_SESSION": session,
+                "MCP_INCIDENT_ID": incident,
+                "MCP_AS_OF": cutoff,
+            },
+        )
+        adapter = MCPDiagnosticClient(session, incident, cutoff, client=Client(parameters, cache=None))
+        adapters.append(adapter)
+        return adapter
+
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("MCP_API_URL", url)
+    monkeypatch.setenv("EMBEDDINGS_ENABLED", "false")
+    monkeypatch.setattr(runner, "validate_local_resources", owned_resources)
+    monkeypatch.setattr(runner, "Store", OwnedRunnerStore)
+    monkeypatch.setattr(runner, "source_commit", lambda: "scripted-offline-source-fixture")
+    monkeypatch.setattr(runner.subprocess, "check_output", lambda *args, **kwargs: "")
+    monkeypatch.setattr(runner, "create_provider", lambda name: provider)
+    monkeypatch.setattr(investigator, "MCPDiagnosticClient", real_owned_mcp)
+    output = tmp_path / "scripted-outcome-receipts"
+    arguments = runner.parse_args(
+        [
+            "--provider",
+            "openai",
+            "--model",
+            "gpt-5.4-mini-2026-03-17",
+            "--case-count",
+            "1",
+            "--max-tool-calls",
+            "12",
+            "--max-provider-turns",
+            "12",
+            "--max-spend-usd",
+            "2",
+            "--timeout-seconds",
+            "30",
+            "--provider-timeout-seconds",
+            "5",
+            "--diagnostic-timeout-seconds",
+            "10",
+            "--total-timeout-seconds",
+            "33",
+            "--input-price-ceiling",
+            "0.75",
+            "--output-price-ceiling",
+            "4.50",
+            "--experiment-id",
+            str(uuid4()),
+            "--stage",
+            "first",
+            "--execute-paid",
+            "--output-directory",
+            str(output),
+        ]
+    )
+    return arguments, output, adapters, marker, closed_stores
+
+
+async def test_actual_runner_duplicate_topology_stops_without_substitute_assessment(
+    isolated_failure_api, monkeypatch, tmp_path
+):
+    """Catch strict duplicate guards producing a complete deterministic fallback."""
+    provider = ScriptedRunnerActions([{"name": "get_service_topology"}, {"name": "get_service_topology"}])
+    arguments, output, adapters, marker, closed_stores = owned_runner_path(
+        isolated_failure_api, provider, monkeypatch, tmp_path
+    )
+    with pytest.raises((DiagnosticClientError, ValueError)) as failure:
+        await runner.run(arguments)
+    receipt = json.loads(next(output.glob("run-*.json")).read_text(encoding="utf-8"))
+    ledger = json.loads(next(output.glob("experiment-*.json")).read_text(encoding="utf-8"))
+    partial = receipt["results"][0]
+    assert partial["status"] == "failed"
+    assert isinstance(failure.value, DiagnosticClientError)
+    assert receipt["execution"] == ledger["state"] == "STOPPED"
+    assert provider.decisions == 2 and provider.assessments == 0
+    assert partial["assessment"] is None and partial["provider_proposal"] is None
+    assert partial["validation_outcome"]["status"] == "not_validated"
+    assert partial["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
+    assert partial["validation_outcome"]["rejected_fields"] == []
+    assert partial["provenance"]["action_rejections"] == [
+        {
+            "stage": "investigation_guard",
+            "reason": "duplicate_diagnostic_request",
+            "provider_turn": 2,
+            "mcp_dispatched": False,
+            "action": {"name": "get_service_topology", "arguments": {}},
+        }
+    ]
+    assert partial["provenance"]["tool_calls"] == 2
+    assert partial["provenance"]["provider_turns"] == 2
+    assert [step["tool"] for step in partial["steps"]] == ["get_incident", "get_service_topology"]
+    assert all(step["status"] == "complete" for step in partial["steps"])
+    assert {item["id"] for item in partial["evidence"]} == {"INC-DEMO-001", "TOPOLOGY-001"}
+    assert (
+        Decimal(receipt["reserved_spend_usd"])
+        == Decimal(ledger["reserved_spend_usd"])
+        == FIXTURE_RESERVATION * 2
+    )
+    assert receipt["provider_calls"] == partial["provider_calls"] == provider.execution_receipts
+    assert receipt["estimated_cost_usd"] is None and receipt["known_cost_subtotal_usd"] is None
+    store, _, _, requests_path, _ = isolated_failure_api
+    saved = await store.get_investigation(partial["provenance"]["session_id"], partial["id"])
+    assert saved["status"] == "failed" and saved["assessment"] is None
+    requests = [json.loads(line) for line in requests_path.read_text(encoding="utf-8").splitlines()]
+    assert [item["path"] for item in requests] == [
+        "/api/diagnostics/get_incident",
+        "/api/diagnostics/get_service_topology",
+    ]
+    assert all(item["session"] == partial["provenance"]["session_id"] for item in requests)
+    assert all(item["arguments"]["incident_id"] == "INC-DEMO-001" for item in requests)
+    assert all(item["arguments"]["as_of"] == partial["provenance"]["snapshot_cutoff"] for item in requests)
+    assert len(adapters) == 1 and adapters[0]._entered is False
+    assert provider.closed and closed_stores == [True]
+    assert marker.exists() and not process_is_running(int(marker.read_text(encoding="utf-8")))
+    assert not list(output.glob("*.lock"))
+
+
+async def test_actual_mcp_retains_topology_and_allows_distinct_broader_log_query(
+    isolated_failure_api, monkeypatch, tmp_path
+):
+    """Topology exhaustion must not remove parameterized tools or prior evidence."""
+    provider = ScriptedRunnerActions(
+        [
+            {"name": "get_service_topology"},
+            {"name": "search_logs", "q": "rfq response OR timeout"},
+            {"name": "search_logs", "q": ""},
+        ]
+    )
+    arguments, output, adapters, marker, closed_stores = owned_runner_path(
+        isolated_failure_api, provider, monkeypatch, tmp_path
+    )
+    receipt = await runner.run(arguments)
+    result = receipt["results"][0]
+    assert receipt["execution"] == "COMPLETED_APPROVED_CASES"
+    assert result["status"] == "complete"
+    assert provider.decisions == 4 and provider.assessments == 1
+    assert "get_service_topology" in {item["name"] for item in provider.inputs[0]["schemas"]}
+    for current in provider.inputs[1:]:
+        assert {item["name"] for item in current["schemas"]} == {
+            "search_logs",
+            "query_metrics",
+            "get_recent_deployments",
+            "find_similar_incidents",
+            "search_runbooks",
+            "inspect_kafka_lag",
+            "inspect_fix_session",
+            "inspect_database_health",
+        }
+        assert "TOPOLOGY-001" in {item["id"] for item in current["evidence"]}
+    assert provider.inputs[2]["observations"][-1]["tool"] == "search_logs"
+    assert provider.inputs[2]["observations"][-1]["status"] == "complete"
+    assert provider.inputs[2]["observations"][-1]["evidence_ids"] == []
+    assert provider.inputs[3]["observations"][-1]["evidence_ids"]
+    assert result["provenance"]["action_rejections"] == []
+    assert result["provenance"]["tool_calls"] == 4
+    assert [step["tool"] for step in result["steps"]] == [
+        "get_incident",
+        "get_service_topology",
+        "search_logs",
+        "search_logs",
+        "assessment_validation",
+    ]
+    assert result["steps"][2]["safe_arguments"] == {"q": "rfq response OR timeout"}
+    assert result["steps"][3]["safe_arguments"] == {"q": ""}
+    assert result["steps"][2]["evidence_ids"] == [] and result["steps"][3]["evidence_ids"]
+    assert {item["id"] for item in result["evidence"]} >= {"INC-DEMO-001", "TOPOLOGY-001"}
+    assert result["provenance"]["model_called"] is False
+    assert result["provenance"]["assessment_source"]["kind"] == "scripted_provider"
+    _, _, _, requests_path, _ = isolated_failure_api
+    requests = [json.loads(line) for line in requests_path.read_text(encoding="utf-8").splitlines()]
+    assert [item["path"] for item in requests] == [
+        "/api/diagnostics/get_incident",
+        "/api/diagnostics/get_service_topology",
+        "/api/diagnostics/search_logs",
+        "/api/diagnostics/search_logs",
+    ]
+    assert requests[2]["arguments"]["q"] == "rfq response OR timeout"
+    assert requests[3]["arguments"]["q"] == ""
+    assert all(item["session"] == result["provenance"]["session_id"] for item in requests)
+    assert all(item["arguments"]["incident_id"] == "INC-DEMO-001" for item in requests)
+    assert all(item["arguments"]["as_of"] == result["provenance"]["snapshot_cutoff"] for item in requests)
+    assert len(adapters) == 1 and adapters[0]._entered is False
+    assert provider.closed and closed_stores == [True]
+    assert marker.exists() and not process_is_running(int(marker.read_text(encoding="utf-8")))
+    assert not list(output.glob("*.lock"))

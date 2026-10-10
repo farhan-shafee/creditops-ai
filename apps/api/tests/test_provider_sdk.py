@@ -5,6 +5,8 @@ import json
 import httpx
 import pytest
 from creditops.providers import AnthropicProvider, DiagnosticPlan, OpenAIProvider, usage_record
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError as SchemaError
 
 PLAN = {"requests": [{"name": "query_metrics", "service": None, "metric": None, "start": None, "end": None}]}
 
@@ -207,6 +209,18 @@ async def test_offline_adaptive_sdk_receives_actual_prior_result(kind, monkeypat
         assert usage["total_tokens"] == 140
         assert "METRIC-POOL" in json.dumps(captured)
         assert "pool_utilization" in json.dumps(captured)
+        # Both official SDKs receive the narrowed request schema, not merely an
+        # altered textual catalog; prior metric evidence stays in their context.
+        schema = (
+            captured[0]["text"]["format"]["schema"]
+            if kind == "openai"
+            else captured[0]["output_config"]["format"]["schema"]
+        )
+        validator = Draft202012Validator(schema)
+        validator.validate(action)
+        with pytest.raises(SchemaError):
+            validator.validate({"action": "tool", "request": {"name": "get_service_topology"}})
+        assert "get_service_topology" not in json.dumps(schema)
         provider.enable_budget(0.000001)
         with pytest.raises(RuntimeError, match="before request"):
             await provider.next_action({}, [], [], [])

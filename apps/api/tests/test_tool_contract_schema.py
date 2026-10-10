@@ -198,11 +198,10 @@ async def test_complete_metrics_object_forbids_q_even_when_null(monkeypatch, q):
         )
 
 
-async def test_actual_sdk_schema_uses_supported_closed_nested_union(monkeypatch):
-    schema, _ = await serialized_schema(monkeypatch, {"action": "assess", "request": None})
+def assert_supported_closed_schema(schema):
+    """Inspect actual wire schemas against the documented provider subset."""
     assert schema["type"] == "object"
     assert "anyOf" not in schema
-    assert "anyOf" in schema["properties"]["request"]
 
     def check(node):
         if isinstance(node, dict):
@@ -217,6 +216,15 @@ async def test_actual_sdk_schema_uses_supported_closed_nested_union(monkeypatch)
                 check(value)
 
     check(schema)
+
+
+async def test_actual_sdk_schema_uses_supported_closed_nested_union(monkeypatch):
+    schema, _ = await serialized_schema(monkeypatch, {"action": "assess", "request": None})
+    assert schema["type"] == "object"
+    assert "anyOf" not in schema
+    assert "anyOf" in schema["properties"]["request"]
+
+    assert_supported_closed_schema(schema)
     # Cross-field semantic checks remain local; Python validators are not
     # represented as unsupported JSON Schema conditionals.
     for bad in [
@@ -264,3 +272,79 @@ async def test_actual_provider_request_includes_owned_catalog_and_no_match_seman
     assert "metric" in metrics["input_schema"]["properties"]
     assert not {"q", "aggregation"} & metrics["input_schema"]["properties"].keys()
     assert "No matches and tool failures are unknown" in captured[0]["input"][0]["content"]
+
+
+async def test_topology_omitted_catalog_rejects_topology_in_actual_sdk_schema_and_parsing(monkeypatch):
+    # The first successful frozen-snapshot topology result is retained by the
+    # investigator. Its next catalog deliberately removes the redundant action.
+    catalog = [
+        item
+        for item in DirectDiagnosticClient(
+            None, "00000000-0000-0000-0000-000000000001", "INC-SYNTHETIC", "2026-10-09T15:00:00Z"
+        ).schemas
+        if item["name"] != "get_service_topology"
+    ]
+    repeated = {"action": "tool", "request": {"name": "get_service_topology"}}
+    captured = []
+    schema, parsed = await serialized_schema(
+        monkeypatch, repeated, catalog=catalog, captured_sink=captured
+    )
+    assert_supported_closed_schema(schema)
+    validator = Draft202012Validator(schema, format_checker=TIME_FORMAT_CHECKER)
+    with pytest.raises(SchemaError):
+        validator.validate(repeated)
+    assert parsed is None
+    assert "get_service_topology" not in json.dumps(schema)
+    payload = json.loads(captured[0]["input"][1]["content"].split("\n", 1)[1])
+    visible = {item["name"] for item in payload["available_tools"]}
+    assert visible == {
+        "search_logs", "query_metrics", "get_recent_deployments", "find_similar_incidents",
+        "search_runbooks", "inspect_kafka_lag", "inspect_fix_session", "inspect_database_health",
+    }
+    for name in sorted(visible):
+        validator.validate({"action": "tool", "request": request_for(name)})
+    # Distinct narrow/broader filter requests remain representable: availability
+    # is tool-specific, not an irreversible once-per-tool ban.
+    for query in ["timeout", ""]:
+        request = {**request_for("search_logs"), "q": query}
+        validator.validate({"action": "tool", "request": request})
+    for service in ["quote-service", "pricing-service", None]:
+        request = {**request_for("query_metrics"), "service": service}
+        validator.validate({"action": "tool", "request": request})
+
+
+async def test_initial_catalog_retains_topology_in_actual_sdk_schema(monkeypatch):
+    catalog = DirectDiagnosticClient(
+        None, "00000000-0000-0000-0000-000000000001", "INC-SYNTHETIC", "2026-10-09T15:00:00Z"
+    ).schemas
+    action = {"action": "tool", "request": {"name": "get_service_topology"}}
+    schema, parsed = await serialized_schema(monkeypatch, action, catalog=catalog)
+    assert_supported_closed_schema(schema)
+    Draft202012Validator(schema).validate(action)
+    assert parsed.request.name == "get_service_topology"
+
+
+async def test_empty_catalog_is_assessment_only_in_actual_sdk_schema(monkeypatch):
+    schema, parsed = await serialized_schema(
+        monkeypatch, {"action": "assess", "request": None}, catalog=[]
+    )
+    assert parsed.action == "assess"
+    assert_supported_closed_schema(schema)
+    validator = Draft202012Validator(schema)
+    validator.validate({"action": "assess", "request": None})
+    with pytest.raises(SchemaError):
+        validator.validate({"action": "tool", "request": request_for("query_metrics")})
+    with pytest.raises(SchemaError):
+        validator.validate({"action": "tool", "request": None})
+
+
+@pytest.mark.parametrize("output", [
+    {"action": "tool", "request": None},
+    {"action": "assess", "request": {"name": "inspect_database_health", "service": None}},
+])
+async def test_restricted_actual_sdk_schema_preserves_local_action_coherence(monkeypatch, output):
+    schema, parsed = await serialized_schema(
+        monkeypatch, output, catalog=[{"name": "inspect_database_health"}]
+    )
+    assert_supported_closed_schema(schema)
+    assert parsed is None

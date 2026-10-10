@@ -393,7 +393,7 @@ def build_assessment(
             "confirmed_cause": None,
             "unknowns": unknowns,
             "limitations": [
-                "Deterministic evidence assessment; no language model was called.",
+                "This assessment was generated deterministically from returned evidence; earlier diagnostic decisions have separate provider-call provenance.",
                 "Synthetic fixtures cover a bounded set of failure modes; confidence is a rule score, not a calibrated probability.",
                 "Draft — human review required. Correlation does not establish a definitive root cause.",
             ],

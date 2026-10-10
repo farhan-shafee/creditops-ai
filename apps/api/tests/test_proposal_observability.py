@@ -289,3 +289,44 @@ async def test_final_tool_failure_adjustments_are_distinct_from_validator_rewrit
         for item in changes
     )
     assert any(item["stage"] == "diagnostic_validation" for item in changes)
+
+
+async def test_deterministic_fallback_authorship_does_not_deny_earlier_decision_calls():
+    class RepeatedScriptedDecisions(ProposalProvider):
+        name = "scripted_decision_receipts"
+
+        def __init__(self):
+            super().__init__()
+            self.execution_receipts = []
+            self.decisions = 0
+            self.assessments = 0
+
+        async def next_action(self, *args):
+            self.decisions += 1
+            # Explicit offline receipt fixtures exercise provenance accounting;
+            # they do not represent real inference or persisted live receipts.
+            self.execution_receipts.append({
+                "provider": self.name,
+                "schema": "AdaptiveDecision",
+                "status": "success",
+                "request_started": True,
+                "usage": {"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
+            })
+            return AdaptiveDecision(
+                action="tool", request=DiagnosticRequest(name="query_metrics")
+            ), {}
+
+        async def assess(self, *args):
+            self.assessments += 1
+            return await super().assess(*args)
+
+    provider = RepeatedScriptedDecisions()
+    result = await investigate(provider)
+    assert provider.decisions == 2
+    assert provider.assessments == 0
+    assert len(result["provider_calls"]) == 2
+    assert result["provenance"]["assessment_source"]["provider"] == "deterministic"
+    assert result["provenance"]["assessment_source"]["kind"] == "orchestrator_fallback"
+    limitations = " ".join(result["assessment"]["limitations"]).lower()
+    assert "no language model was called" not in limitations
+    assert "assessment was generated deterministically" in limitations

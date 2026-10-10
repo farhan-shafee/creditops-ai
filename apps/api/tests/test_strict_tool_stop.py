@@ -24,10 +24,12 @@ class CountingScript(DeterministicProvider):
         self.decision_calls = 0
         self.assessment_calls = 0
         self.observed = []
+        self.catalogs = []
 
     async def next_action(self, incident, schemas, observations, evidence):
         self.decision_calls += 1
         self.observed.append(copy.deepcopy(observations))
+        self.catalogs.append(copy.deepcopy(schemas))
         if self.requests:
             return AdaptiveDecision(action="tool", request=self.requests.pop(0)), {}
         return AdaptiveDecision(action="assess", request=None), {}
@@ -154,6 +156,7 @@ async def test_strict_failure_stops_before_the_next_provider_decision_or_assessm
     assert stopped["assessment"] is None
     assert stopped["provider_proposal"] is None
     assert stopped["validation_outcome"]["status"] == "not_validated"
+    assert stopped["validation_outcome"]["assessment_source"] is None
 
 
 async def test_initial_context_failure_stops_before_any_provider_call():
@@ -379,3 +382,198 @@ async def test_model_policy_override_and_scope_injection_remain_fatal(strict):
             }
         ]
         assert stopped["assessment"] is None
+
+
+async def test_strict_duplicate_stops_without_substitute_assessment_or_complete_outcome():
+    class ReceiptScript(CountingScript):
+        def __init__(self, requests):
+            super().__init__(requests)
+            self.execution_receipts = []
+
+        async def next_action(self, *args):
+            decision = await super().next_action(*args)
+            # Offline receipt fixtures test that successful decision metadata
+            # never overwrites the fact no assessment was requested.
+            self.execution_receipts.append(
+                {"status": "success", "request_started": False, "usage": {"total_tokens": None}}
+            )
+            return decision
+
+    provider = ReceiptScript(
+        [DiagnosticRequest(name="get_service_topology"), DiagnosticRequest(name="get_service_topology")]
+    )
+    client = ValidatingScriptClient(
+        rows={("get_service_topology", None): [evidence("TOPOLOGY-001", "topology", "Bounded topology")]}
+    )
+    snapshots = []
+    with pytest.raises(DiagnosticClientError):
+        await collect_script(client, provider, snapshots)
+
+    assert provider.decision_calls == 2
+    assert provider.assessment_calls == 0
+    assert client.calls == [("get_incident", {}), ("get_service_topology", {})]
+    assert client.closed
+    stopped = snapshots[-1]
+    assert stopped["status"] == "failed"
+    assert stopped["assessment"] is None
+    assert stopped["provider_proposal"] is None
+    assert stopped["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
+    assert stopped["validation_outcome"]["status"] == "not_validated"
+    assert stopped["validation_outcome"]["assessment_source"] is None
+    assert stopped["validation_outcome"]["rejected_fields"] == []
+    assert stopped["provenance"]["tool_calls"] == 2
+    assert len(stopped["provider_calls"]) == 2
+    assert stopped["provenance"]["action_rejections"] == [
+        {
+            "stage": "investigation_guard",
+            "reason": "duplicate_diagnostic_request",
+            "provider_turn": 2,
+            "mcp_dispatched": False,
+            "action": {"name": "get_service_topology", "arguments": {}},
+        }
+    ]
+    assert [item["id"] for item in stopped["evidence"]] == ["INC-DEMO-001", "TOPOLOGY-001"]
+    assert all(item["tool"] != "assessment_validation" for item in stopped["steps"])
+
+
+@pytest.mark.parametrize(
+    "limit_overrides,requests,reason,decision_calls,diagnostic_calls,rejected_action",
+    [
+        (
+            {"max_no_progress_calls": 2},
+            [DiagnosticRequest(name="search_logs", q="narrow"), DiagnosticRequest(name="search_logs", q="")],
+            "no_progress_limit",
+            2,
+            3,
+            None,
+        ),
+        (
+            {"max_diagnostic_calls": 2},
+            [DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="search_logs", q="")],
+            "diagnostic_call_limit",
+            2,
+            2,
+            {"name": "search_logs", "arguments": {"q": ""}},
+        ),
+        (
+            {"max_provider_turns": 2},
+            [DiagnosticRequest(name="query_metrics")],
+            "provider_turn_limit",
+            1,
+            2,
+            None,
+        ),
+    ],
+)
+async def test_strict_control_limits_stop_before_assessment(
+    limit_overrides, requests, reason, decision_calls, diagnostic_calls, rejected_action
+):
+    provider = CountingScript(requests)
+    client = ValidatingScriptClient()
+    snapshots = []
+    with pytest.raises(DiagnosticClientError):
+        await collect_script(client, provider, snapshots, limits=Settings(**limit_overrides))
+    assert provider.decision_calls == decision_calls
+    assert provider.assessment_calls == 0
+    assert len(client.calls) == diagnostic_calls
+    assert client.closed
+    stopped = snapshots[-1]
+    assert stopped["status"] == "failed"
+    assert stopped["assessment"] is None
+    assert stopped["provider_proposal"] is None
+    assert stopped["provenance"]["guard_stop"] == reason
+    assert stopped["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
+    if rejected_action:
+        assert stopped["provenance"]["action_rejections"][0]["action"] == rejected_action
+        assert stopped["provenance"]["action_rejections"][0]["mcp_dispatched"] is False
+    else:
+        assert stopped["provenance"]["action_rejections"] == []
+
+
+async def test_completed_topology_is_removed_from_catalog_but_distinct_queries_remain_available():
+    provider = CountingScript(
+        [
+            DiagnosticRequest(name="get_service_topology"),
+            DiagnosticRequest(name="search_logs", q="narrow"),
+            DiagnosticRequest(name="search_logs", q=""),
+            DiagnosticRequest(name="query_metrics", metric="latency"),
+        ]
+    )
+    client = ValidatingScriptClient(
+        rows={
+            ("get_service_topology", None): [evidence("TOPOLOGY-001", "topology", "Bounded topology")],
+            ("search_logs", ""): [evidence("LOG-001", "log", "Retrieved broader log")],
+            ("query_metrics", None): [evidence("METRIC-001", "metric", "Retrieved metric")],
+        }
+    )
+    client.schemas = [{"name": name} for name in ("get_service_topology", "search_logs", "query_metrics")]
+    snapshots = []
+    result = await collect_script(client, provider, snapshots)
+    assert "get_service_topology" in {item["name"] for item in provider.catalogs[0]}
+    assert all(
+        {item["name"] for item in catalog} == {"search_logs", "query_metrics"}
+        for catalog in provider.catalogs[1:]
+    )
+    assert [name for name, _ in client.calls] == [
+        "get_incident", "get_service_topology", "search_logs", "search_logs", "query_metrics"
+    ]
+    assert provider.decision_calls == 5
+    assert provider.assessment_calls == 1
+    assert "TOPOLOGY-001" in {item["id"] for item in result["evidence"]}
+    assert result["status"] == "complete"
+
+
+async def test_failed_topology_remains_available_to_normal_recovery():
+    provider = CountingScript([DiagnosticRequest(name="get_service_topology")])
+    client = ValidatingScriptClient(fail="get_service_topology")
+    client.schemas = [{"name": "get_service_topology"}, {"name": "search_logs"}]
+    snapshots = []
+    result = await collect_script(client, provider, snapshots, strict=False)
+    assert [item["name"] for item in provider.catalogs[1]] == ["get_service_topology", "search_logs"]
+    assert result["status"] == "complete"
+    assert provider.decision_calls == 2
+    assert provider.assessment_calls == 1
+
+
+async def test_default_duplicate_recovery_keeps_transparent_deterministic_fallback():
+    provider = CountingScript([DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="query_metrics")])
+    client = ValidatingScriptClient()
+    snapshots = []
+    result = await collect_script(client, provider, snapshots, strict=False)
+    assert result["status"] == "complete"
+    assert provider.decision_calls == 2
+    assert provider.assessment_calls == 0
+    assert result["provider_proposal"] is None
+    assert result["provenance"]["assessment_source"]["kind"] == "orchestrator_fallback"
+    assert client.closed
+
+
+async def test_strict_runtime_guard_retains_the_sanitized_parsed_action(monkeypatch):
+    from creditops import investigator
+
+    original = investigator.safe_arguments
+
+    def reject_metric(name, arguments):
+        if name == "query_metrics":
+            raise DiagnosticClientError("Runtime contract rejected parsed action")
+        return original(name, arguments)
+
+    monkeypatch.setattr(investigator, "safe_arguments", reject_metric)
+    provider = CountingScript([DiagnosticRequest(name="query_metrics", metric="latency", service="quote-service")])
+    client = ValidatingScriptClient()
+    snapshots = []
+    with pytest.raises(DiagnosticClientError):
+        await collect_script(client, provider, snapshots)
+    assert provider.decision_calls == 1
+    assert provider.assessment_calls == 0
+    assert client.calls == [("get_incident", {})]
+    rejection = snapshots[-1]["provenance"]["action_rejections"][0]
+    assert rejection["action"] == {
+        "name": "query_metrics", "arguments": {"metric": "latency", "service": "quote-service"}
+    }
+    assert rejection["stage"] == "argument_guard"
+    assert rejection["mcp_dispatched"] is False
+    assert snapshots[-1]["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
+    assert snapshots[-1]["validation_outcome"]["assessment_source"] is None
+    assert snapshots[-1]["assessment"] is None
+    assert client.closed
