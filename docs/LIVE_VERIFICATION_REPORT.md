@@ -432,3 +432,93 @@ manual. Proposed scope stays one case, same pinned OpenAI model, USD 2 additiona
 and no paid extras. No earlier approval authorizes the revised workflow.
 
 **EVIDENCE-FIRST WORKFLOW VERIFIED OFFLINE — LIVE QUALITY NOT YET MEASURED.**
+
+
+## Offline assessment-citation contract repair
+
+The latest historical attempt `5b4313bd-b492-4738-935b-aca9a0c9dac2` remains
+STOPPED; `run-333a8570-5558-4d55-acc2-138d67ca8410.json` is unchanged. Four
+application-selected MCP checks returned 67 evidence rows; one model decision
+selected assessment and one assessment request followed. The proposal named a
+pricing/Kafka backlog condition but placed absence explanations in
+`relevant_runbooks` and `similar_incidents` despite retrieving no eligible rows.
+Diagnostic reference validation rejected both; no final assessment exists.
+Its narrative also requires review: correlated backlog/staleness does not prove
+the initiating cause, sampled lag fluctuated, and isolated earlier health samples
+do not establish continuous or later health. RFQ expiry/quote unavailability does
+not establish fills or financial losses. This repair does not rewrite that result.
+
+Root cause: `models.Assessment` preserves public/historical `list[str]` reference
+fields, while `validation.validate_assessment` requires returned IDs of the correct
+kind. The static schema sent by `providers.assess` permitted both exact prose
+values before that semantic boundary. New `assessment_schema.assessment_type`
+builds fresh, deterministic Pydantic types from the exact bounded, sanitized JSON
+packet supplied to the assessment request. Shared enums contain only top-level
+returned IDs; runbook/history collections use their eligible kinds. Nested mentions,
+other sessions, database inventory and expected answers confer no eligibility.
+All seven top-level/nested citation collections use this contract. Empty collections
+remain optional choices; absent eligible IDs permit only `[]`, never an empty enum,
+placeholder or explanatory prose. Public Assessment serialization, four initial
+checks, abstention, runtime validation and diagnostic thresholds remain unchanged.
+
+[OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+supports the closed, required object/definition schemas and `maxItems: 0` used here.
+The installed Anthropic parser strips that empty-array constraint; its public
+raw-schema SDK route now preserves `const: []`, using the generally documented
+[const support](https://platform.claude.com/docs/en/build-with-claude/structured-outputs#json-schema-limitations).
+Local Pydantic parsing retains numeric/reference validation. Actual offline SDK
+requests verify serialization, not remote API acceptance. No provider/model changed.
+Targeted assessment instructions keep absence explanations in limitations/unknowns,
+distinguish not retrieved from nonexistent, and constrain temporal/causal/business
+wording. Reference eligibility does not guarantee narrative truth or claim support.
+
+Two exact-prose regressions failed against the old actual SDK wire schemas before
+implementation; both now pass. Offline transports inspect both installed official
+SDKs, including all seven collections, empty/nonempty/null values, wrong kinds,
+unreturned/nested IDs, zero/ordinary/100-row packets, 96-character Unicode IDs,
+closure/enum/size limits and session isolation. Invalid offline output preserves its
+sanitized public candidate separately with `assessment_structured_output` rejection,
+provider metadata/usage/reservations and no semantic validation or substitute final
+assessment. Malformed envelopes retain finished partial receipts. Real local MCP
+runner tests cover four application-selected calls, one offline decision and one
+offline assessment: rejected citations stop with partial receipts and clean teardown;
+valid empty references allow abstention. Valid citations with misleading prose still
+undergo the unchanged rule layer, with original proposal and normalization separate.
+These are offline integration tests, not successful live-model assessments.
+
+Final local verification: normal `pnpm test` passed 336 Python tests with no skips
+(124.92 s), two dependency checks and 20 frontend tests; 19 isolated Chromium
+regressions passed (45.09 s). Lint/types/build, isolated PostgreSQL migrations,
+pip/pnpm audits, Bandit and redacted Git-history/source Gitleaks passed. Linux
+lifecycle skips locally on Windows and is covered by normal CI. Results are local
+under `artifacts/test-results/citation-contract-*`; source CI receipt follows after
+publication. Unchanged legacy evaluation outputs are separate from archived history: 12/15
+baseline, 11/15 initial-plan pipeline, zero invalid citations; developer-authored
+robustness 13/13 with four abstentions, not an independent held-out evaluation.
+
+One recalculation at the unchanged recorded USD 0.75/4.50 rates includes actual
+SDK schema overhead, 120,000 data bytes plus 96 prefix bytes, 16,384 protocol bytes
+and 5,000 output tokens. Decision bound: USD 0.13420275. The latest 67-row schema
+is 8,079 bytes on the wire; assessment bound USD 0.135. Maximum 100-row ASCII
+schema: 25,248 bytes, assessment USD 0.14787675. A deliberately looser 100 ×
+96-character non-BMP bound is 236,448 schema bytes and USD 0.30627675; that packet
+itself exceeds the unchanged collector limit, so this safely overestimates.
+At most 11 decisions plus one assessment under 12 total turns reserve at most
+USD 1.782507, fitting the unchanged proposed USD 2 allocation. No limits increased.
+Details: `artifacts/test-results/citation-contract-reservations.json`. These are
+prospective reservation bounds, not reported usage, confirmed billing or approval.
+
+All 37 protected history/data/approval/replay files, including `.env`, match local
+before/after hashes; the live artifact set is unchanged. Four ledger outcomes remain
+STOPPED, STOPPED, completed with model abstention, and STOPPED on invalid references.
+Retained reservations total USD 0.60731325. Retained plus the calculated maximum
+is USD 2.38982025; retained plus a proposed USD 2 allocation is USD 2.60731325
+within the original USD 5 envelope. Cross-ledger accounting remains manual.
+No new real attempt ID, approval note, execution ledger, reservation or paid request
+was created. `.env` stays unchanged, ignored and untracked; private manifests remain
+local and no secret/hash values are published.
+
+**LIVE RETRY NOT RUN — REPAIRED SOURCE REQUIRES SEPARATE OWNER APPROVAL.**
+Live-model quality and remote acceptance of these new schemas remain unverified.
+Any future attempt requires an explicit source-bound owner decision and existing
+credential/resource/pricing/cumulative-history checks; no previous approval applies.

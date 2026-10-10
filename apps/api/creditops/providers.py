@@ -15,8 +15,9 @@ from pathlib import Path
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model, model_validator
 
+from .assessment_schema import anthropic_assessment_schema, assessment_type
 from .diagnostics import (
     ABSTAIN_DOMAIN,
     CPU_DOMAIN,
@@ -69,8 +70,51 @@ ASSESSMENT_INSTRUCTION = (
     "Produce the structured evidence-backed RCA draft using only returned evidence IDs. "
     "Keep abstention available: a completed investigation need not identify a failure domain. "
     "Describe material missing coverage, distinguish evidence not retrieved from unavailable evidence, and do not claim unqueried systems were checked. "
+    "Structured ID arrays contain references only, never absence explanations, none or N/A; with no eligible references use []. Explain missing runbooks/history in limitations or unknowns; not retrieved does not mean nonexistent. "
+    "Use only relevant eligible citations; availability does not make a citation support the claim. No extra runbook/history check is required to populate optional arrays. "
+    "Correlated backlog and staleness do not confirm a causal chain or initiating cause. Describe the actual sampled sequence, including fluctuations; do not call it monotonically rising unless samples support that. "
+    "One normal CPU/health sample supports its timestamp, not stayed healthy or health at a later cutoff. RFQ expiry or quote unavailability does not establish fills or financial losses. "
     + TEMPORAL_EVIDENCE_INSTRUCTIONS
 )
+
+
+def _assessment_schema(message: str) -> type[Assessment]:
+    # Derive eligibility from exactly the bounded, sanitized JSON sent by the SDK,
+    # including any ID sanitization; no second/raw evidence source is consulted.
+    return assessment_type(json.loads(message.split("\n", 1)[1])["evidence"])
+
+
+def _record_assessment_schema_rejection(receipt: dict, payload: dict, error: ValidationError) -> None:
+    """Retain public advisory fields only, explicitly rejected by the narrow schema."""
+    receipt["rejection_stage"] = "assessment_structured_output"
+    receipt["rejected_fields"] = [
+        {"field": ".".join(str(part) for part in item["loc"]), "reason": "assessment_response_schema_violation", "error_type": item["type"]}
+        for item in error.errors(include_input=False, include_context=False, include_url=False)
+    ]
+    # A valid public shape is inspectable without accepting its references. Do not
+    # persist malformed text, private reasoning, refusal text or unknown fields.
+    texts = []
+    if "output" in payload:
+        outputs = payload.get("output")
+        if not isinstance(outputs, list):
+            return
+        for output in outputs:
+            contents = output.get("content") if isinstance(output, dict) else None
+            if not isinstance(contents, list):
+                continue
+            texts.extend(item.get("text") for item in contents if isinstance(item, dict) and item.get("type") == "output_text")
+    else:
+        contents = payload.get("content")
+        if not isinstance(contents, list):
+            return
+        texts = [item.get("text") for item in contents if isinstance(item, dict) and item.get("type") == "text"]
+    if len(texts) != 1 or not isinstance(texts[0], str) or len(texts[0]) > 120000:
+        return
+    try:
+        proposal = Assessment.model_validate_json(texts[0])
+    except (ValidationError, ValueError):
+        return
+    receipt["rejected_assessment_proposal"] = sanitize(proposal.model_dump(mode="json"))
 
 # Backward-compatible imports for existing evaluation/tests; diagnostic rules
 # now have their own independently tested module.
@@ -495,11 +539,13 @@ class OpenAIProvider(AdaptiveProviderMixin):
         )
 
     async def _parse(
-        self, schema: type[BaseModel], instruction: str, data: Any
+        self, schema: type[BaseModel], instruction: str, data: Any, *, constrain_assessment_refs: bool = False
     ) -> tuple[Any, dict[str, Any]]:
         receipt, started = self._start_receipt(schema)
         try:
             message = data_message(data)
+            if constrain_assessment_refs:
+                schema = _assessment_schema(message)
             self._reserve_receipt(receipt, schema, instruction, message)
             receipt["request_started"] = True
             raw = await self.client.responses.with_raw_response.parse(
@@ -542,6 +588,8 @@ class OpenAIProvider(AdaptiveProviderMixin):
             self._finish_receipt(receipt, started)
             return response.output_parsed, receipt["usage"].copy()
         except BaseException as error:
+            if constrain_assessment_refs and isinstance(error, ValidationError) and receipt["response_received"]:
+                _record_assessment_schema_rejection(receipt, payload, error)
             self._finish_receipt(receipt, started, error)
             raise
 
@@ -559,6 +607,7 @@ class OpenAIProvider(AdaptiveProviderMixin):
             Assessment,
             ASSESSMENT_INSTRUCTION,
             {"incident": incident, "evidence": evidence},
+            constrain_assessment_refs=True,
         )
 
 
@@ -579,32 +628,59 @@ class AnthropicProvider(AdaptiveProviderMixin):
         )
 
     async def _parse(
-        self, schema: type[BaseModel], instruction: str, data: Any
+        self, schema: type[BaseModel], instruction: str, data: Any, *, constrain_assessment_refs: bool = False
     ) -> tuple[Any, dict[str, Any]]:
         receipt, started = self._start_receipt(schema)
         try:
             message = data_message(data)
+            if constrain_assessment_refs:
+                schema = _assessment_schema(message)
             self._reserve_receipt(receipt, schema, instruction, message)
             receipt["request_started"] = True
-            response = await self.client.messages.parse(
-                model=self.model,
-                max_tokens=5000,
-                system=SYSTEM_PROMPT + "\n" + instruction,
-                messages=[{"role": "user", "content": message}],
-                output_format=schema,
-            )
-            self._metadata(receipt, response.model_dump(mode="json"), getattr(response, "_request_id", None))
-            if response.stop_reason in ("refusal", "max_tokens"):
-                receipt["status"] = "refusal" if response.stop_reason == "refusal" else "incomplete"
-                raise ProviderUnavailable("Provider refused or returned incomplete structured output")
-            if response.parsed_output is None:
-                receipt["status"] = "incomplete"
-                raise ProviderUnavailable("Provider returned no structured output")
-            receipt["structured_output"] = sanitize(response.parsed_output.model_dump(mode="json"))
+            if constrain_assessment_refs:
+                # Public raw JSON-schema API preserves empty-array constants that
+                # messages.parse currently drops. Parse locally with the same type.
+                raw = await self.client.messages.with_raw_response.create(
+                    model=self.model,
+                    max_tokens=5000,
+                    system=SYSTEM_PROMPT + "\n" + instruction,
+                    messages=[{"role": "user", "content": message}],
+                    output_config={"format": {"type": "json_schema", "schema": anthropic_assessment_schema(schema)}},
+                )
+                receipt["response_received"] = True
+                payload = await raw.json()
+                self._metadata(receipt, payload, raw.headers.get("request-id"))
+                if payload.get("stop_reason") in ("refusal", "max_tokens"):
+                    receipt["status"] = "refusal" if payload["stop_reason"] == "refusal" else "incomplete"
+                    raise ProviderUnavailable("Provider refused or returned incomplete structured output")
+                texts = [item.get("text") for item in payload.get("content", []) if item.get("type") == "text"]
+                if len(texts) != 1 or not isinstance(texts[0], str):
+                    receipt["status"] = "incomplete"
+                    raise ProviderUnavailable("Provider returned no structured output")
+                parsed = schema.model_validate_json(texts[0])
+            else:
+                response = await self.client.messages.parse(
+                    model=self.model,
+                    max_tokens=5000,
+                    system=SYSTEM_PROMPT + "\n" + instruction,
+                    messages=[{"role": "user", "content": message}],
+                    output_format=schema,
+                )
+                self._metadata(receipt, response.model_dump(mode="json"), getattr(response, "_request_id", None))
+                if response.stop_reason in ("refusal", "max_tokens"):
+                    receipt["status"] = "refusal" if response.stop_reason == "refusal" else "incomplete"
+                    raise ProviderUnavailable("Provider refused or returned incomplete structured output")
+                if response.parsed_output is None:
+                    receipt["status"] = "incomplete"
+                    raise ProviderUnavailable("Provider returned no structured output")
+                parsed = response.parsed_output
+            receipt["structured_output"] = sanitize(parsed.model_dump(mode="json"))
             receipt["status"] = "success"
             self._finish_receipt(receipt, started)
-            return response.parsed_output, receipt["usage"].copy()
+            return parsed, receipt["usage"].copy()
         except BaseException as error:
+            if constrain_assessment_refs and isinstance(error, ValidationError) and receipt["response_received"]:
+                _record_assessment_schema_rejection(receipt, payload, error)
             self._finish_receipt(receipt, started, error)
             raise
 
@@ -622,6 +698,7 @@ class AnthropicProvider(AdaptiveProviderMixin):
             Assessment,
             ASSESSMENT_INSTRUCTION,
             {"incident": incident, "evidence": evidence},
+            constrain_assessment_refs=True,
         )
 
 

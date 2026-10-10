@@ -480,10 +480,29 @@ async def collect_adaptive_investigation(
                 }
             else:
                 provider_turns += 1
-                async with asyncio.timeout(configuration.provider_timeout_seconds):
-                    assessment, usage = await provider.assess(
-                        model_context(), result["evidence"]
-                    )
+                try:
+                    async with asyncio.timeout(configuration.provider_timeout_seconds):
+                        assessment, usage = await provider.assess(
+                            model_context(), result["evidence"]
+                        )
+                except ValidationError:
+                    calls = getattr(provider, "execution_receipts", [])
+                    rejected = calls[-1] if len(calls) > initial_receipt_index else {}
+                    proposal = copy.deepcopy(rejected.get("rejected_assessment_proposal"))
+                    result["provider_proposal"] = proposal
+                    result["validation_outcome"] = {
+                        "status": "not_validated",
+                        "stage": "assessment_structured_output",
+                        "structurally_parsed": proposal is not None,
+                        "provider_schema_accepted": False,
+                        "provider_response": "parse_error",
+                        "assessment_source": _assessment_source(provider),
+                        "scope": "Public structured candidate only; provider-facing reference schema rejected it before diagnostic validation.",
+                        "original_claims_independently_verified": False,
+                        "changed_fields": [],
+                        "rejected_fields": copy.deepcopy(rejected.get("rejected_fields", [])),
+                    }
+                    raise
                 usages.append(usage)
                 assessment_source = _assessment_source(provider)
             assessment = _record_validation(result, assessment, assessment_source)
