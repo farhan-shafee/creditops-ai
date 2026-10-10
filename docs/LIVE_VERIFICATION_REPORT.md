@@ -526,3 +526,118 @@ local and no secret/hash values are published.
 Live-model quality and remote acceptance of these new schemas remain unverified.
 Any future attempt requires an explicit source-bound owner decision and existing
 credential/resource/pricing/cumulative-history checks; no previous approval applies.
+
+## Accepted case-001 result and remaining-case preparation
+
+The separately approved attempt `38ec45c9-71aa-4323-91cb-c5a0360d11ce` completed
+on 2026-10-10 in 25.191 s, using application source
+`22ffd4d77245a7f12f177fa9bdd20f43a33088b9` at documentation-only HEAD
+`bb7aa0ae9805d07be39cf043a1d9dafc5992eb9e`. Original sanitized receipt:
+`artifacts/live-verification/run-3f4d7391-f31c-47b9-93cb-da7d02354782.json`.
+OpenAI accepted the revised assessment schema remotely. Four application-selected
+MCP diagnostics (`get_incident`, `get_service_topology`, `query_metrics`,
+`search_logs`) returned 67 evidence rows, including the bounded 50 metric rows.
+One model decision selected assessment immediately; one assessment request followed.
+There were no model-selected diagnostic follow-ups or rejected actions.
+
+The original model proposed the supported pricing-service/Kafka consumer backlog
+condition with support score 0.63 and valid returned reference IDs. Validation
+accepted the domain and normalized 19 distinct fields; that count is not evidence
+of 19 separately detected errors. Final 0.84 is rule-generated support, not model
+confidence or accuracy; both scores are uncalibrated. The original narrative still
+overgeneralized causality, fluctuating sampled trends and the timing of CPU/database
+health observations. Returned samples ended at 14:02:24Z, before the 15:00Z cutoff.
+Final initiating cause remains unconfirmed. RFQ expiry and quote unavailability
+are supported; fills or financial losses are not established. This repeatedly
+developed synthetic case is not independent held-out evidence. The two remaining
+cases are also developer-authored fixtures. One accepted condition demonstrates
+neither production MTTR reduction, general accuracy nor autonomous investigation.
+
+Reported usage was 28,119 input and 2,722 output tokens, with usage-based estimate
+USD 0.03333825 and separate conservative reservation USD 0.14025975. Confirmed
+billing is unknown. Original proposal, receipt, ledger and approval remain unchanged.
+Five historical outcomes remain STOPPED, STOPPED, completed with model abstention,
+STOPPED on invalid references, and completed with an accepted normalized domain.
+Their retained reservations total **USD 0.74757300**; none was reset or refunded.
+
+This preparation changes only `scripts/verify_live.py`, offline runner tests and
+this report. `--case-id` accepts exactly the three existing demo IDs and is mutually
+exclusive with `--case-count`. Single-case mode executes only the selected case,
+using a fresh standalone ledger under stage `first`; that stage does not select
+case 001 in this mode. It cannot use `--stage remaining` or `--continue-reviewed`.
+Invalid/ambiguous selections fail in argument parsing, before ledger/provider/Store
+creation. Dry-run, immutable configuration, identity marker, MCP scope, persisted
+investigation and receipt bind the same selected ID. Legacy prefix/staged behavior
+and its first-case review requirements remain intact.
+
+The investigation implementation is frozen: evidence_first_v1 initial checks,
+adaptive loop, model/settings/prompts, citation schemas, retrieval/sampling,
+thresholds, validation/support scores, fixture labels, frontend/replay and deployment
+configuration are unchanged. Local before/after checks use the existing SHA-256
+preservation approach: 131 frozen implementation/configuration files and 40
+protected history files, including all five ledgers/receipts/approvals, benchmark/
+replay artifacts, live latest pointer and `.env`. Hash manifests stay private under
+`artifacts/test-results/remaining-cases-preservation-*`; no secret hashes are published.
+
+Prospective commands from `D:\Dev\Repos\creditops-ai` follow. UUIDs are placeholders,
+not allocated attempt identities. Each requires fresh explicit owner approval bound
+to the tested runner commit and reviewed cumulative history. No approval, real
+attempt ID, execution ledger or paid request is created by this offline preparation.
+
+INC-DEMO-002 (FIX connectivity):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\verify_live.py --provider openai --model gpt-5.4-mini-2026-03-17 --case-id INC-DEMO-002 --max-tool-calls 12 --max-provider-turns 12 --max-spend-usd 2 --timeout-seconds 300 --provider-timeout-seconds 90 --diagnostic-timeout-seconds 15 --total-timeout-seconds 330 --input-price-ceiling 0.75 --output-price-ceiling 4.50 --experiment-id <CASE_002_ATTEMPT_UUID> --stage first --execute-paid
+```
+
+INC-DEMO-003 (database connection pool):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\verify_live.py --provider openai --model gpt-5.4-mini-2026-03-17 --case-id INC-DEMO-003 --max-tool-calls 12 --max-provider-turns 12 --max-spend-usd 2 --timeout-seconds 300 --provider-timeout-seconds 90 --diagnostic-timeout-seconds 15 --total-timeout-seconds 330 --input-price-ceiling 0.75 --output-price-ceiling 4.50 --experiment-id <CASE_003_ATTEMPT_UUID> --stage first --execute-paid
+```
+
+These are separate prospective attempts, not continuation or re-execution of case
+001. Standard endpoint/default tier, frozen completed synthetic snapshot, real MCP,
+application-controlled scope, strict stopping, 12 diagnostic calls including four
+initial checks, 12 provider turns including assessment, 5,000 output tokens, existing
+bounded context, 300/90/15/330 s deadlines and zero retries remain unchanged. There
+are no paid extras. Future execution must recheck clean reviewed source, credentials
+without exposure, dedicated process/resource identity and retained history.
+
+The unchanged [official model rates](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
+were checked on 2026-10-10: USD 0.75 input / 4.50 output per million tokens for the
+pinned snapshot. The existing actual-SDK-schema reservation calculation remains
+applicable because prompts, schemas and context/output allowances are frozen:
+USD 0.13420275 per decision, conservative assessment bound USD 0.30627675,
+at most 11 decisions plus one assessment = **USD 1.78250700 per case**, below USD 2.
+Details remain in `artifacts/test-results/citation-contract-reservations.json`.
+Two maximum reservation bounds plus history equal USD 4.31258700. Proposed ceilings
+are USD 2 per case / USD 4 additional combined, giving **USD 4.74757300** allocated
+exposure under the original USD 5 envelope. Prior active time 84.586 s plus two
+330 s limits = **744.586 s**, within 900 s. Cross-ledger spend/time accounting is
+manual, not automatically enforced; reservations, proposed allocations, reported
+usage estimates and confirmed billing are distinct. Unused allocation grants no
+extra execution, and missing usage must remain unknown.
+
+Offline verification: three new selector dry-run tests and four real-runner/MCP
+paths failed against the original parser before implementation. Afterward, ten
+CLI/dry-run checks and five real local MCP checks pass. Each selected 002/003
+success activated only that case and made four diagnostics, one scripted decision
+and one scripted assessment. Each induced failure retained the selected case,
+partial receipt and fixture reservation, STOPPED after one decision/five diagnostics,
+and made no assessment or retry. Legacy first/remaining still runs 001 then 002/003
+without repeating 001. Scripted results verify integration, not live-model quality.
+Normal local `pnpm test` passed 351 Python tests without skips (190.05 s), two
+dependency checks and 20 frontend tests. Nineteen isolated Chromium regressions
+passed without retries/flakiness (46.079 s), with owned processes cleaned up.
+Lint/types/build, disposable local PostgreSQL migrations, pip/pnpm audits, Bandit
+and redacted Git-history Gitleaks passed. Linux lifecycle is skipped locally on
+Windows and will run in normal CI. Unchanged legacy evaluation remains 12/15
+baseline and 11/15 initial-plan pipeline; developer-authored robustness remains
+13/13 with four abstentions, not held-out evaluation. New outputs are separate under
+`artifacts/test-results/remaining-*`. All 40 protected and 131 frozen file hashes
+match afterward; live file set/latest pointer and `.env` remain unchanged, ignored
+and untracked. Normal CI receipt for the tested runner source will be recorded
+after publication; no remaining-case paid execution has occurred.
+
+**REMAINING LIVE CASES NOT RUN — FRESH SOURCE-BOUND OWNER APPROVAL REQUIRED.**

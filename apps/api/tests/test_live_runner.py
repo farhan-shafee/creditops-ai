@@ -158,7 +158,7 @@ async def test_interrupted_attempt_retains_usage_cost_and_closes_resources(
         async def close(self):
             closed.append("store")
 
-    async def identity(*args):
+    async def identity(*args, **kwargs):
         return {"verified": True, "offline_test": True}
 
     async def interrupted(*args, **kwargs):

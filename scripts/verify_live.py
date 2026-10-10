@@ -92,7 +92,9 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--provider", choices=("openai", "anthropic"), required=True)
     parser.add_argument("--model", required=True)
-    parser.add_argument("--case-count", type=int, choices=range(1, 4), required=True)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--case-count", type=int, choices=range(1, 4), help="Legacy staged prefix plan")
+    selection.add_argument("--case-id", choices=CASE_IDS, help="One standalone case; no staged continuation")
     parser.add_argument("--max-tool-calls", type=int, choices=range(2, 17), required=True)
     parser.add_argument("--max-provider-turns", type=int, choices=range(2, 17), required=True)
     parser.add_argument("--max-spend-usd", type=float, required=True)
@@ -110,6 +112,8 @@ def parse_args(argv=None):
     boundary.add_argument("--preflight", action="store_true", help="Local identity check; no model calls")
     parser.add_argument("--output-directory", type=Path, default=PROJECT_ROOT / "artifacts/live-verification")
     args = parser.parse_args(argv)
+    if args.case_id is not None and (args.stage == "remaining" or args.continue_reviewed):
+        parser.error("Explicit single-case selection cannot use remaining stage or continuation review")
     ranges = [
         (args.max_spend_usd, 0, 10),
         (args.timeout_seconds, 0, 300),
@@ -170,12 +174,12 @@ def validate_local_resources(configuration):
     return {"database": identity, "api": configuration.mcp_api_url, "embeddings_enabled": False}
 
 
-async def verify_api_identity(store, configuration, session_id):
+async def verify_api_identity(store, configuration, session_id, *, incident_id=CASE_IDS[0]):
     """Fresh session row proves shared persistence; no seed, migration or reset."""
     identifier = str(uuid4())
     marker = {
         "id": identifier,
-        "incident_id": CASE_IDS[0],
+        "incident_id": incident_id,
         "mode": "LIVE_AI",
         "status": "preflight",
         "provider": "none",
@@ -218,7 +222,7 @@ async def run(args):
     plan = {
         "provider": args.provider,
         "model": args.model,
-        "case_ids": CASE_IDS[: args.case_count],
+        "case_ids": [args.case_id] if args.case_id is not None else CASE_IDS[: args.case_count],
         "max_tool_calls_per_case": args.max_tool_calls,
         "max_provider_turns_per_case": args.max_provider_turns,
         "maximum_spend_usd": str(args.max_spend_usd),
@@ -260,7 +264,9 @@ async def run(args):
         store = Store(configuration.database_url)
         try:
             async with asyncio.timeout(15):
-                receipt["local_identity"] = await verify_api_identity(store, configuration, str(uuid4()))
+                receipt["local_identity"] = await verify_api_identity(
+                    store, configuration, str(uuid4()), incident_id=plan["case_ids"][0]
+                )
             receipt["execution"] = "LOCAL_PREFLIGHT_ONLY_NO_MODEL_CALLS"
         finally:
             await store.close()
@@ -297,7 +303,9 @@ async def run(args):
         store = Store(configuration.database_url)
         session_id = str(uuid4())
         async with asyncio.timeout(min(15, args.total_timeout_seconds - ledger.data["elapsed_seconds"])):
-            receipt["local_identity"] = await verify_api_identity(store, configuration, session_id)
+            receipt["local_identity"] = await verify_api_identity(
+                store, configuration, session_id, incident_id=plan["case_ids"][0]
+            )
         provider = create_provider(args.provider)
 
         def reserve(total):
@@ -308,7 +316,11 @@ async def run(args):
         provider.enable_budget(
             args.max_spend_usd, reserved_spend=ledger.reserved, reservation_callback=reserve
         )
-        cases = CASE_IDS[:1] if args.stage == "first" else CASE_IDS[1 : args.case_count]
+        cases = (
+            plan["case_ids"]
+            if args.case_id is not None
+            else CASE_IDS[:1] if args.stage == "first" else CASE_IDS[1 : args.case_count]
+        )
         for incident_id in cases:
             remaining = (
                 args.total_timeout_seconds - ledger.data["elapsed_seconds"] - (time.monotonic() - started)
@@ -358,7 +370,7 @@ async def run(args):
             ledger.save()
         receipt["execution"] = (
             "AWAITING_FIRST_CASE_REVIEW"
-            if args.stage == "first" and args.case_count > 1
+            if args.stage == "first" and len(plan["case_ids"]) > 1
             else "COMPLETED_APPROVED_CASES"
         )
         ledger.data["state"] = receipt["execution"]
