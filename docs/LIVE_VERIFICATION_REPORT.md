@@ -490,9 +490,13 @@ Final local verification: normal `pnpm test` passed 336 Python tests with no ski
 (124.92 s), two dependency checks and 20 frontend tests; 19 isolated Chromium
 regressions passed (45.09 s). Lint/types/build, isolated PostgreSQL migrations,
 pip/pnpm audits, Bandit and redacted Git-history/source Gitleaks passed. Linux
-lifecycle skips locally on Windows and is covered by normal CI. Results are local
-under `artifacts/test-results/citation-contract-*`; source CI receipt follows after
-publication. Unchanged legacy evaluation outputs are separate from archived history: 12/15
+lifecycle skips locally on Windows. [Normal source CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/38020329064)
+passed all four jobs on `22ffd4d77245a7f12f177fa9bdd20f43a33088b9`: 336 Python tests
+with no skips (112.74 s), 20 frontend tests, two dependency checks, 19 Chromium
+tests (3.2 min), one Linux lifecycle test, lint/types/build, PostgreSQL migrations,
+evaluation/robustness, audits, Bandit and Git-history secret scanning. This later
+CI receipt changes documentation only. Local results remain under
+`artifacts/test-results/citation-contract-*`. Unchanged legacy evaluation outputs are separate from archived history: 12/15
 baseline, 11/15 initial-plan pipeline, zero invalid citations; developer-authored
 robustness 13/13 with four abstentions, not an independent held-out evaluation.
 
