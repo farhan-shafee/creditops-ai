@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const isWindows = process.platform === 'win32';
-const python = join(root, '.venv', isWindows ? 'Scripts/python.exe' : 'bin/python');
+const python = process.env.PYTHON ?? join(root, '.venv', isWindows ? 'Scripts/python.exe' : 'bin/python');
 if (!existsSync(python)) {
   console.error('Create the Python environment first: python -m venv .venv, then install .[dev]. See README.');
   process.exit(1);

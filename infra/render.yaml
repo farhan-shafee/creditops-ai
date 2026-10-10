@@ -5,7 +5,6 @@ services:
     dockerfilePath: ./infra/docker/api.Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    plan: free
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -13,11 +12,13 @@ services:
         value: persisted
       - key: PUBLIC_DEMO
         value: "true"
-      - key: AI_PROVIDER
-        value: openai
-      - key: ADMIN_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_MODEL
+      - key: REPLAY_DIR
+        value: /app/data/showcase
+      - key: CREDITOPS_ENV_FILE
+        value: ""
+      - key: EMBEDDINGS_ENABLED
+        value: "false"
+      - key: DATABASE_REQUIRE_SSL
+        value: "true"
+      - key: CORS_ORIGINS
         sync: false

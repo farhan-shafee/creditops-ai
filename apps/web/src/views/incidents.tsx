@@ -22,6 +22,7 @@ export function ScenarioControls({
   busy,
   running,
   hasIncident,
+  showcaseProfile = false,
 }: {
   scenarios: Scenario[];
   selectedScenario: string;
@@ -31,6 +32,7 @@ export function ScenarioControls({
   busy: boolean;
   running: boolean;
   hasIncident: boolean;
+  showcaseProfile?: boolean;
 }) {
   return (
     <div className="scenario-controls">
@@ -51,7 +53,7 @@ export function ScenarioControls({
       </div>
       <button className="button primary" onClick={onRun} disabled={busy || !scenarios.length}>
         <Play size={14} />
-        Run Incident
+        {showcaseProfile ? 'View recorded investigation' : 'Run Incident'}
       </button>
       <button className="button secondary" onClick={onReset} disabled={busy || !hasIncident}>
         <RotateCcw size={14} />
@@ -59,7 +61,7 @@ export function ScenarioControls({
       </button>
       <span className="clock-caption">
         <Clock3 size={13} />
-        Simulated clock · 12×
+        {showcaseProfile ? 'Recorded snapshot · UTC' : 'Simulated clock · 12×'}
       </span>
     </div>
   );
@@ -79,6 +81,7 @@ export function IncidentView({
   onEvidence,
   onIncident,
   onlyInvestigator = false,
+  showcaseProfile = false,
 }: {
   incident: Incident | null;
   incidents: Incident[];
@@ -93,6 +96,7 @@ export function IncidentView({
   onEvidence: (id: string) => void;
   onIncident: (incident: Incident) => void;
   onlyInvestigator?: boolean;
+  showcaseProfile?: boolean;
 }) {
   if (!incident)
     return (
@@ -103,6 +107,12 @@ export function IncidentView({
         </Empty>
       </Panel>
     );
+  const recorded = investigation?.mode === 'REPLAY';
+  const recordedContext = investigation?.evidence.find((row) => row.kind === 'incident')?.data;
+  const timeline =
+    recorded && Array.isArray(recordedContext?.timeline)
+      ? (recordedContext.timeline as Incident['timeline'])
+      : incident.timeline;
   return (
     <div data-testid="incident-detail">
       {incidents.length > 1 && (
@@ -126,7 +136,11 @@ export function IncidentView({
             {incident.id} / {incident.scenario}
           </span>
           <h2>{incident.title}</h2>
-          <p>{incident.summary}</p>
+          <p>
+            {recorded
+              ? 'Inspect the original recorded evidence and conservative advisory output. The synthetic simulation clock is separate from this complete snapshot.'
+              : incident.summary}
+          </p>
         </div>
         <div>
           <Status value={incident.severity} />
@@ -149,63 +163,77 @@ export function IncidentView({
               <strong>{incident.affected_services.join(', ')}</strong>
             </div>
             <div>
-              <span>Simulated elapsed</span>
-              <strong>{Math.floor(incident.simulated_elapsed_seconds)} seconds</strong>
+              <span>{recorded ? 'Evidence snapshot cutoff' : 'Simulated elapsed'}</span>
+              <strong>
+                {recorded
+                  ? `${investigation.provenance?.snapshot_cutoff ?? 'not recorded'} UTC`
+                  : `${Math.floor(incident.simulated_elapsed_seconds)} seconds`}
+              </strong>
             </div>
           </div>
-          <BusinessImpactPanel incidentId={incident.id} onEvidence={onEvidence} />
-          <Panel
-            title="Incident telemetry"
-            eyebrow="Observe the signal"
-            action={<Badge tone="amber">Simulated clock / 12×</Badge>}
-          >
-            <div className="grid-two">
-              {metrics.length ? (
-                metrics
-                  .slice(0, 4)
-                  .map((series, index) => (
-                    <TelemetryChart
-                      key={`${series.service}-${series.metric}`}
-                      series={series}
-                      color={index % 2 ? 'amber' : 'teal'}
-                      onEvidence={onEvidence}
-                    />
-                  ))
-              ) : (
-                <p className="padded muted">Waiting for the first persisted telemetry samples…</p>
-              )}
-            </div>
-          </Panel>
-          <div className="grid-two">
-            <Panel title="Incident timeline" eyebrow="Alerts & observations">
-              <ol className="incident-timeline">
-                {incident.timeline.map((event, index) => (
-                  <li key={`${event.timestamp}-${index}`}>
-                    <time>
-                      {time(event.timestamp)}
-                      <span>UTC</span>
-                    </time>
-                    <div>
-                      <strong>{event.label}</strong>
-                      <div className="citations">
-                        {event.evidence_ids.map((id) => (
-                          <Citation key={id} id={id} onEvidence={onEvidence} />
-                        ))}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-                {!incident.timeline.length && (
-                  <li>
-                    <p>Telemetry is accumulating as the simulated clock advances.</p>
-                  </li>
-                )}
-              </ol>
-            </Panel>
-            <Panel title="Dependency impact" eyebrow="Follow the trading path">
-              <ServiceMap topology={topology} incident={incident} compact />
-            </Panel>
-          </div>
+          <BusinessImpactPanel
+            incidentId={incident.id}
+            onEvidence={onEvidence}
+            investigation={investigation}
+          />
+          {!recorded && (
+            <>
+              <Panel
+                title="Incident telemetry"
+                eyebrow="Observe the signal"
+                action={<Badge tone="amber">Simulated clock / 12×</Badge>}
+              >
+                <div className="grid-two">
+                  {metrics.length ? (
+                    metrics
+                      .slice(0, 4)
+                      .map((series, index) => (
+                        <TelemetryChart
+                          key={`${series.service}-${series.metric}`}
+                          series={series}
+                          color={index % 2 ? 'amber' : 'teal'}
+                          onEvidence={onEvidence}
+                        />
+                      ))
+                  ) : (
+                    <p className="padded muted">
+                      Waiting for the first persisted telemetry samples…
+                    </p>
+                  )}
+                </div>
+              </Panel>
+              <div className="grid-two">
+                <Panel title="Incident timeline" eyebrow="Alerts & observations">
+                  <ol className="incident-timeline">
+                    {timeline.map((event, index) => (
+                      <li key={`${event.timestamp}-${index}`}>
+                        <time>
+                          {time(event.timestamp)}
+                          <span>UTC</span>
+                        </time>
+                        <div>
+                          <strong>{event.label}</strong>
+                          <div className="citations">
+                            {event.evidence_ids.map((id) => (
+                              <Citation key={id} id={id} onEvidence={onEvidence} />
+                            ))}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                    {!incident.timeline.length && (
+                      <li>
+                        <p>Telemetry is accumulating as the simulated clock advances.</p>
+                      </li>
+                    )}
+                  </ol>
+                </Panel>
+                <Panel title="Dependency impact" eyebrow="Follow the trading path">
+                  <ServiceMap topology={topology} incident={incident} compact />
+                </Panel>
+              </div>
+            </>
+          )}
         </>
       )}
       <Investigator
@@ -217,6 +245,7 @@ export function IncidentView({
         disabled={running}
         onInvestigate={onInvestigate}
         onEvidence={onEvidence}
+        showcaseProfile={showcaseProfile}
       />
     </div>
   );

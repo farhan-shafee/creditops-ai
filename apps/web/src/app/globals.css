@@ -6,6 +6,117 @@
   right: 12px;
   top: 10px;
 }
+
+.showcase-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.hero .showcase-labels {
+  position: relative;
+  z-index: 1;
+}
+.showcase-intro,
+.showcase-results-intro {
+  padding: 0 22px 20px;
+  color: var(--muted);
+}
+.showcase-intro ol {
+  padding-left: 18px;
+  margin: 0;
+  line-height: 2.1;
+}
+.showcase-intro p,
+.showcase-results-intro p {
+  line-height: 1.8;
+}
+.recorded-action-summary {
+  padding: 14px 18px;
+  margin: 8px 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.project-review-notes {
+  padding: 16px 0;
+}
+.project-review-notes h4 {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+.project-review-notes p,
+.project-review-notes li {
+  color: var(--muted);
+  line-height: 1.8;
+}
+.project-review-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.recording-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0 20px 20px;
+}
+.recording-results article {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+}
+.recording-results h3 {
+  margin: 8px 0 12px;
+  font-size: 17px;
+}
+.recording-results h4 {
+  font-size: 12px;
+  margin: 20px 0 6px;
+}
+.recording-review-notes summary {
+  cursor: pointer;
+  color: var(--teal);
+  font-size: 12px;
+}
+.recording-results dl {
+  font-size: 11px;
+  margin: 20px 0;
+}
+.recording-results dl > div {
+  margin-bottom: 15px;
+}
+.recording-results dt {
+  color: var(--quiet);
+  margin-bottom: 4px;
+}
+.recording-results dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.recording-results ul {
+  color: var(--muted);
+  font-size: 11px;
+  padding-left: 16px;
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .recording-results {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 540px) {
+  .recording-results {
+    padding: 0 14px 14px;
+  }
+  .showcase-intro,
+  .showcase-results-intro {
+    padding: 0 14px 14px;
+  }
+}
 @media (max-width: 900px) {
   .sidebar-close {
     display: inline-flex !important;

@@ -136,6 +136,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     incidents[0] ??
     null;
   const activeId = active?.id;
+  const showcaseProfile = Boolean(evaluation?.selected_recordings?.length);
 
   const refresh = useCallback(async () => {
     try {
@@ -211,8 +212,21 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     abortRef.current?.abort();
     setInvestigating(false);
     setInvestigation(null);
+    evidenceRequestRef.current += 1;
+    setEvidenceId(null);
   }, []);
 
+  useEffect(() => {
+    const restore = setTimeout(() => {
+      const savedScenario = readStorage('creditops-selected-scenario:v1');
+      if (
+        savedScenario &&
+        ['kafka-pricing-lag', 'fix-connectivity', 'db-pool-exhaustion'].includes(savedScenario)
+      )
+        setSelectedScenario(savedScenario);
+    }, 0);
+    return () => clearTimeout(restore);
+  }, []);
   useEffect(() => {
     const initial = setTimeout(() => {
       void refresh();
@@ -281,8 +295,15 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       signal: controller.signal,
     })
       .then((value) => monitorInvestigation(value, controller, generation))
-      .catch(() => {
-        if (!controller.signal.aborted) removeStorage(`creditops-investigation:v1:${activeId}`);
+      .catch((cause) => {
+        if (!controller.signal.aborted) {
+          removeStorage(`creditops-investigation:v1:${activeId}`);
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : 'The saved investigation could not be restored. Open the recording again.',
+          );
+        }
       });
     return () => {
       controller.abort();
@@ -328,6 +349,16 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
           : undefined;
       setEvidence(persisted ?? null);
       if (persisted) return;
+      if (
+        ['incidents', 'investigator', 'live-operations'].includes(view) &&
+        investigation?.incident_id === activeId &&
+        investigation.mode === 'REPLAY'
+      ) {
+        setEvidenceError(
+          'This evidence ID was not returned in the recorded snapshot. Current session evidence is not substituted.',
+        );
+        return;
+      }
       void api<Evidence>(`/evidence/${encodeURIComponent(id)}`)
         .then((value) => {
           if (request === evidenceRequestRef.current) setEvidence(value);
@@ -337,7 +368,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
             setEvidenceError(cause instanceof Error ? cause.message : 'Evidence not found');
         });
     },
-    [investigation, activeId],
+    [investigation, activeId, view],
   );
   const closeEvidence = useCallback(() => setEvidenceId(null), []);
   const chooseIncident = (item: Incident) => {
@@ -346,12 +377,14 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     stopInvestigation();
     setSelectedId(item.id);
     setSelectedScenario(item.scenario);
+    writeStorage('creditops-selected-scenario:v1', item.scenario);
   };
   const chooseScenario = (value: string) => {
     if (scenarioOperationRef.current) return;
     selectionGenerationRef.current += 1;
     stopInvestigation();
     setSelectedScenario(value);
+    writeStorage('creditops-selected-scenario:v1', value);
     setSelectedId(incidents.find((item) => item.scenario === value)?.id ?? '');
   };
   const run = async () => {
@@ -372,7 +405,23 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       setSelectedId(created.id);
       setSelectedScenario(created.scenario);
       await refresh();
-      if (generation === selectionGenerationRef.current && view === 'overview')
+      if (generation === selectionGenerationRef.current && showcaseProfile) {
+        const recorded = await api<Investigation>('/investigations', {
+          method: 'POST',
+          body: JSON.stringify({ incident_id: created.id, mode: 'REPLAY' }),
+        });
+        if (generation !== selectionGenerationRef.current) return;
+        writeStorage(`creditops-investigation:v1:${created.id}`, recorded.id);
+        writeStorage('creditops-selected-scenario:v1', created.scenario);
+        setInvestigation(recorded);
+        setInvestigationMode('REPLAY');
+        const controller = new AbortController();
+        abortRef.current?.abort();
+        abortRef.current = controller;
+        const playbackGeneration = ++investigationGenerationRef.current;
+        if (view === 'overview') router.push('/incidents');
+        await monitorInvestigation(recorded, controller, playbackGeneration);
+      } else if (generation === selectionGenerationRef.current && view === 'overview')
         router.push('/incidents');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Scenario failed to start');
@@ -444,6 +493,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     busy: busy || investigating,
     running: busy,
     hasIncident: incidents.some((item) => item.scenario === selectedScenario),
+    showcaseProfile,
   };
   const incidentProps = {
     incident: active,
@@ -458,6 +508,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     onInvestigate: () => void investigate(),
     onEvidence,
     onIncident: chooseIncident,
+    showcaseProfile,
   };
 
   return (
@@ -601,7 +652,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
               selectedScenario={selectedScenario}
               onScenario={chooseScenario}
               onRun={() => void run()}
-              busy={busy}
+              busy={busy || investigating}
               metrics={metrics}
               topology={topology}
               onEvidence={onEvidence}

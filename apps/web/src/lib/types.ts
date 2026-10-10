@@ -109,6 +109,17 @@ export interface Investigation {
   } | null;
   error: string | null;
   usage: Record<string, unknown>;
+  provider_calls?: {
+    schema: string;
+    structured_output?: Record<string, unknown>;
+    started_at?: string;
+    ended_at?: string;
+    duration_ms?: number;
+    status?: string;
+    requested_model?: string;
+    returned_model?: string;
+    usage?: Record<string, unknown>;
+  }[];
   provenance?: {
     transport?: string;
     workflow?: string;
@@ -125,6 +136,34 @@ export interface Investigation {
     tool_schema_verified?: boolean;
     recorded?: boolean;
     original_transport?: string;
+    original_model?: string;
+    playback_validation?: {
+      checked_at?: string;
+      recorded_output_preserved: boolean;
+      assessment_would_change: boolean;
+      current_validation_assessment?: Record<string, unknown> | null;
+      scope?: string;
+    };
+    showcase?: {
+      title: string;
+      scenario_id: string;
+      review_notes: {
+        identified: string[];
+        overstatements: string[];
+        validator_changes: string[];
+        unknowns: string[];
+      };
+      original_duration_seconds: number;
+      sample_start: string;
+      sample_end: string;
+      exported_at: string;
+      generated_at: string;
+      source_commit: string;
+      source_receipt: string;
+      source_sha256?: string;
+      recorded_execution_outcome?: string;
+      snapshot_label?: string;
+    };
     [key: string]: unknown;
   };
 }
@@ -221,5 +260,28 @@ export interface Evaluation {
   algorithms?: EvalAlgorithm[];
   methodology?: string | Record<string, unknown>;
   cases?: Record<string, unknown>[];
+  selected_recordings?: {
+    incident_id: string;
+    title: string;
+    scenario_id: string;
+    execution_outcome: string;
+    proposed_domain: string;
+    final_domain: string;
+    validation_status: string;
+    application_selected_diagnostic_count: number;
+    model_selected_diagnostic_count: number;
+    model_decision_count: number;
+    model_assessment_count: number;
+    original_duration_seconds: number;
+    major_limitations: string[];
+    sample_start?: string;
+    sample_end?: string;
+    snapshot_cutoff?: string;
+    source_commit?: string;
+    source_receipt?: string;
+    source_sha256?: string;
+    generated_at?: string;
+    exported_at?: string;
+  }[];
   [key: string]: unknown;
 }

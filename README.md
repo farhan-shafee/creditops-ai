@@ -2,26 +2,37 @@
 
 **AI-assisted incident intelligence for synthetic electronic credit trading systems.**
 
-CreditOps AI correlates logs, metrics, Kafka consumer state, FIX sessions, database health, service dependencies, application changes, historical incidents and runbooks into an evidence-backed investigation. It demonstrates the diagnosis, observability and safety boundaries a Production Support, SRE or AI Enablement engineer needs to design.
+Open three recorded model-assisted investigations of pricing backlog, FIX session instability and database pool exhaustion. Follow the synthetic trading problem, affected RFQs/orders, application-selected MCP evidence, original model proposal, separate validation and conservative advisory outcome. Every outcome requires human review; the initiating causes remain unconfirmed.
 
 > CreditOps AI is an independent portfolio project using entirely synthetic data. It is not affiliated with or connected to any trading venue, broker, financial institution, or employer.
 
-![CreditOps AI operations console](docs/screenshots/overview.png)
+![CreditOps AI keyless recorded showcase](docs/screenshots/showcase-entry.png)
 
-## Five-minute demo
+## Open the keyless showcase
 
-1. Open Overview and select **Run Incident Demo**.
-2. Choose **Kafka pricing lag**, **FIX connectivity**, or **Database pool exhaustion**, then **Run Incident**.
-3. Observe changing telemetry on a clearly labeled simulated clock: one real second represents twelve synthetic seconds.
-4. Open the incident and select **MCP · adaptive deterministic** to execute new read-only checks through the real MCP connection. **Replay · deterministic provider** plays a recorded complete scenario snapshot.
-5. Review the **Business impact / affected requests** timeline, supported failure condition, candidate triggers and unknowns. Click evidence IDs to inspect the returned records.
-6. Open **Evaluations** to inspect generated results and their limitations. Reset the scenario and repeat.
+After the one-time dependency setup below, run `pnpm showcase` and open [the console](http://127.0.0.1:3000).
 
-Replay artifacts are produced by the direct diagnostic collection and validation pipeline, with original timestamps and a complete-snapshot cutoff. The keyless MCP mode makes fresh protocol calls and adapts using deterministic rules. Neither path calls a model. Protected `LIVE_AI` implements the same bounded adaptive loop through official OpenAI or Anthropic SDKs; live provider execution is **NOT RUN**, and live-model quality is **UNVERIFIED**.
+1. Choose **Pricing backlog**, **FIX session instability**, or **Database pool exhaustion**, then select **View recorded investigation**.
+2. Review the trading problem and recorded business impact: stale/unavailable quotes and RFQ expiry; uncertain acknowledgements and retransmission of the same order; or DB wait, processing timeouts and RFQ expiry.
+3. Follow four initial checks selected by the application, one model decision selecting assessment, one recorded model assessment and local validation. These recordings contain no model-selected diagnostic follow-ups.
+4. Click evidence IDs, then expand **Original model proposal and review notes** to compare original statements with the recorded advisory output and validation changes.
+5. Open **Evaluations** for **Selected recorded synthetic examples**. The separate legacy benchmark and robustness reports remain available.
 
-![Event-derived synthetic RFQ and order impact](docs/screenshots/second-pass-impact-fix-connectivity.png)
+**Entirely synthetic data · Recorded model-assisted run · No new model calls during playback · Human review required.** The three completed OpenAI recordings use `gpt-5.4-mini-2026-03-17` and the frozen `evidence_first_v1` workflow. They are selected development examples, with earlier failed attempts and abstention preserved in the [verification history](docs/LIVE_VERIFICATION_REPORT.md). They are not autonomous investigations or a general-accuracy benchmark.
 
-[Watch the recorded demo](docs/screenshots/demo.webm) or follow the [two-minute interview script](docs/DEMO_SCRIPT.md).
+Replay preserves original proposals, validation outcomes, final assessments, evidence IDs and observation timestamps from sanitized derivatives in [data/showcase](data/showcase). The complete recorded snapshot is distinct from the visitor's current animation: returned samples end at **2026-10-09 14:02:24 UTC**, before the **15:00 UTC** cutoff. Original generation time, export time and playback time are labeled separately. Keyless **MCP · adaptive deterministic** remains a separate mode that makes fresh read-only protocol calls using application rules; its tool sequence is not part of these live-model recordings.
+
+![Recorded synthetic RFQ and order impact](docs/screenshots/showcase-business-impact.png)
+
+Follow the [30-second introduction and two-minute click-through](docs/DEMO_SCRIPT.md) or the [five-minute technical walkthrough](docs/INTERVIEW_WALKTHROUGH.md). The [short showcase playback video](docs/screenshots/showcase-playback.webm) records local playback with no new model calls. Inspect the [original proposal and validation](docs/screenshots/showcase-proposal-validation.png), [final advisory output](docs/screenshots/showcase-final-advisory.png), [evidence drawer](docs/screenshots/showcase-impact-evidence.png) and [three-example results](docs/screenshots/showcase-results.png). The existing [deterministic video](docs/screenshots/demo.webm) remains a historical recording of the separate deterministic experience.
+
+| Selected recorded synthetic example | Original generation duration | Advisory outcome |
+|---|---:|---|
+| Pricing backlog · INC-DEMO-001 | 25.191 s | Supported condition; initiating cause unknown |
+| FIX session instability · INC-DEMO-002 | 19.019 s | Supported condition; execution and initiating cause unresolved |
+| Database pool exhaustion · INC-DEMO-003 | 16.138 s | Supported condition; initiating cause unknown |
+
+Valid citation IDs do not guarantee truthful prose: the original proposals overstate some causal, trend, exclusion and temporal claims. Project review notes identify these limitations; they are not an independent audit. Recorded latency is not measured human time saved.
 
 ## The incidents
 
@@ -68,16 +79,12 @@ python -m venv .venv
 python -m pip install -r requirements.lock
 python -m pip install --no-deps -e .
 pnpm install --frozen-lockfile
-python -m alembic upgrade head
-python scripts/seed.py
-python scripts/evaluate.py
-python scripts/robustness.py
-pnpm dev
+pnpm showcase
 ```
 
-Open [the console](http://localhost:3000), [API health](http://localhost:8000/health) and [OpenAPI](http://localhost:8000/docs). `pnpm dev` starts both servers. If needed, start them separately with `python -m uvicorn creditops.main:app --host 127.0.0.1 --port 8000` and `pnpm --filter @creditops/web dev`.
+Open [the console](http://127.0.0.1:3000), [API health](http://127.0.0.1:8000/health) and [OpenAPI](http://127.0.0.1:8000/docs). `pnpm showcase` starts both servers, initializes its dedicated SQLite store at `artifacts/runtime/showcase.db`, selects `data/showcase`, removes inherited provider/admin keys and bypasses the owner's `.env`. It forces `PUBLIC_DEMO=true`, `EMBEDDINGS_ENABLED=false` and persisted telemetry. Ctrl+C stops the owned servers. Public API requests for paid `LIVE_AI` are denied even if a fake or accidental credential is present.
 
-On Windows without activating the environment, replace `python` with `.venv\Scripts\python.exe`. Copy `.env.example` to `.env` for local configuration. No AI credentials are required for replay.
+On Windows without activating the environment, replace `python` with `.venv\Scripts\python.exe`. The launcher uses the repository `.venv` by default; `PYTHON` may name an existing absolute Python executable. No `.env`, model key, admin secret, raw local receipt directory, migration or evaluation regeneration is needed for showcase playback. `pnpm dev` remains available for general development with the ordinary local configuration.
 
 ## Full local infrastructure
 
@@ -102,12 +109,15 @@ All host ports bind to loopback. Disposable local credentials in Compose are int
 | Command | Purpose |
 |---|---|
 | `pnpm dev` / `make dev` | Start API and console |
+| `pnpm showcase` | Start isolated keyless public showcase using three recorded model-assisted runs |
 | `pnpm test` / `make test` | Python and frontend unit tests |
 | `pnpm lint` / `make lint` | Python and frontend lint |
 | `pnpm typecheck` | Strict frontend TypeScript |
 | `pnpm test:dependencies` | Scoped lint dependency compatibility and active rule checks |
 | `pnpm test:lifecycle` | Real Playwright/Linux launcher shutdown and descendant cleanup; explicit Unix-proof skip on Windows |
 | `pnpm e2e` | Playwright all-scenario and responsive checks |
+| `pnpm e2e:showcase` | Keyless three-recording playback and public boundary browser checks |
+| `pnpm test:showcase-startup` | Offline inherited-credential and isolated-storage launcher checks |
 | `make seed` | Idempotent seed |
 | `make eval` | Generate the unchanged 15-case benchmark and versioned replay artifacts |
 | `python scripts/robustness.py` | Separate 13-case synthetic robustness/regression report |
@@ -125,7 +135,7 @@ AI accelerates evidence collection and diagnosis while human engineers retain op
 
 - **Evidence-grounded investigation:** structured assessments are checked against returned evidence IDs and evidence types. Unknown references invalidate output. Insufficient corroboration causes abstention and escalation.
 - **Retrieval:** bounded diagnostic queries and explainable lexical ranking select context rather than dumping entire log stores into a model. Optional pgvector retrieval is available when configured.
-- **Replay for public demos:** persisted pipeline artifacts cap spending and work without keys. Replay provenance, generation timestamps and deterministic assessment are visible.
+- **Replay for public demos:** sanitized persisted artifacts work without keys and preserve the original model proposal, validation and final advisory assessment. Original generation, export, playback and observation times stay distinct.
 - **Local Kafka, inexpensive cloud:** Redpanda supports real event publication/consumption locally. The public path uses persisted synthetic telemetry without a paid Kafka cluster.
 - **Provider abstraction:** official SDKs, server-side configuration, validated tool plans, structured output, request deadlines and no automatic retries that could multiply costs.
 - **Support and uncertainty:** scores are uncalibrated rule support, not probabilities. Every assessment requires human review. Valid references do not establish causality; the known-domain rule gate is not a general factuality verifier.
@@ -140,7 +150,11 @@ Actual results are in [generated JSON](artifacts/eval/latest.json), [generated r
 
 The separate [13-case robustness report](artifacts/robustness/latest.md) checks declared condition/trigger/uncertainty expectations, including missing and contradictory evidence. It is developer-authored and not independently held out. Scripted adaptation, real MCP transport and offline provider-SDK tests have separate receipts in the [second-pass report](docs/SECOND_PASS_REPORT.md). Zero invalid references does not mean zero hallucinations.
 
-`scripts/evaluate.py` is offline only. Prepare a future live check with `python scripts/verify_live.py --provider openai --model MODEL --case-count 1 --max-tool-calls 8 --max-provider-turns 8 --max-spend-usd 0.25 --timeout-seconds 45`. This defaults to a credential-free **dry run**. A separately authorized paid run additionally requires `--execute-paid`, server-side credentials and positive input/output price ceilings covering the selected model. No paid calls or embeddings were made in this pass.
+The selected live-model recordings are a separate development-example series, not replacement benchmark results. All three preserve four application-selected diagnostic calls, zero model-selected diagnostic follow-ups, one model decision and one assessment. Earlier failures and abstention remain part of the [verification history](docs/LIVE_VERIFICATION_REPORT.md). The three recorded usage estimates total USD 0.09934275; confirmed billing is unknown, and this is not total hosting cost. Historical retained reservations remain USD 1.03060200. No provider inference, embeddings or cloud mutation occurs in this packaging milestone.
+
+Technical detail: original model scores are 0.63/0.78/0.87, while the final rule support score is 0.84 for every case. Both are uncalibrated; rule support is not AI confidence or an accuracy percentage. Recorded validation accepted the three known synthetic domains and normalized 19/17/19 distinct fields. These counts are not counts of independently detected errors.
+
+`scripts/evaluate.py` remains offline only. The protected live runner is a separate development tool requiring explicit source-bound authorization, configured credentials and conservative budget accounting; unused historical allocation does not authorize another run.
 
 ## MCP
 
@@ -148,7 +162,7 @@ The [MCP README](apps/mcp/README.md) includes compatible-client configuration. T
 
 ## Security and configuration
 
-`LIVE_AI` requires a configured server admin key and `Authorization: Bearer ...`, plus an investigation budget. Demo state is scoped to UUID sessions. Request-size caps, result limits, timeouts, log sanitization and evidence validation bound the attack surface. Untrusted telemetry cannot add tools or alter system instructions. An injection fixture and direct tests exercise this boundary. Session identifiers are capability tokens for synthetic data, not customer authentication.
+`PUBLIC_DEMO=true` denies paid `LIVE_AI` and query embeddings at the API boundary, including when credentials accidentally exist. In a separate private development profile, `LIVE_AI` requires a configured server admin key and `Authorization: Bearer ...`, plus an investigation budget. Demo state is scoped to UUID sessions. Request-size caps, result limits, timeouts, log sanitization and evidence validation bound the attack surface. Untrusted telemetry cannot add tools or alter system instructions. An injection fixture and direct tests exercise this boundary. Session identifiers are capability tokens for synthetic data, not customer authentication.
 
 The [version-controlled investigator prompt](apps/api/creditops/prompts/investigator.md) and [security document](docs/SECURITY.md) explain the threat model. The current single-instance in-memory rate limiter needs a shared store before multi-replica hosting. An admin key is a minimal demonstration mechanism, not institutional identity management.
 
@@ -157,7 +171,9 @@ The [version-controlled investigator prompt](apps/api/creditops/prompts/investig
 | `DATABASE_URL` | SQLite or asynchronous PostgreSQL URL |
 | `API_BASE_URL` | Server-side Next.js proxy destination |
 | `TELEMETRY_MODE`, `KAFKA_BOOTSTRAP_SERVERS` | Persisted demo or local Kafka adapter |
-| `PUBLIC_DEMO` | Defaults true; prevents paid embedding queries in public diagnostic requests |
+| `PUBLIC_DEMO` | Defaults true; denies paid live investigations and embedding queries |
+| `REPLAY_DIR` | Showcase uses `data/showcase`; ordinary development preserves legacy `data/replay` |
+| `CREDITOPS_ENV_FILE` | Defaults to project `.env`; explicitly empty disables dotenv for isolated public startup |
 | `EMBEDDINGS_ENABLED`, `EMBEDDING_MODEL` | Optional private pgvector retrieval; explicit offline indexing setup |
 | `AI_PROVIDER` | `openai` or `anthropic` for protected live mode |
 | `OPENAI_MODEL`, `ANTHROPIC_MODEL` | Explicit model choice, no business-logic hardcoding |
@@ -168,7 +184,7 @@ The [version-controlled investigator prompt](apps/api/creditops/prompts/investig
 
 ## Deployment
 
-Target: Vercel frontend, container-hosted FastAPI, Neon PostgreSQL. Docker and Render configuration are included; no cloud deployment was performed in this pass. See [deployment steps](docs/DEPLOYMENT.md), the historical [first-pass report](docs/FINAL_REPORT.md), and the current [second-pass report](docs/SECOND_PASS_REPORT.md). A local build is not a verified cloud deployment.
+Target: dedicated Vercel frontend, container-hosted FastAPI and Neon PostgreSQL. The API image includes `data/showcase` at `/app/data/showcase`; original local receipts/approvals are excluded. No cloud deployment or public URL exists from this milestone. The next owner decision is the dedicated hosting accounts/resources and approved plan/cost limits in the [deployment handoff](docs/DEPLOYMENT.md). Current hosting pricing has not been verified. Repository access remains private and is optional for understanding the demo; source links require authorized GitHub access.
 
 ## Interview materials
 

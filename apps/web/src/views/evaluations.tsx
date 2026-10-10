@@ -32,6 +32,77 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
           </button>
         )}
       </div>
+      {evaluation?.selected_recordings?.length ? (
+        <div data-testid="selected-recordings">
+          <Panel
+            title="Selected recorded synthetic examples"
+            eyebrow="Completed development examples / preserved results"
+          >
+            <div className="showcase-results-intro">
+              <p>
+                Execution success, a supported domain, and truthful prose are separate questions.
+                These selected examples are not a general-accuracy benchmark or held-out tests.
+                Earlier attempts failed or abstained and remain preserved in project history.
+              </p>
+              <p>
+                Original generation duration is neither playback duration nor measured human time
+                saved. Estimated API cost, where recorded, is not confirmed billing or total hosting
+                cost.
+              </p>
+            </div>
+            <div className="recording-results">
+              {evaluation.selected_recordings.map((row) => (
+                <article key={row.incident_id} data-testid="selected-recording-row">
+                  <div>
+                    <span className="eyebrow mono">{row.incident_id}</span>
+                    <h3>{row.title}</h3>
+                    <Badge>Execution {row.execution_outcome}</Badge>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Model-proposed domain</dt>
+                      <dd>{row.proposed_domain}</dd>
+                    </div>
+                    <div>
+                      <dt>Validation</dt>
+                      <dd>
+                        {row.validation_status} · final advisory domain: {row.final_domain}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Action attribution</dt>
+                      <dd>
+                        {row.application_selected_diagnostic_count} application-selected diagnostics
+                        · {row.model_selected_diagnostic_count} model-selected diagnostics
+                        <br />
+                        {row.model_decision_count} model decision · {row.model_assessment_count}{' '}
+                        model assessment · local validation
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Original generation duration</dt>
+                      <dd>{row.original_duration_seconds.toFixed(2)} seconds</dd>
+                    </div>
+                  </dl>
+                  <details className="recording-review-notes">
+                    <summary>Project review notes</summary>
+                    <h4>Major narrative limitations</h4>
+                    <ul>
+                      {row.major_limitations.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  </details>
+                </article>
+              ))}
+            </div>
+          </Panel>
+          <p className="reference-note">
+            Legacy 15-case benchmark and robustness suite remain separate from these selected
+            recordings.
+          </p>
+        </div>
+      ) : null}
       {!algorithms.length ? (
         <Panel title="Generated benchmark">
           <Empty title="Benchmark not yet generated.">
@@ -42,6 +113,7 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
       ) : (
         <>
           <div className="evaluation-provenance">
+            <strong>Legacy synthetic benchmark</strong>
             <Badge tone="teal">Generated artifact</Badge>
             <code>artifacts/eval/latest.json</code>
             <span>

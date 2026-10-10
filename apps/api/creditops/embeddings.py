@@ -72,6 +72,8 @@ async def query_references(store, kind: str, q: str, limit: int = 10) -> list[tu
 
 async def index_references(store) -> int:
     settings = get_settings()
+    if settings.public_demo:
+        raise ValueError("Embedding indexing is disabled in the public demo")
     if (
         not settings.openai_api_key
         or not settings.embedding_model

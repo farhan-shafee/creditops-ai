@@ -1,0 +1,2030 @@
+{
+  "sha256": "8ffa2d1c81d1fe77e555b930bb7d71955be5d466e22f92791216a1db23626e95",
+  "payload": {
+    "schema_version": 2,
+    "generated_at": "2026-10-10T16:23:26.466267+00:00",
+    "provenance": {
+      "pipeline": "creditops.investigator.collect_adaptive_investigation",
+      "provider": "openai",
+      "workflow": "evidence_first_v1",
+      "model_called": true,
+      "telemetry_window": "frozen synthetic evidence cutoff",
+      "snapshot_kind": "frozen_current",
+      "transport": "mcp_stdio",
+      "snapshot_cutoff": "2026-10-09T15:00:00Z",
+      "original_created_at": "2026-10-10T16:23:27.712279+00:00",
+      "original_model": "gpt-5.4-mini-2026-03-17"
+    },
+    "investigation": {
+      "id": "046f81ed-ad8f-48c9-b360-067559a4ba38",
+      "incident_id": "INC-DEMO-003",
+      "mode": "LIVE_AI",
+      "status": "complete",
+      "provider": "openai",
+      "created_at": "2026-10-10T16:23:27.712279+00:00",
+      "steps": [
+        {
+          "id": "STEP-001",
+          "action": "Retrieved incident context",
+          "tool": "get_incident",
+          "status": "complete",
+          "evidence_ids": [
+            "INC-DEMO-003"
+          ],
+          "timestamp": "2026-10-10T16:23:29.415716+00:00",
+          "duration_ms": 219.807,
+          "safe_arguments": {},
+          "transport": "mcp_stdio",
+          "provider": "openai",
+          "provider_turn": 0,
+          "selected_by": "application_runbook",
+          "recorded": false,
+          "error": null
+        },
+        {
+          "id": "STEP-002",
+          "action": "Mapped service dependencies",
+          "tool": "get_service_topology",
+          "status": "complete",
+          "evidence_ids": [
+            "TOPOLOGY-001"
+          ],
+          "timestamp": "2026-10-10T16:23:29.648961+00:00",
+          "duration_ms": 34.185,
+          "safe_arguments": {},
+          "transport": "mcp_stdio",
+          "provider": "openai",
+          "provider_turn": 0,
+          "selected_by": "application_runbook",
+          "recorded": false,
+          "error": null
+        },
+        {
+          "id": "STEP-003",
+          "action": "Queried service latency and freshness",
+          "tool": "query_metrics",
+          "status": "complete",
+          "evidence_ids": [
+            "METRIC-003-POOL",
+            "METRIC-003-LATENCY",
+            "METRIC-003-BASE-0",
+            "METRIC-003-BASE-1",
+            "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+            "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+            "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-5",
+            "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-5",
+            "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+            "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+            "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+            "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-4",
+            "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-4",
+            "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-4",
+            "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-4"
+          ],
+          "timestamp": "2026-10-10T16:23:29.693984+00:00",
+          "duration_ms": 41.185,
+          "safe_arguments": {},
+          "transport": "mcp_stdio",
+          "provider": "openai",
+          "provider_turn": 0,
+          "selected_by": "application_runbook",
+          "recorded": false,
+          "error": null
+        },
+        {
+          "id": "STEP-004",
+          "action": "Searched bounded service logs",
+          "tool": "search_logs",
+          "status": "complete",
+          "evidence_ids": [
+            "BUSINESS-003-001",
+            "LOG-003-001",
+            "BUSINESS-003-002",
+            "BUSINESS-003-006",
+            "BUSINESS-003-007",
+            "BUSINESS-003-003",
+            "BUSINESS-003-008",
+            "BUSINESS-003-004",
+            "LOG-003-002",
+            "BUSINESS-003-009",
+            "BUSINESS-003-005",
+            "LOG-003-003",
+            "BUSINESS-003-010"
+          ],
+          "timestamp": "2026-10-10T16:23:29.750115+00:00",
+          "duration_ms": 40.264,
+          "safe_arguments": {},
+          "transport": "mcp_stdio",
+          "provider": "openai",
+          "provider_turn": 0,
+          "selected_by": "application_runbook",
+          "recorded": false,
+          "error": null
+        },
+        {
+          "id": "STEP-005",
+          "action": "Validated advisory assessment",
+          "tool": "assessment_validation",
+          "status": "complete",
+          "evidence_ids": [
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+            "LOG-003-002"
+          ],
+          "timestamp": "2026-10-10T16:23:42.255307+00:00",
+          "duration_ms": 10111.759,
+          "safe_arguments": {},
+          "transport": "local_validation",
+          "provider": "openai",
+          "provider_turn": 2,
+          "selected_by": "validator",
+          "recorded": false,
+          "error": null
+        }
+      ],
+      "evidence": [
+        {
+          "id": "INC-DEMO-003",
+          "kind": "incident",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Current incident observation context",
+          "data": {
+            "incident_id": "INC-DEMO-003",
+            "severity": "SEV2",
+            "started_at": "2026-10-09T14:00:00Z",
+            "affected_services": [
+              "quote-service",
+              "rfq-gateway"
+            ],
+            "symptoms": "Observed operational degradation; determine the condition from timestamped evidence.",
+            "as_of": "2026-10-09T15:00:00Z",
+            "timeline": [
+              {
+                "timestamp": "2026-10-09T14:00:00Z",
+                "label": "Alert threshold crossed",
+                "evidence_ids": [
+                  "INC-DEMO-003",
+                  "LOG-003-001",
+                  "METRIC-003-BASE-0",
+                  "METRIC-003-BASE-1",
+                  "DEPLOY-003-001",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-0",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-0",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-0",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-0",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-0",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-0"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:00Z",
+                "label": "Dependency health samples available",
+                "evidence_ids": [
+                  "DB-003-001"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:01:24Z",
+                "label": "Correlated warning and error logs captured",
+                "evidence_ids": [
+                  "LOG-003-002"
+                ]
+              },
+              {
+                "timestamp": "2026-10-09T14:02:12Z",
+                "label": "Upstream impact observed",
+                "evidence_ids": [
+                  "LOG-003-003"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "TOPOLOGY-001",
+          "kind": "topology",
+          "service": "platform",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Synthetic service dependency graph",
+          "data": {
+            "services": [
+              "rfq-gateway",
+              "quote-service",
+              "pricing-service",
+              "market-data-service",
+              "reference-data-service",
+              "execution-service",
+              "fix-gateway",
+              "risk-service",
+              "audit-service",
+              "notification-service"
+            ],
+            "dependencies": [
+              {
+                "source": "rfq-gateway",
+                "target": "quote-service"
+              },
+              {
+                "source": "rfq-gateway",
+                "target": "execution-service"
+              },
+              {
+                "source": "quote-service",
+                "target": "pricing-service"
+              },
+              {
+                "source": "quote-service",
+                "target": "risk-service"
+              },
+              {
+                "source": "pricing-service",
+                "target": "market-data-service"
+              },
+              {
+                "source": "pricing-service",
+                "target": "reference-data-service"
+              },
+              {
+                "source": "execution-service",
+                "target": "fix-gateway"
+              },
+              {
+                "source": "execution-service",
+                "target": "audit-service"
+              },
+              {
+                "source": "audit-service",
+                "target": "notification-service"
+              }
+            ]
+          }
+        },
+        {
+          "id": "METRIC-003-POOL",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "DB connection pool utilization reached capacity",
+          "data": {
+            "metric": "db_pool_utilization",
+            "value": 100.0,
+            "unit": "%"
+          }
+        },
+        {
+          "id": "METRIC-003-LATENCY",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Request latency budget breached",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 1450.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-003-BASE-0",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T13:59:00Z",
+          "summary": "Baseline request latency within budget",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 85.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-003-BASE-1",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T13:59:00Z",
+          "summary": "Baseline request latency within budget",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "value": 95.0,
+            "unit": "ms"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic execution_ack_latency_ms sample",
+          "data": {
+            "metric": "execution_ack_latency_ms",
+            "unit": "ms",
+            "value": 80.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_connection_status sample",
+          "data": {
+            "metric": "fix_connection_status",
+            "unit": "connected",
+            "value": 1.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_reconnect_count sample",
+          "data": {
+            "metric": "fix_reconnect_count",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic fix_sequence_gaps sample",
+          "data": {
+            "metric": "fix_sequence_gaps",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic kafka_consumer_lag sample",
+          "data": {
+            "metric": "kafka_consumer_lag",
+            "unit": "messages",
+            "value": 3.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic kafka_throughput_per_second sample",
+          "data": {
+            "metric": "kafka_throughput_per_second",
+            "unit": "messages/s",
+            "value": 2600.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 47.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_pool_utilization sample",
+          "data": {
+            "metric": "db_pool_utilization",
+            "unit": "%",
+            "value": 100.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_query_latency_ms sample",
+          "data": {
+            "metric": "db_query_latency_ms",
+            "unit": "ms",
+            "value": 870.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic db_wait_ms sample",
+          "data": {
+            "metric": "db_wait_ms",
+            "unit": "ms",
+            "value": 2400.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 7.8,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 650.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic quote_age_ms sample",
+          "data": {
+            "metric": "quote_age_ms",
+            "unit": "ms",
+            "value": 95.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 700.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1450.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 2400.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 240.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-5",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic stale_price_count sample",
+          "data": {
+            "metric": "stale_price_count",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 47.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 7.8,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 650.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P50_MS-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 700.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P95_MS-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1450.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_LATENCY_P99_MS-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 2400.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-REQUEST_RATE_PER_SECOND-5",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 240.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+          "kind": "metric",
+          "service": "execution-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic execution_ack_latency_ms sample",
+          "data": {
+            "metric": "execution_ack_latency_ms",
+            "unit": "ms",
+            "value": 80.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_connection_status sample",
+          "data": {
+            "metric": "fix_connection_status",
+            "unit": "connected",
+            "value": 1.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_reconnect_count sample",
+          "data": {
+            "metric": "fix_reconnect_count",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+          "kind": "metric",
+          "service": "fix-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic fix_sequence_gaps sample",
+          "data": {
+            "metric": "fix_sequence_gaps",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic kafka_consumer_lag sample",
+          "data": {
+            "metric": "kafka_consumer_lag",
+            "unit": "messages",
+            "value": 3.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+          "kind": "metric",
+          "service": "pricing-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic kafka_throughput_per_second sample",
+          "data": {
+            "metric": "kafka_throughput_per_second",
+            "unit": "messages/s",
+            "value": 2600.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 42.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic db_pool_utilization sample",
+          "data": {
+            "metric": "db_pool_utilization",
+            "unit": "%",
+            "value": 87.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic db_query_latency_ms sample",
+          "data": {
+            "metric": "db_query_latency_ms",
+            "unit": "ms",
+            "value": 698.4,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic db_wait_ms sample",
+          "data": {
+            "metric": "db_wait_ms",
+            "unit": "ms",
+            "value": 1920.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-ERROR_RATE_PERCENT-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 6.26,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-MEMORY_MB-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 602.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-QUOTE_AGE_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic quote_age_ms sample",
+          "data": {
+            "metric": "quote_age_ms",
+            "unit": "ms",
+            "value": 85.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P50_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p50_ms sample",
+          "data": {
+            "metric": "request_latency_p50_ms",
+            "unit": "ms",
+            "value": 568.4,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p95_ms sample",
+          "data": {
+            "metric": "request_latency_p95_ms",
+            "unit": "ms",
+            "value": 1177.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P99_MS-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_latency_p99_ms sample",
+          "data": {
+            "metric": "request_latency_p99_ms",
+            "unit": "ms",
+            "value": 1948.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic request_rate_per_second sample",
+          "data": {
+            "metric": "request_rate_per_second",
+            "unit": "requests/s",
+            "value": 256.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-QUOTE-SERVICE-STALE_PRICE_COUNT-4",
+          "kind": "metric",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic stale_price_count sample",
+          "data": {
+            "metric": "stale_price_count",
+            "unit": "count",
+            "value": 0.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-4",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic cpu_percent sample",
+          "data": {
+            "metric": "cpu_percent",
+            "unit": "%",
+            "value": 42.2,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-ERROR_RATE_PERCENT-4",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic error_rate_percent sample",
+          "data": {
+            "metric": "error_rate_percent",
+            "unit": "%",
+            "value": 6.26,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "METRIC-003-SERIES-RFQ-GATEWAY-MEMORY_MB-4",
+          "kind": "metric",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:01:48Z",
+          "summary": "Synthetic memory_mb sample",
+          "data": {
+            "metric": "memory_mb",
+            "unit": "MiB",
+            "value": 602.0,
+            "sample_kind": "series"
+          }
+        },
+        {
+          "id": "BUSINESS-003-001",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "Fictional RFQ-DEMO-003-001: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: rfq requested"
+          }
+        },
+        {
+          "id": "LOG-003-001",
+          "kind": "log",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:00Z",
+          "summary": "RFQ requests timing out after change",
+          "data": {
+            "severity": "WARN",
+            "trace_id": "TRACE-DEMO-003",
+            "rfq_id": "RFQ-DEMO-000003",
+            "message": "RFQ requests timing out after change",
+            "environment": "synthetic"
+          }
+        },
+        {
+          "id": "BUSINESS-003-002",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-003-001: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-003-006",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:12Z",
+          "summary": "Fictional RFQ-DEMO-003-002: rfq requested",
+          "data": {
+            "event_type": "RFQ_REQUESTED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: rfq requested"
+          }
+        },
+        {
+          "id": "BUSINESS-003-007",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:00:24Z",
+          "summary": "Fictional RFQ-DEMO-003-002: processing started",
+          "data": {
+            "event_type": "PROCESSING_STARTED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: processing started"
+          }
+        },
+        {
+          "id": "BUSINESS-003-003",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:36Z",
+          "summary": "Fictional RFQ-DEMO-003-001: db wait",
+          "data": {
+            "event_type": "DB_WAIT",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-001: db wait"
+          }
+        },
+        {
+          "id": "BUSINESS-003-008",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:00:48Z",
+          "summary": "Fictional RFQ-DEMO-003-002: db wait",
+          "data": {
+            "event_type": "DB_WAIT",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-002: db wait"
+          }
+        },
+        {
+          "id": "BUSINESS-003-004",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:24Z",
+          "summary": "Fictional RFQ-DEMO-003-001: processing timeout",
+          "data": {
+            "event_type": "PROCESSING_TIMEOUT",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "WARN",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-001: processing timeout"
+          }
+        },
+        {
+          "id": "LOG-003-002",
+          "kind": "log",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:24Z",
+          "summary": "Database connection pool timeout after 2000 ms",
+          "data": {
+            "severity": "ERROR",
+            "trace_id": "TRACE-DEMO-003",
+            "message": "POOL_TIMEOUT acquire_connection timed out pool_size=40 in_use=40"
+          }
+        },
+        {
+          "id": "BUSINESS-003-009",
+          "kind": "business_event",
+          "service": "quote-service",
+          "timestamp": "2026-10-09T14:01:36Z",
+          "summary": "Fictional RFQ-DEMO-003-002: processing timeout",
+          "data": {
+            "event_type": "PROCESSING_TIMEOUT",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "WARN",
+            "processing_stage": "DB_WAIT",
+            "message": "Fictional RFQ-DEMO-003-002: processing timeout"
+          }
+        },
+        {
+          "id": "BUSINESS-003-005",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:00Z",
+          "summary": "Fictional RFQ-DEMO-003-001: rfq expired",
+          "data": {
+            "event_type": "RFQ_EXPIRED",
+            "rfq_id": "RFQ-DEMO-003-001",
+            "client_id": "CLIENT-DEMO-001",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "BUY",
+            "par_amount": "1000000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:00Z",
+            "rfq_expires_at": "2026-10-09T14:02:00Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-001",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-001: rfq expired"
+          }
+        },
+        {
+          "id": "LOG-003-003",
+          "kind": "log",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:12Z",
+          "summary": "Upstream quote dependency timed out following pool saturation",
+          "data": {
+            "severity": "ERROR",
+            "trace_id": "TRACE-DEMO-003",
+            "message": "quote-service upstream timeout elapsed_ms=2500"
+          }
+        },
+        {
+          "id": "BUSINESS-003-010",
+          "kind": "business_event",
+          "service": "rfq-gateway",
+          "timestamp": "2026-10-09T14:02:24Z",
+          "summary": "Fictional RFQ-DEMO-003-002: rfq expired",
+          "data": {
+            "event_type": "RFQ_EXPIRED",
+            "rfq_id": "RFQ-DEMO-003-002",
+            "client_id": "CLIENT-DEMO-002",
+            "instrument_id": "BOND-DEMO-003",
+            "side": "SELL",
+            "par_amount": "750000.00",
+            "currency": "USD",
+            "par_unit": "currency units of requested face value",
+            "requested_at": "2026-10-09T14:00:12Z",
+            "rfq_expires_at": "2026-10-09T14:02:24Z",
+            "trace_id": "TRACE-DEMO-003-RFQ-002",
+            "severity": "INFO",
+            "message": "Fictional RFQ-DEMO-003-002: rfq expired"
+          }
+        }
+      ],
+      "assessment": {
+        "incident_summary": "Synthetic operational observations. Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5, LOG-003-002]. The initiating cause is unconfirmed.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.84,
+        "supporting_evidence_ids": [
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+          "LOG-003-002"
+        ],
+        "alternative_hypotheses": [],
+        "recommended_next_steps": [
+          "Compare the affected service time window with its upstream and downstream dependencies.",
+          "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+          "Escalate to the owning service team before considering any configuration change."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "Displayed known-domain observations, hypotheses and causal fields are normalized by a conservative rule gate. This is not a general factuality guarantee.",
+          "The support score is uncalibrated. Historical similarity and a preceding deployment do not prove causation.",
+          "Evidence-adaptive openai investigation through mcp_stdio; final assessment source openai (live_provider); frozen synthetic cutoff 2026-10-09T15:00:00Z. No operational action was executed."
+        ],
+        "rca": {
+          "executive_summary": "Draft \u2014 human review required. Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5, LOG-003-002]. The initiating cause is unconfirmed.",
+          "impact": "Returned synthetic RFQ/order events are available for human inspection; event states do not establish financial loss or confirmed execution.",
+          "timeline": [
+            "2026-10-09T14:02:24Z: quote-service: db_pool_utilization=100.0 % [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
+            "2026-10-09T14:02:24Z: quote-service: db_query_latency_ms=870.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
+            "2026-10-09T14:02:24Z: quote-service: db_wait_ms=2400.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
+            "2026-10-09T14:01:24Z: quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\" [LOG-003-002]"
+          ],
+          "observed_evidence": [
+            "quote-service: db_pool_utilization=100.0 % [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5]",
+            "quote-service: db_query_latency_ms=870.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5]",
+            "quote-service: db_wait_ms=2400.0 ms [METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5]",
+            "quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\" [LOG-003-002]"
+          ],
+          "probable_root_cause": "Supported failure condition: database connection pool exhaustion [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5, LOG-003-002]. The initiating cause is unconfirmed.",
+          "contributing_factors": [
+            "Service dependency propagation needs human confirmation [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5, LOG-003-002]."
+          ],
+          "immediate_next_steps": [
+            "Compare the affected service time window with its upstream and downstream dependencies.",
+            "Have a human engineer verify the evidence and review the relevant diagnostic runbook.",
+            "Escalate to the owning service team before considering any configuration change."
+          ],
+          "follow_up_work": [
+            "Validate alert coverage and collect a longer diagnostic window.",
+            "Check relevant preceding changes and capacity assumptions without assuming causation.",
+            "Add the verified incident outcome to the synthetic regression dataset."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "quote-service: db_pool_utilization=100.0 %",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+            ]
+          },
+          {
+            "statement": "quote-service: db_query_latency_ms=870.0 ms",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5"
+            ]
+          },
+          {
+            "statement": "quote-service: db_wait_ms=2400.0 ms",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5"
+            ]
+          },
+          {
+            "statement": "quote-service: Source-reported log observation: \"Database connection pool timeout after 2000 ms\"",
+            "evidence_ids": [
+              "LOG-003-002"
+            ]
+          }
+        ],
+        "supported_failure_condition": "database connection pool exhaustion",
+        "possible_triggers": [],
+        "confirmed_cause": null,
+        "unknowns": [
+          "The initiating cause has not been established by these observations.",
+          "Historical similarity and runbooks are investigation aids, not proof of the current cause.",
+          "A relevant preceding deployment is only a candidate trigger; code-path, connection ownership and causal evidence need human investigation."
+        ],
+        "score_kind": "uncalibrated_support"
+      },
+      "provider_proposal": {
+        "incident_summary": "Synthetic SEV2 incident where RFQ handling degraded between 14:00 and 15:00 UTC, with RFQ requests timing out in the quote path and expiring at the gateway. The strongest evidence points to quote-service database connection pool exhaustion causing request latency and upstream timeouts, while the downstream FIX path appears healthy in the sampled data.",
+        "probable_failure_domain": "database connection pool exhaustion",
+        "confidence": 0.87,
+        "supporting_evidence_ids": [
+          "METRIC-003-POOL",
+          "METRIC-003-LATENCY",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+          "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+          "LOG-003-002",
+          "BUSINESS-003-003",
+          "BUSINESS-003-004",
+          "BUSINESS-003-009",
+          "LOG-003-003",
+          "BUSINESS-003-005",
+          "BUSINESS-003-010",
+          "TOPOLOGY-001"
+        ],
+        "alternative_hypotheses": [
+          {
+            "domain": "quote-service / CPU saturation",
+            "reason": "Quote-service and rfq-gateway latency were elevated, but sampled CPU remained moderate at 42.2% to 47.0%, which does not support CPU saturation as the primary failure domain.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-5",
+              "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-4",
+              "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-5",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5"
+            ]
+          },
+          {
+            "domain": "pricing-service / Kafka consumer backlog",
+            "reason": "Pricing-service consumer lag was present but small in the sampled rows, and throughput stayed high. This does not support a backlog as the proximate cause of the observed quote timeouts.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+              "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+              "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+              "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+              "TOPOLOGY-001"
+            ]
+          },
+          {
+            "domain": "FIX connectivity/session instability",
+            "reason": "Execution and FIX telemetry sampled at 14:01:48 and 14:02:24 remained connected, with zero reconnects and zero sequence gaps, so the FIX path does not explain the RFQ timeout symptoms in the returned evidence.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+              "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+              "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5"
+            ]
+          }
+        ],
+        "recommended_next_steps": [
+          "Inspect quote-service DB pool configuration, pool waiters, and concurrent request counts around 14:00-14:03 UTC.",
+          "Check whether a recent same-service deployment or schema/query change preceded 14:00 UTC; no deployment evidence was returned here, so change attribution remains unproven.",
+          "Review the specific DB queries executed on the timed-out RFQs to identify slow or blocking statements.",
+          "Correlate application-thread saturation, connection acquisition timing, and database-side locks or saturation metrics if available.",
+          "Confirm whether timeouts resolved after the incident window and whether pool sizing or query optimization is warranted."
+        ],
+        "relevant_runbooks": [],
+        "similar_incidents": [],
+        "requires_human_review": true,
+        "limitations": [
+          "No runbooks or historical incidents were returned, so no validated remediation history is available in this assessment.",
+          "Returned samples cover only selected timestamps, not continuous telemetry; absence of evidence outside sampled rows is unknown, not disproven.",
+          "The evidence strongly supports pool exhaustion but does not independently establish why the pool became saturated.",
+          "A deployment/change record was referenced in the incident timeline, but no returned evidence ID for an actual deployment object was available, so change causality cannot be confirmed."
+        ],
+        "rca": {
+          "executive_summary": "RFQ processing degraded because quote-service database connections were fully exhausted, causing long DB waits, request latency spikes, and downstream RFQ timeouts/expirations. The sampled FIX path stayed healthy, making FIX instability unlikely in the returned evidence.",
+          "impact": "Two RFQs were observed to enter processing, then time out in quote-service and expire at rfq-gateway. rfq-gateway also logged upstream quote timeouts, indicating customer-facing RFQ availability degradation during the incident window.",
+          "timeline": [
+            "14:00:00 UTC: RFQ requested; quote-service log reports RFQ requests timing out after change.",
+            "14:00:36 UTC: Quote-service records DB wait and p95 latency breach.",
+            "14:01:24 UTC: Quote-service logs a processing timeout and a pool acquisition timeout with pool_size=40 and in_use=40.",
+            "14:01:36 UTC: DB pool utilization reaches 100% and the second RFQ also times out.",
+            "14:02:12 UTC: rfq-gateway logs upstream quote timeout after pool saturation.",
+            "14:02:00-14:02:24 UTC: RFQs expire at the gateway."
+          ],
+          "observed_evidence": [
+            "Quote-service DB pool utilization reached 100%, indicating all connections were in use.",
+            "Quote-service DB wait and DB query latency were elevated at the sampled times.",
+            "Quote-service p95 request latency breached budget, rising from an 85 ms baseline to 1450 ms.",
+            "A log entry reported pool acquisition timeout with pool_size=40 and in_use=40.",
+            "rfq-gateway logged upstream quote timeout after pool saturation.",
+            "Business events show RFQs transitioning from requested/processing_started to processing_timeout and RFQ_EXPIRED.",
+            "FIX gateway and execution-service samples remained connected and stable in the returned rows.",
+            "Topology shows rfq-gateway depends on quote-service, and quote-service depends on pricing-service and risk-service."
+          ],
+          "probable_root_cause": "Quote-service database connection pool exhaustion caused queueing and DB wait inflation, which in turn drove request latency and RFQ processing timeouts.",
+          "contributing_factors": [
+            "The returned samples show elevated request rate at the same time as saturated DB pool usage, which likely increased contention.",
+            "The investigation window contains only sampled telemetry, so the exact upstream trigger for saturation is not established.",
+            "The returned evidence does not show a failing FIX path, suggesting the issue was localized above execution/FIX handling."
+          ],
+          "immediate_next_steps": [
+            "Validate the DB pool saturation mechanism in quote-service with thread, waiter, and acquire-time diagnostics.",
+            "Inspect blocking or slow DB queries associated with the affected RFQ trace IDs.",
+            "Confirm whether a recent configuration or deployment change altered pool sizing, request concurrency, or query patterns.",
+            "Monitor whether pool utilization, DB wait time, and request latency return to baseline after remediation."
+          ],
+          "follow_up_work": [
+            "Add alerts on DB pool saturation and sustained acquire waits in quote-service.",
+            "Review query plans and connection usage patterns for the quote path.",
+            "Consider backpressure or admission control so rfq-gateway degrades more gracefully under quote-service contention.",
+            "Establish a change-correlation check for future incidents, since a change was mentioned but not evidenced here."
+          ]
+        },
+        "observations": [
+          {
+            "statement": "Quote-service DB pool utilization reached 100% at 14:01:36 UTC.",
+            "evidence_ids": [
+              "METRIC-003-POOL",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+            ]
+          },
+          {
+            "statement": "Quote-service DB query latency and DB wait time were elevated in the returned samples.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5"
+            ]
+          },
+          {
+            "statement": "Quote-service p95 latency breached budget compared with the baseline sample.",
+            "evidence_ids": [
+              "METRIC-003-LATENCY",
+              "METRIC-003-BASE-0",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5"
+            ]
+          },
+          {
+            "statement": "A log entry explicitly reports connection pool acquisition timeout with pool_size=40 and in_use=40.",
+            "evidence_ids": [
+              "LOG-003-002"
+            ]
+          },
+          {
+            "statement": "Business events show RFQs timing out in quote-service and expiring at the gateway.",
+            "evidence_ids": [
+              "BUSINESS-003-003",
+              "BUSINESS-003-004",
+              "BUSINESS-003-009",
+              "BUSINESS-003-005",
+              "BUSINESS-003-010"
+            ]
+          },
+          {
+            "statement": "rfq-gateway observed an upstream quote timeout following pool saturation.",
+            "evidence_ids": [
+              "LOG-003-003"
+            ]
+          },
+          {
+            "statement": "FIX connectivity and execution acknowledgement latency remained healthy in sampled rows.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+              "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+              "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+              "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5"
+            ]
+          }
+        ],
+        "supported_failure_condition": "quote-service DB pool saturation with sustained DB wait and pool acquisition timeout, resulting in RFQ processing timeouts",
+        "possible_triggers": [
+          {
+            "statement": "A recent change may have increased quote-service concurrency or DB pressure, but the returned evidence does not confirm a deployment cause.",
+            "evidence_ids": [
+              "LOG-003-001",
+              "BUSINESS-003-003",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5"
+            ],
+            "status": "candidate",
+            "reason": "The incident summary mentions a change, and request rate/latency rose, but no deployment evidence was returned to establish causality."
+          },
+          {
+            "statement": "Higher request load may have contributed to exhausting the quote-service DB pool.",
+            "evidence_ids": [
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+            ],
+            "status": "candidate",
+            "reason": "Load and saturation co-occur in the samples, but the evidence does not prove the load increase alone caused exhaustion."
+          }
+        ],
+        "confirmed_cause": {
+          "statement": "Quote-service DB connection pool exhaustion is the best-supported cause of the RFQ timeouts in the returned evidence.",
+          "evidence_ids": [
+            "METRIC-003-POOL",
+            "LOG-003-002",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+            "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+            "BUSINESS-003-004",
+            "BUSINESS-003-009",
+            "LOG-003-003"
+          ]
+        },
+        "unknowns": [
+          "Whether a deployment or configuration change preceded the saturation is not established by returned evidence.",
+          "Whether a specific DB query or lock contention pattern drove the pool exhaustion is not established.",
+          "Whether additional hidden metrics outside the returned sample set show a wider service impact is unknown.",
+          "The incident timeline references a deployment-like event in untrusted data, but no returned deployment evidence ID is available here."
+        ],
+        "score_kind": "uncalibrated_support"
+      },
+      "validation_outcome": {
+        "status": "accepted_normalized",
+        "structurally_parsed": true,
+        "proposal_sanitized": true,
+        "proposed_domain": "database connection pool exhaustion",
+        "final_domain": "database connection pool exhaustion",
+        "diagnostic_domain_supported": true,
+        "original_claims_independently_verified": false,
+        "scope": "Citation validity and conservative known synthetic-domain support only; normalized fields are rule-authored and do not independently confirm every original claim.",
+        "invalid_evidence_ids": [],
+        "invalid_citation_count": 0,
+        "changed_fields": [
+          {
+            "field": "alternative_hypotheses",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "confidence",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "confirmed_cause",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "incident_summary",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "limitations",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "observations",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "possible_triggers",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.contributing_factors",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.executive_summary",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.follow_up_work",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.immediate_next_steps",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.impact",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.observed_evidence",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.probable_root_cause",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "rca.timeline",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "recommended_next_steps",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "supported_failure_condition",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "supporting_evidence_ids",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "unknowns",
+            "reason": "known_domain_rule_normalization",
+            "stage": "diagnostic_validation"
+          },
+          {
+            "field": "limitations",
+            "reason": "execution_provenance_limitation",
+            "stage": "orchestration"
+          }
+        ],
+        "rejected_fields": [],
+        "assessment_source": {
+          "kind": "live_provider",
+          "provider": "openai"
+        }
+      },
+      "provider_calls": [
+        {
+          "provider": "openai",
+          "requested_model": "gpt-5.4-mini-2026-03-17",
+          "returned_model": "gpt-5.4-mini-2026-03-17",
+          "schema": "AvailableAdaptiveDecision",
+          "status": "success",
+          "request_started": true,
+          "response_received": true,
+          "started_at": "2026-10-10T16:23:29.810902+00:00",
+          "ended_at": "2026-10-10T16:23:32.143301+00:00",
+          "duration_ms": 2330.36,
+          "usage": {
+            "input_tokens": 14722,
+            "output_tokens": 19,
+            "total_tokens": 14741,
+            "reported_total_tokens": 14741,
+            "estimated_cost_usd": 0.011127,
+            "usage_status": "reported",
+            "estimate_basis": "configured_uncached_input_and_output_price_ceilings",
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "charge_status": "estimated",
+          "structured_output": {
+            "action": "assess",
+            "request": null
+          },
+          "provider_status": "completed"
+        },
+        {
+          "provider": "openai",
+          "requested_model": "gpt-5.4-mini-2026-03-17",
+          "returned_model": "gpt-5.4-mini-2026-03-17",
+          "schema": "Assessment",
+          "status": "success",
+          "request_started": true,
+          "response_received": true,
+          "started_at": "2026-10-10T16:23:32.143727+00:00",
+          "ended_at": "2026-10-10T16:23:42.251730+00:00",
+          "duration_ms": 10106.23,
+          "usage": {
+            "input_tokens": 12169,
+            "output_tokens": 2777,
+            "total_tokens": 14946,
+            "reported_total_tokens": 14946,
+            "estimated_cost_usd": 0.02162325,
+            "usage_status": "reported",
+            "estimate_basis": "configured_uncached_input_and_output_price_ceilings",
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "charge_status": "estimated",
+          "structured_output": {
+            "incident_summary": "Synthetic SEV2 incident where RFQ handling degraded between 14:00 and 15:00 UTC, with RFQ requests timing out in the quote path and expiring at the gateway. The strongest evidence points to quote-service database connection pool exhaustion causing request latency and upstream timeouts, while the downstream FIX path appears healthy in the sampled data.",
+            "probable_failure_domain": "database connection pool exhaustion",
+            "confidence": 0.87,
+            "supporting_evidence_ids": [
+              "METRIC-003-POOL",
+              "METRIC-003-LATENCY",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+              "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+              "LOG-003-002",
+              "BUSINESS-003-003",
+              "BUSINESS-003-004",
+              "BUSINESS-003-009",
+              "LOG-003-003",
+              "BUSINESS-003-005",
+              "BUSINESS-003-010",
+              "TOPOLOGY-001"
+            ],
+            "alternative_hypotheses": [
+              {
+                "domain": "quote-service / CPU saturation",
+                "reason": "Quote-service and rfq-gateway latency were elevated, but sampled CPU remained moderate at 42.2% to 47.0%, which does not support CPU saturation as the primary failure domain.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-CPU_PERCENT-5",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-4",
+                  "METRIC-003-SERIES-RFQ-GATEWAY-CPU_PERCENT-5",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5"
+                ]
+              },
+              {
+                "domain": "pricing-service / Kafka consumer backlog",
+                "reason": "Pricing-service consumer lag was present but small in the sampled rows, and throughput stayed high. This does not support a backlog as the proximate cause of the observed quote timeouts.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-4",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_CONSUMER_LAG-5",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-4",
+                  "METRIC-003-SERIES-PRICING-SERVICE-KAFKA_THROUGHPUT_PER_SECOND-5",
+                  "TOPOLOGY-001"
+                ]
+              },
+              {
+                "domain": "FIX connectivity/session instability",
+                "reason": "Execution and FIX telemetry sampled at 14:01:48 and 14:02:24 remained connected, with zero reconnects and zero sequence gaps, so the FIX path does not explain the RFQ timeout symptoms in the returned evidence.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5"
+                ]
+              }
+            ],
+            "recommended_next_steps": [
+              "Inspect quote-service DB pool configuration, pool waiters, and concurrent request counts around 14:00-14:03 UTC.",
+              "Check whether a recent same-service deployment or schema/query change preceded 14:00 UTC; no deployment evidence was returned here, so change attribution remains unproven.",
+              "Review the specific DB queries executed on the timed-out RFQs to identify slow or blocking statements.",
+              "Correlate application-thread saturation, connection acquisition timing, and database-side locks or saturation metrics if available.",
+              "Confirm whether timeouts resolved after the incident window and whether pool sizing or query optimization is warranted."
+            ],
+            "relevant_runbooks": [],
+            "similar_incidents": [],
+            "requires_human_review": true,
+            "limitations": [
+              "No runbooks or historical incidents were returned, so no validated remediation history is available in this assessment.",
+              "Returned samples cover only selected timestamps, not continuous telemetry; absence of evidence outside sampled rows is unknown, not disproven.",
+              "The evidence strongly supports pool exhaustion but does not independently establish why the pool became saturated.",
+              "A deployment/change record was referenced in the incident timeline, but no returned evidence ID for an actual deployment object was available, so change causality cannot be confirmed."
+            ],
+            "rca": {
+              "executive_summary": "RFQ processing degraded because quote-service database connections were fully exhausted, causing long DB waits, request latency spikes, and downstream RFQ timeouts/expirations. The sampled FIX path stayed healthy, making FIX instability unlikely in the returned evidence.",
+              "impact": "Two RFQs were observed to enter processing, then time out in quote-service and expire at rfq-gateway. rfq-gateway also logged upstream quote timeouts, indicating customer-facing RFQ availability degradation during the incident window.",
+              "timeline": [
+                "14:00:00 UTC: RFQ requested; quote-service log reports RFQ requests timing out after change.",
+                "14:00:36 UTC: Quote-service records DB wait and p95 latency breach.",
+                "14:01:24 UTC: Quote-service logs a processing timeout and a pool acquisition timeout with pool_size=40 and in_use=40.",
+                "14:01:36 UTC: DB pool utilization reaches 100% and the second RFQ also times out.",
+                "14:02:12 UTC: rfq-gateway logs upstream quote timeout after pool saturation.",
+                "14:02:00-14:02:24 UTC: RFQs expire at the gateway."
+              ],
+              "observed_evidence": [
+                "Quote-service DB pool utilization reached 100%, indicating all connections were in use.",
+                "Quote-service DB wait and DB query latency were elevated at the sampled times.",
+                "Quote-service p95 request latency breached budget, rising from an 85 ms baseline to 1450 ms.",
+                "A log entry reported pool acquisition timeout with pool_size=40 and in_use=40.",
+                "rfq-gateway logged upstream quote timeout after pool saturation.",
+                "Business events show RFQs transitioning from requested/processing_started to processing_timeout and RFQ_EXPIRED.",
+                "FIX gateway and execution-service samples remained connected and stable in the returned rows.",
+                "Topology shows rfq-gateway depends on quote-service, and quote-service depends on pricing-service and risk-service."
+              ],
+              "probable_root_cause": "Quote-service database connection pool exhaustion caused queueing and DB wait inflation, which in turn drove request latency and RFQ processing timeouts.",
+              "contributing_factors": [
+                "The returned samples show elevated request rate at the same time as saturated DB pool usage, which likely increased contention.",
+                "The investigation window contains only sampled telemetry, so the exact upstream trigger for saturation is not established.",
+                "The returned evidence does not show a failing FIX path, suggesting the issue was localized above execution/FIX handling."
+              ],
+              "immediate_next_steps": [
+                "Validate the DB pool saturation mechanism in quote-service with thread, waiter, and acquire-time diagnostics.",
+                "Inspect blocking or slow DB queries associated with the affected RFQ trace IDs.",
+                "Confirm whether a recent configuration or deployment change altered pool sizing, request concurrency, or query patterns.",
+                "Monitor whether pool utilization, DB wait time, and request latency return to baseline after remediation."
+              ],
+              "follow_up_work": [
+                "Add alerts on DB pool saturation and sustained acquire waits in quote-service.",
+                "Review query plans and connection usage patterns for the quote path.",
+                "Consider backpressure or admission control so rfq-gateway degrades more gracefully under quote-service contention.",
+                "Establish a change-correlation check for future incidents, since a change was mentioned but not evidenced here."
+              ]
+            },
+            "observations": [
+              {
+                "statement": "Quote-service DB pool utilization reached 100% at 14:01:36 UTC.",
+                "evidence_ids": [
+                  "METRIC-003-POOL",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+                ]
+              },
+              {
+                "statement": "Quote-service DB query latency and DB wait time were elevated in the returned samples.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_QUERY_LATENCY_MS-5",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5"
+                ]
+              },
+              {
+                "statement": "Quote-service p95 latency breached budget compared with the baseline sample.",
+                "evidence_ids": [
+                  "METRIC-003-LATENCY",
+                  "METRIC-003-BASE-0",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_LATENCY_P95_MS-5"
+                ]
+              },
+              {
+                "statement": "A log entry explicitly reports connection pool acquisition timeout with pool_size=40 and in_use=40.",
+                "evidence_ids": [
+                  "LOG-003-002"
+                ]
+              },
+              {
+                "statement": "Business events show RFQs timing out in quote-service and expiring at the gateway.",
+                "evidence_ids": [
+                  "BUSINESS-003-003",
+                  "BUSINESS-003-004",
+                  "BUSINESS-003-009",
+                  "BUSINESS-003-005",
+                  "BUSINESS-003-010"
+                ]
+              },
+              {
+                "statement": "rfq-gateway observed an upstream quote timeout following pool saturation.",
+                "evidence_ids": [
+                  "LOG-003-003"
+                ]
+              },
+              {
+                "statement": "FIX connectivity and execution acknowledgement latency remained healthy in sampled rows.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_CONNECTION_STATUS-5",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_RECONNECT_COUNT-5",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-4",
+                  "METRIC-003-SERIES-FIX-GATEWAY-FIX_SEQUENCE_GAPS-5",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-4",
+                  "METRIC-003-SERIES-EXECUTION-SERVICE-EXECUTION_ACK_LATENCY_MS-5"
+                ]
+              }
+            ],
+            "supported_failure_condition": "quote-service DB pool saturation with sustained DB wait and pool acquisition timeout, resulting in RFQ processing timeouts",
+            "possible_triggers": [
+              {
+                "statement": "A recent change may have increased quote-service concurrency or DB pressure, but the returned evidence does not confirm a deployment cause.",
+                "evidence_ids": [
+                  "LOG-003-001",
+                  "BUSINESS-003-003",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5"
+                ],
+                "status": "candidate",
+                "reason": "The incident summary mentions a change, and request rate/latency rose, but no deployment evidence was returned to establish causality."
+              },
+              {
+                "statement": "Higher request load may have contributed to exhausting the quote-service DB pool.",
+                "evidence_ids": [
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+                  "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5"
+                ],
+                "status": "candidate",
+                "reason": "Load and saturation co-occur in the samples, but the evidence does not prove the load increase alone caused exhaustion."
+              }
+            ],
+            "confirmed_cause": {
+              "statement": "Quote-service DB connection pool exhaustion is the best-supported cause of the RFQ timeouts in the returned evidence.",
+              "evidence_ids": [
+                "METRIC-003-POOL",
+                "LOG-003-002",
+                "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4",
+                "METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5",
+                "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-4",
+                "METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5",
+                "BUSINESS-003-004",
+                "BUSINESS-003-009",
+                "LOG-003-003"
+              ]
+            },
+            "unknowns": [
+              "Whether a deployment or configuration change preceded the saturation is not established by returned evidence.",
+              "Whether a specific DB query or lock contention pattern drove the pool exhaustion is not established.",
+              "Whether additional hidden metrics outside the returned sample set show a wider service impact is unknown.",
+              "The incident timeline references a deployment-like event in untrusted data, but no returned deployment evidence ID is available here."
+            ],
+            "score_kind": "uncalibrated_support"
+          },
+          "provider_status": "completed"
+        }
+      ],
+      "error": null,
+      "usage": {
+        "input_tokens": 26891,
+        "output_tokens": 2796,
+        "total_tokens": 29687,
+        "estimated_cost_usd": 0.03275025,
+        "known_subtotals": {
+          "input_tokens": 26891,
+          "output_tokens": 2796,
+          "total_tokens": 29687,
+          "estimated_cost_usd": 0.03275025
+        },
+        "usage_status": "known"
+      },
+      "provenance": {
+        "workflow": "evidence_first_v1",
+        "initial_diagnostics": [
+          "get_incident",
+          "get_service_topology",
+          "query_metrics",
+          "search_logs"
+        ],
+        "transport": "mcp_stdio",
+        "provider": "openai",
+        "model_called": true,
+        "snapshot_cutoff": "2026-10-09T15:00:00Z",
+        "snapshot_kind": "frozen_current",
+        "recorded": false,
+        "provider_turns": 2,
+        "tool_calls": 4,
+        "assessment_source": {
+          "kind": "live_provider",
+          "provider": "openai"
+        },
+        "source_commit": "7e08ab2aa0e942d9596156bdc1191f0bd5c053d8",
+        "showcase": {
+          "title": "Database pool exhaustion",
+          "scenario_id": "db-pool-exhaustion",
+          "source_receipt": "run-b36007b2-4680-44d5-b67c-69a3d255242e.json",
+          "source_sha256": "2188a501347bb22ac03bdd1f040986f7ae296a841145406d34b39e153164ee08",
+          "source_commit": "7e08ab2aa0e942d9596156bdc1191f0bd5c053d8",
+          "export_version": 1,
+          "exported_at": "2026-10-10T17:03:00.545587+00:00",
+          "generated_at": "2026-10-10T16:23:26.466267+00:00",
+          "generation_ended_at": "2026-10-10T16:23:42.603790+00:00",
+          "original_duration_seconds": 16.138,
+          "recorded_execution_outcome": "COMPLETED_APPROVED_CASES",
+          "sample_start": "2026-10-09T13:59:00Z",
+          "sample_end": "2026-10-09T14:02:24Z",
+          "snapshot_label": "Complete recorded evidence snapshot; independent of simulated animation progress. Cutoff is not continuous sample coverage.",
+          "review_notes": {
+            "identified": [
+              "Pool saturation, long DB wait and processing timeouts align with RFQ expiry [METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-DB_WAIT_MS-5, LOG-003-002, BUSINESS-003-004, BUSINESS-003-005]."
+            ],
+            "overstatements": [
+              "The proposal asserts degradation through 15:00 UTC, although returned samples end at 14:02:24 UTC; the cutoff is not continuous time coverage.",
+              "Its confirmed-cause and 'caused' wording overstates causal evidence. The recorded timeout log reports pool_size=40 and in_use=40, but it does not prove the initiating saturation mechanism [LOG-003-002].",
+              "Pool utilization is 100% at 14:01:36, 87% at 14:01:48 and 100% at 14:02:24. Request rate falls from 256 to 240 between the last two samples, so a continuous rising-load story is unsupported [METRIC-003-POOL, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-4, METRIC-003-SERIES-QUOTE-SERVICE-DB_POOL_UTILIZATION-5, METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-4, METRIC-003-SERIES-QUOTE-SERVICE-REQUEST_RATE_PER_SECOND-5].",
+              "CPU/pricing/FIX exclusions apply only to the returned rows. The incident timeline mentions a deployment, but no deployment object was retrieved; higher request load does not independently prove the trigger."
+            ],
+            "unknowns": [
+              "The initiating load/query/lock/connection-ownership mechanism, any preceding change, recovery and state after 14:02:24 UTC remain unknown. The events establish RFQ expiry, not financial loss."
+            ],
+            "validator_changes": [
+              "The recorded gate accepted the failure domain and normalized 19 fields, including causal prose and observations. Its rewrites are rule-authored; they do not independently establish that each original field was erroneous.",
+              "The final advisory leaves the initiating cause unconfirmed and requires human review. Model and rule support scores are distinct and uncalibrated."
+            ]
+          },
+          "review_scope": "Project review notes; not an independent human audit or automatically proven factuality assessment.",
+          "usage_scope": "Recorded token usage and estimated API cost; not confirmed billing, hosting cost or measured human time saved."
+        }
+      }
+    }
+  }
+}

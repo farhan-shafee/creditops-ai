@@ -235,7 +235,7 @@ def create_app(
                 "kafka": adapter.health(),
                 "environment": "synthetic",
                 "diagnostic_capabilities": "read-only",
-                "embeddings_enabled": get_settings().embeddings_enabled,
+                "embeddings_enabled": configuration.embeddings_enabled and not configuration.public_demo,
             },
             status_code=200 if database_ok else 503,
         )
@@ -400,21 +400,26 @@ def create_app(
 
     @app.get("/api/evaluations/latest")
     async def latest_evaluation():
+        from .investigator import read_selected_recordings
+
         path = configuration.project_root / "artifacts" / "eval" / "latest.json"
-        if not path.is_file():
-            return {"status": "not_generated"}
-        if path.stat().st_size > 2_000_000:
-            raise HTTPException(503, "Evaluation artifact exceeds size budget")
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            selected = read_selected_recordings(configuration.replay_dir)
+            if not path.is_file():
+                return {"status": "not_generated", "selected_recordings": selected}
+            if path.stat().st_size > 2_000_000:
+                raise HTTPException(503, "Evaluation artifact exceeds size budget")
+            evaluation = json.loads(path.read_text(encoding="utf-8"))
+            evaluation["selected_recordings"] = selected
+            return evaluation
         except (ValueError, OSError) as error:
-            raise HTTPException(503, "Evaluation artifact unavailable") from error
+            raise HTTPException(503, "Evaluation or selected recording artifact unavailable") from error
 
     async def worker(session_id: str, id: str):
         from .investigator import run_investigation
 
         try:
-            await run_investigation(database, session_id, id)
+            await run_investigation(database, session_id, id, configuration)
             row = await database.get_investigation(session_id, id)
             if row:
                 investigation_runs.labels(row["status"], row["mode"]).inc()
@@ -431,6 +436,8 @@ def create_app(
         from .investigator import create_investigation as create
 
         if body.mode == "LIVE_AI":
+            if configuration.public_demo:
+                raise HTTPException(403, "LIVE_AI is disabled in the public demo")
             key = configuration.admin_api_key.get_secret_value() if configuration.admin_api_key else None
             if not authorize_admin(authorization, key):
                 raise HTTPException(403, "LIVE_AI requires a server-side admin key")
@@ -439,7 +446,7 @@ def create_app(
         ip = request.client.host if request.client else "unknown"
         if not ip_limiter.allow(ip) or not investigation_limiter.allow(session_id):
             raise HTTPException(429, "Investigation budget exceeded; wait for the current window to reset")
-        row = await create(database, session_id, body.incident_id, body.mode)
+        row = await create(database, session_id, body.incident_id, body.mode, configuration)
         task = asyncio.create_task(worker(session_id, row["id"]))
         tasks[(session_id, row["id"])] = (body.incident_id, task)
         return row
@@ -462,6 +469,16 @@ def create_app(
             media_type="text/event-stream",
             headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
         )
+
+    @app.get("/api/investigations/{id}/evidence/{evidence_id}", response_model=Evidence)
+    async def investigation_evidence(id: str, evidence_id: str, session_id: Session):
+        row = await database.get_investigation(session_id, id)
+        if row is None:
+            raise HTTPException(404, "Investigation not found in this session")
+        evidence = next((item for item in row["evidence"] if item["id"] == evidence_id), None)
+        if evidence is None:
+            raise HTTPException(404, "Evidence not found in this investigation snapshot")
+        return evidence
 
     return app
 

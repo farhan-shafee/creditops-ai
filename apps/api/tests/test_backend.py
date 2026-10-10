@@ -174,7 +174,7 @@ async def test_api_protects_live_calls_limits_bodies_and_rate_budgets(store):
     from fastapi.testclient import TestClient
 
     database, _ = store
-    config = Settings(admin_api_key="synthetic-local-admin", max_investigations_per_window=1)
+    config = Settings(public_demo=False, admin_api_key="synthetic-local-admin", max_investigations_per_window=1)
     with TestClient(create_app(store=database, manage_store=False, settings=config)) as client:
         headers = {"X-Demo-Session": str(uuid4())}
         client.post("/api/demo/scenarios/fix-connectivity/run", headers=headers)

@@ -27,7 +27,7 @@ for (const [scenario, domain] of [
     await page.getByRole('button', { name: 'Run Incident', exact: true }).click();
     await expect(page.getByTestId('incident-detail')).toBeVisible();
     await expect(page.getByText('Simulated clock', { exact: false }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+    await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
     await expect(page.getByTestId('assessment')).toBeVisible();
     await expect(page.getByTestId('failure-domain')).toHaveText(domain);
     await expect(
@@ -95,7 +95,7 @@ test('completed investigation survives reload and opens in the investigator work
 }) => {
   await page.goto('/incidents');
   await page.getByRole('button', { name: 'Run Incident', exact: true }).click();
-  await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+  await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
   await expect(page.getByTestId('assessment')).toBeVisible();
   const domain = await page.getByTestId('failure-domain').innerText();
   await page.reload();
@@ -134,13 +134,13 @@ test('a truncated investigation stream produces an actionable failure without an
       body: ': connection closed\n\n',
     }),
   );
-  await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+  await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText(
     'Investigation stream ended before completion',
   );
   await expect(page.getByTestId('assessment')).not.toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Investigate with AI', exact: true }),
+    page.getByRole('button', { name: 'View recorded investigation', exact: true }),
   ).toBeEnabled();
 });
 
@@ -200,7 +200,7 @@ test('switching incidents during a real pending stream cannot attach the old ass
   const investigationRequest = page.waitForRequest(
     (request) => request.method() === 'POST' && request.url().endsWith('/api/investigations'),
   );
-  await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+  await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
   expect((await investigationRequest).postDataJSON().incident_id).toBe('INC-DEMO-001');
   await streamRequested;
   await page.getByLabel('Incident scenario').selectOption('fix-connectivity');
@@ -208,7 +208,7 @@ test('switching incidents during a real pending stream cannot attach the old ass
   await streamDelivered;
   await expect(page.locator('.incident-banner')).toContainText('INC-DEMO-002');
   await expect(
-    page.getByRole('button', { name: 'Investigate with AI', exact: true }),
+    page.getByRole('button', { name: 'View recorded investigation', exact: true }),
   ).toBeEnabled();
   await expect(page.getByTestId('assessment')).not.toBeVisible();
 });
@@ -257,7 +257,7 @@ test('pending scenario run and reset keep every incident selection control locke
         await expect(tab).toBeDisabled();
       }
       await expect(
-        page.getByRole('button', { name: 'Investigate with AI', exact: true }),
+        page.getByRole('button', { name: 'View recorded investigation', exact: true }),
       ).toBeDisabled();
     } finally {
       release();
@@ -272,7 +272,7 @@ test('a replay citation opens its exact persisted investigation record even befo
 }) => {
   await page.goto('/incidents');
   await page.getByRole('button', { name: 'Run Incident', exact: true }).click();
-  await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+  await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
   await expect(page.getByTestId('assessment')).toBeVisible();
   const ids = await page.evaluate(() => ({
     session: localStorage.getItem('creditops-demo-session')!,
@@ -314,7 +314,7 @@ test('reload resumes a saved running investigation without starting another inve
 }) => {
   await page.goto('/incidents');
   await page.getByRole('button', { name: 'Run Incident', exact: true }).click();
-  await page.getByRole('button', { name: 'Investigate with AI', exact: true }).click();
+  await page.getByRole('button', { name: 'View recorded investigation', exact: true }).click();
   await expect(page.getByTestId('investigation-step').first()).toBeVisible();
   const ids = await page.evaluate(() => ({
     session: localStorage.getItem('creditops-demo-session')!,

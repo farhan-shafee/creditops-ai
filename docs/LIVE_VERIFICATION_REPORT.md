@@ -1,6 +1,8 @@
 # Live verification and offline investigation repairs
 
-**OFFLINE REPAIR — NO LIVE REQUESTS IN THIS PASS. LIVE-MODEL QUALITY UNVERIFIED.**
+**Current status: three selected completed synthetic live-model recordings are packaged for keyless replay. No new model experiment, embedding request or cloud mutation is part of this milestone.**
+
+The sections below preserve the chronological development record, including earlier failures, abstention and then-pending approvals. Their historical “not run” statements describe those earlier passes. The current completed 001/002/003 results and showcase scope appear in the final section. Domain acceptance is not general accuracy, autonomous investigation or independent verification of the model's narrative.
 
 ## Failed first attempt
 
@@ -649,3 +651,60 @@ CI receipt changes documentation only; future approval must bind that tested
 runner source and the unchanged investigation implementation.
 
 **REMAINING LIVE CASES NOT RUN — FRESH SOURCE-BOUND OWNER APPROVAL REQUIRED.**
+
+## Selected recorded synthetic examples — completed 001/002/003 and keyless packaging
+
+The remaining separately authorized source recordings completed on 2026-10-10 without changing the frozen `evidence_first_v1` investigation implementation. The reviewed runner is `18c50ea2c10a7aef69d0e2ea08caf0ec6bb44d8b`; the 002/003 receipt source commit is documentation-only `7e08ab2aa0e942d9596156bdc1191f0bd5c053d8`. Case 001 retains its original `bb7aa0ae9805d07be39cf043a1d9dafc5992eb9e` receipt source commit and the implementation provenance described in its earlier section. All use OpenAI `gpt-5.4-mini-2026-03-17`.
+
+These are **selected recorded synthetic examples**, developed alongside the application and diagnostic rules. They are not independent held-out tests, an autonomous-investigation demonstration or a general-accuracy benchmark. Earlier STOPPED attempts and model abstention remain preserved. The original selected receipts and approvals remain private local records, and the live latest pointer is unchanged by packaging.
+
+| Case and recorded generation (UTC) | Private local source receipt / experiment | Original duration / evidence | Model proposal → recorded validation |
+|---|---|---|---|
+| 001 pricing backlog; 10:34:52–10:35:17 | `run-3f4d7391-f31c-47b9-93cb-da7d02354782.json`; `38ec45c9-71aa-4323-91cb-c5a0360d11ce` | 25.191 s; 67 rows | Pricing-service / Kafka consumer backlog; model score 0.63; domain accepted; 19 distinct fields normalized; final rule support 0.84 |
+| 002 FIX session instability; 16:20:04–16:20:23 | `run-75c7bf12-0bb1-4ca8-b386-721d886f50ad.json`; `77ad110d-913d-4002-b81b-a5648e068d4f` | 19.019 s; 71 rows | FIX connectivity/session instability; model score 0.78; domain accepted; 17 distinct fields normalized; final rule support 0.84 |
+| 003 database pool exhaustion; 16:23:26–16:23:42 | `run-b36007b2-4680-44d5-b67c-69a3d255242e.json`; `d731255e-15db-4a97-a331-c74bdaac5327` | 16.138 s; 65 rows | Database connection pool exhaustion; model score 0.87; domain accepted; 19 distinct fields normalized; final rule support 0.84 |
+
+Every selected run dispatched exactly four **application-selected** MCP checks: `get_incident`, `get_service_topology`, `query_metrics` and `search_logs`, with bounded 50-row metric samples. Each then made one model decision choosing assessment and one model assessment. There were **zero model-selected diagnostic follow-ups**, zero rejected actions and no dedicated Kafka/FIX/database inspection, runbook retrieval or historical-incident search in these traces. Discovery of an available tool is not evidence that it was called. The existing deterministic/MCP demonstrations remain separate.
+
+All three preserve valid returned reference IDs and `accepted_normalized` domain-support outcomes. The final 0.84 scores are rule-generated support, not model confidence or accuracy. Both original model and rule scores are uncalibrated. Counts of 19/17/19 distinct rewritten fields do not mean that many independently detected errors; the known-domain rule layer authors conservative wording and is not a general factuality verifier.
+
+### Project review notes and unresolved claims
+
+These are project review notes based on the recorded evidence, not an independent human audit or an automatically proven factuality assessment. Original erroneous prose remains inspectable.
+
+- **001:** The model identifies pricing backlog and stale/unavailable quotes, but overstates causal chains and describes fluctuating lag as growing/rising. Some CPU/DB health wording says “at the cutoff” although the cited observations are earlier. The advisory output keeps the supported condition while leaving the initiating cause unconfirmed. RFQ expiry and unavailable quotes are supported; no fills, financial losses or revenue impact are established.
+- **002:** The model identifies FIX instability, delayed ACKs, retransmission and uncertainty. Its executive wording says acknowledgements were delayed “because” of the pathway condition, stronger than the correlation establishes. A CPU alternative cites DB/stale-price objects rather than CPU samples; valid IDs alone do not prove that explanation. Absence of a sampled recovery does not establish failure through the full cutoff. The advisory output requires reconciliation of the same economic order identity; execution/fill state and the initiating network/peer/session cause remain unknown.
+- **003:** The model identifies pool saturation, acquisition timeout/DB waits and RFQ processing timeout/expiry. Its incident summary extends the degradation through 15:00 UTC and its causal prose is stronger than the sparse sample coverage supports. A change mentioned in context is not a returned deployment object. The recorded advisory output preserves the pool-exhaustion condition without confirming a release or other initiating cause. No fill, loss or revenue conclusion follows from these events.
+
+The complete recorded snapshots have a frozen cutoff of **2026-10-09 15:00:00 UTC**, but returned samples end at **14:02:24 UTC**. That cutoff is an upper bound, not evidence of continuous or later health/failure. Earlier/negative observations do not exclude missing upstream faults. The UI labels complete-snapshot evidence separately from the visitor's simulated animation, which may be earlier. Original generation time, export time, playback time and original observation timestamps remain distinct.
+
+### Usage estimates and retained history
+
+| Selected receipt | Reported input / output tokens | Usage-based estimate (USD) | Conservative retained reservation (USD) |
+|---|---:|---:|---:|
+| 001 | 28,119 / 2,722 | 0.03333825 | 0.14025975 |
+| 002 | 30,389 / 2,325 | 0.03325425 | 0.14532075 |
+| 003 | 26,891 / 2,796 | 0.03275025 | 0.13770825 |
+| Selected total | 85,399 / 7,843 | 0.09934275 | 0.42328875 |
+
+These values are recorded usage estimates/reservations, not confirmed billing or total hosting cost. The three original execution durations total 60.348 s and do not measure human time saved. Playback duration is separate. The seven historical outcomes remain three STOPPED attempts, one completed model abstention and these three completed accepted-domain examples. Earlier retained reservations of USD 0.60731325 plus these USD 0.42328875 equal **USD 1.03060200**; the historical ledgers remain unchanged, with no new paid attempt, approval, reservation or refund from packaging.
+
+### Sanitized replay package and public profile
+
+The committed derivatives live in `data/showcase/INC-DEMO-001.json` through `003.json`, with `data/showcase/manifest.json`. `scripts/export_showcase.py` uses the explicit three-receipt filename/experiment allowlist and existing replay format/integrity contract. The manifest records original receipt source/hash/commit, export version/time and redactions; source hashes are provenance values, not credential fingerprints. Local paths, account/device/session details, provider request identifiers, authorization/approval/environment data and unnecessary operational metadata are removed. The packaged evidence, original structured proposal, original validation outcome and original final assessment retain the original identities/content/times needed for inspection.
+
+Replay checks structural/reference/integrity validity and keeps recorded output intact. Any separate present-day validation check remains distinct from the historical result. Missing, malformed or mismatched artifacts fail visibly, without substituting a deterministic recording. Playback opens evidence from its recorded snapshot rather than current session/database rows. The API uses the configured `REPLAY_DIR`, preserving ordinary `data/replay` compatibility.
+
+The exact local command is **`pnpm showcase`**. It reuses the existing launcher, sets `REPLAY_DIR` to the absolute showcase directory, uses only `artifacts/runtime/showcase.db`, strips inherited provider/admin keys, sets `PUBLIC_DEMO=true` and `EMBEDDINGS_ENABLED=false`, and disables dotenv using `CREDITOPS_ENV_FILE=''`. It leaves the owner's `.env` untouched. Public paid investigations and query embeddings are denied at the API boundary even with offline fake-key canaries. Replay constructs no model client and makes no new model/embedding/MCP diagnostic calls.
+
+Focused configuration verification: two subprocess regressions failed before the dotenv opt-out and all three now pass, including a guard forbidding every dotenv read for empty mode, an explicitly isolated fake-only dotenv and unchanged ordinary default-path configuration. The Node launcher regression failed before implementation and now passes with inherited fake OpenAI/Anthropic/admin keys, a private-receipt replay path and an owner database path: the child profile drops keys and selects only isolated showcase storage. Focused Ruff and Node syntax checks passed. Normal repository acceptance, browser screenshots and actual source CI are recorded below when completed; these focused checks alone do not claim whole-suite or cloud success.
+
+The existing [demo script](DEMO_SCRIPT.md), [interview walkthrough](INTERVIEW_WALKTHROUGH.md), README and [deployment handoff](DEPLOYMENT.md) now describe the selected recordings accurately. The intended hosted topology remains dedicated frontend/API/database resources, with `/app/data/showcase` packaged in the API image and no provider/admin credentials. Hosting account/resource/plan approval and current cost verification remain owner decisions. No public URL, cloud resource or new provider execution was created by this milestone.
+
+Offline packaging acceptance on 2026-10-10: normal `pnpm test` passed **375 Python tests without skips** (181.46 s; one local pytest-cache warning), **27 frontend tests** and three startup/dependency checks. The Python suite includes real local MCP, strict stopping, session/cutoff isolation, receipt/proposal preservation and disposable PostgreSQL checks. All three packaged recordings also load without access to the private receipt directory, with provider and diagnostic constructors forbidden. Missing/malformed artifacts and mismatched manifest claims fail honestly. Replay retains recorded output; any current copy-based validation changes are displayed separately. A validator step remains local validation even when replay transport is recorded.
+
+Lint, types and production build passed. Pip/pnpm audits found no known dependency vulnerabilities (the local project itself is not a PyPI package); Bandit found no issues; redacted Gitleaks scans passed for staged files and Git history. The unchanged isolated evaluations reproduce 12/15 baseline and 11/15 deterministic-investigator exact labels, plus 13/13 developer-authored robustness cases, without overwriting archived outputs. Nineteen legacy Chromium regressions passed in 59.6 s and four keyless showcase regressions passed in 23.9 s without retries, including all recordings, recorded evidence click-through, refresh/reset, independent sessions, public paid-action denial and desktop/mobile widths down to 320 px. An earlier local browser pass hit a cold Next.js JSON-cache error; clearing only ignored dev cache and restarting the owned server resolved it. Playwright's Windows-managed launcher shutdown required explicit owned-tree cleanup; the existing Unix process-group lifecycle check is skipped on Windows and runs in normal Linux CI. No assertions were weakened.
+
+Genuine local [entry](screenshots/showcase-entry.png), [business events](screenshots/showcase-business-impact.png), [evidence drawer](screenshots/showcase-impact-evidence.png), [original proposal/validation](screenshots/showcase-proposal-validation.png), [advisory output](screenshots/showcase-final-advisory.png), [results](screenshots/showcase-results.png) and [mobile](screenshots/showcase-mobile.png) captures accompany the short [playback recording](screenshots/showcase-playback.webm). A local API image build and inspection of an unstarted, network-disabled container verified exact showcase/replay/evaluation hashes and the absence of dotenv, private receipts, runtime files and provider/admin environment keys. It was not deployed.
+
+The post-test preservation check confirms all **32 protected files**, **23 frozen-core files** and both collector AST hashes unchanged. The original 22 live-history files/latest pointer, seven ledgers, retained **USD 1.03060200**, historical replay/benchmarks and ignored/untracked `.env` are preserved. All three derivatives match their source hashes and original sanitized proposal/validation/final/evidence objects. Changes are confined to replay, presentation, public-profile packaging, documentation and tests; investigation logic, prompts, citation schemas, sampling, fixtures and diagnostic rules remain frozen. Actual source CI is recorded in the following publication receipt; no new live request or approval was created.

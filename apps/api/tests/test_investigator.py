@@ -157,7 +157,7 @@ async def test_rejected_domain_neutralizes_all_causal_narrative_and_preserves_ob
     assert validated.requires_human_review
 
 
-async def test_replay_loader_returns_the_corrected_assessment_after_support_gate(tmp_path):
+async def test_replay_loader_preserves_recorded_output_and_separately_checks_current_gate(tmp_path):
     from creditops.investigator import read_replay_artifact, write_replay_artifact
 
     evidence = [
@@ -184,7 +184,11 @@ async def test_replay_loader_returns_the_corrected_assessment_after_support_gate
         "usage": {},
     }
     write_replay_artifact(trace, tmp_path)
-    loaded = read_replay_artifact("INC-DEMO-001", tmp_path)["investigation"]["assessment"]
+    payload = read_replay_artifact("INC-DEMO-001", tmp_path)
+    assert payload["investigation"]["assessment"] == trace["assessment"]
+    assert payload["playback_validation"]["recorded_output_preserved"] is True
+    assert payload["playback_validation"]["assessment_would_change"] is True
+    loaded = payload["playback_validation"]["current_validation_assessment"]
     assert loaded["probable_failure_domain"] == "insufficient evidence"
     assert loaded["confidence"] <= 0.4
     assert loaded["requires_human_review"] is True

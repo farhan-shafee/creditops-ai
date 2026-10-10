@@ -206,9 +206,12 @@ export function ArchitectureView() {
           <ul className="prose-list">
             <li>Persisted synthetic telemetry adapter</li>
             <li>Accelerated deterministic incident clock</li>
-            <li>Replay artifacts from the actual pipeline</li>
-            <li>Fresh adaptive MCP stdio diagnostics at a frozen cutoff</li>
-            <li>Deterministic assessment provider clearly labeled</li>
+            <li>Three selected recordings from completed model-assisted development runs</li>
+            <li>
+              Application-selected initial MCP checks, recorded model proposal, and local validation
+            </li>
+            <li>Keyless replay: no new model, embedding, or recorded-tool calls</li>
+            <li>Legacy deterministic MCP demonstration remains separately labeled</li>
           </ul>
         </Panel>
         <Panel title="Optional integrations" eyebrow="Explicit configuration">
@@ -257,10 +260,11 @@ export function AboutView() {
           <p className="prose">
             The investigator separates observations, supported failure conditions, candidate
             triggers and unknown causes. Its support score is uncalibrated, and its domain-specific
-            checks do not establish arbitrary claim truth. Recorded replay and fresh adaptive MCP
-            diagnostics run without paid model calls; the console shows which path produced each
-            result. Synthetic evaluations measure the implemented pipeline without estimating
-            financial losses or production outcomes.
+            checks do not establish arbitrary claim truth. The selected recordings preserve real
+            model proposals and separate validation with project review notes. Playback makes no new
+            model or recorded-tool calls. The legacy deterministic MCP demonstration remains a
+            separate path. Synthetic evaluations do not establish financial losses or production
+            outcomes.
           </p>
         </Panel>
         <Panel title="Why production mutation is excluded" eyebrow="Deliberate safety boundary">
@@ -274,9 +278,11 @@ export function AboutView() {
         <Panel title="Scope & limitations" eyebrow="Honest portfolio positioning">
           <p className="prose">
             This is a compact, independently built demonstration. It does not connect to real
-            trading systems and has no real customer or incident data. Live provider quality is
-            unmeasured until the live evaluation harness runs. Synthetic benchmark latency is not a
-            measured reduction in real production MTTR.
+            trading systems and has no real customer or incident data. The three selected completed
+            examples are development recordings, with earlier failed or abstaining attempts
+            preserved. They do not establish general live-model accuracy. Original model latency and
+            synthetic benchmark latency are not measured reductions in real production MTTR. Paid
+            live-model and embedding actions are disabled in the public showcase profile.
           </p>
           <Link className="text-button" href="/evaluations">
             Inspect the generated evaluations <ArrowRight size={14} />

@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, ChevronDown, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { BusinessImpact, BusinessImpactRequest } from '@/lib/types';
+import type { BusinessImpact, BusinessImpactRequest, Investigation } from '@/lib/types';
 import { Badge, Citation, Panel, Spinner, Status, time } from './primitives';
 
 export function BusinessImpactPanel({
   incidentId,
   onEvidence,
+  investigation,
 }: {
   incidentId: string;
   onEvidence: (id: string) => void;
+  investigation?: Investigation | null;
 }) {
   const [snapshot, setSnapshot] = useState<{
     incidentId: string;
@@ -17,6 +19,7 @@ export function BusinessImpactPanel({
     error: string | null;
   } | null>(null);
   useEffect(() => {
+    if (investigation?.mode === 'REPLAY') return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
@@ -47,8 +50,10 @@ export function BusinessImpactPanel({
       controller.abort();
       if (timer) clearTimeout(timer);
     };
-  }, [incidentId]);
+  }, [incidentId, investigation?.mode]);
   const current = snapshot?.incidentId === incidentId ? snapshot : null;
+  if (investigation?.mode === 'REPLAY')
+    return <RecordedBusinessImpact investigation={investigation} onEvidence={onEvidence} />;
   return (
     <Panel
       title="Business impact / affected requests"
@@ -67,6 +72,150 @@ export function BusinessImpactPanel({
           <Spinner /> Loading the session-scoped request lifecycle…
         </div>
       )}
+    </Panel>
+  );
+}
+
+function RecordedBusinessImpact({
+  investigation,
+  onEvidence,
+}: {
+  investigation: Investigation;
+  onEvidence: (id: string) => void;
+}) {
+  const events = investigation.evidence
+    .filter((row) => row.kind === 'business_event')
+    .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const groups = new Map<string, typeof events>();
+  for (const event of events) {
+    const id =
+      typeof event.data.rfq_id === 'string' ? event.data.rfq_id : 'Request identity not recorded';
+    groups.set(id, [...(groups.get(id) ?? []), event]);
+  }
+  const metadata = investigation.provenance?.showcase;
+  return (
+    <Panel
+      title="Business impact / affected requests"
+      eyebrow="Recorded events / entirely synthetic data"
+      action={<Badge>Complete recorded snapshot</Badge>}
+      className="business-impact-panel"
+    >
+      <div className="business-impact" data-testid="recorded-business-impact">
+        <div className="business-summary">
+          <p>Business state below comes only from the recorded evidence snapshot.</p>
+          <span>
+            Returned-sample coverage:{' '}
+            {metadata ? `${metadata.sample_start} — ${metadata.sample_end}` : 'not recorded'} · UTC
+          </span>
+          <span>
+            Snapshot cutoff: {investigation.provenance?.snapshot_cutoff ?? 'not recorded'} · UTC.
+            The complete snapshot can contain later events than the current simulation animation.
+            Sample coverage does not establish health at the cutoff.
+          </span>
+        </div>
+        <div className="business-counters">
+          <Counter label="RFQs in returned events" value={String(groups.size)} id="rfqs-recorded" />
+          {(
+            [
+              'QUOTE_STALE',
+              'QUOTE_UNAVAILABLE',
+              'RFQ_EXPIRED',
+              'PROCESSING_TIMEOUT',
+              'ACK_UNCERTAIN',
+            ] as const
+          ).map((kind) => (
+            <Counter
+              key={kind}
+              label={
+                {
+                  QUOTE_STALE: 'Observed stale quotes',
+                  QUOTE_UNAVAILABLE: 'Observed unavailable quotes',
+                  RFQ_EXPIRED: 'Observed RFQ expiry',
+                  PROCESSING_TIMEOUT: 'Observed processing timeouts',
+                  ACK_UNCERTAIN: 'Observed uncertain acknowledgements',
+                }[kind]
+              }
+              value={String(
+                [...groups.values()].filter((rows) =>
+                  rows.some((event) => event.data.event_type === kind),
+                ).length,
+              )}
+              id={`recorded-${kind.toLowerCase()}`}
+            />
+          ))}
+        </div>
+        <div className="request-journeys">
+          {[...groups].map(([id, rows], index) => (
+            <details
+              key={id}
+              className="request-journey"
+              open={index === 0}
+              data-testid="request-journey"
+            >
+              <summary>
+                <div>
+                  <strong className="mono">{id}</strong>
+                  <span>{String(rows[0].data.instrument_id ?? 'Instrument not recorded')}</span>
+                </div>
+                <div>
+                  <span>
+                    {String(rows[0].data.side ?? '')} · {String(rows[0].data.currency ?? '')}{' '}
+                    {rows[0].data.par_amount
+                      ? par(String(rows[0].data.par_amount)) + ' requested par'
+                      : ''}
+                  </span>
+                  <Status value={String(rows.at(-1)?.data.event_type ?? 'State not recorded')} />
+                </div>
+                <ChevronDown size={15} />
+              </summary>
+              <div className="request-detail">
+                <ol className="business-timeline">
+                  {rows.map((event) => (
+                    <li key={event.id}>
+                      <time dateTime={event.timestamp}>
+                        {time(event.timestamp)}
+                        <span>UTC</span>
+                      </time>
+                      <div>
+                        <strong>{event.summary}</strong>
+                        <p>
+                          {String(event.data.event_type)} · {event.service}
+                        </p>
+                        {typeof event.data.order_id === 'string' && (
+                          <p>
+                            Economic order identity:{' '}
+                            <code>
+                              {String(event.data.economic_order_id ?? event.data.order_id)}
+                            </code>
+                            {event.data.retransmission === true
+                              ? ' · retransmission of the same order'
+                              : ''}
+                          </p>
+                        )}
+                        <Citation id={event.id} onEvidence={onEvidence} />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </details>
+          ))}
+          {!events.length && (
+            <p className="padded muted">
+              No business events were returned in this recording. Current session rows are not
+              substituted.
+            </p>
+          )}
+        </div>
+        <div className="business-boundary">
+          <ShieldCheck size={15} />
+          <p>
+            Pending or uncertain acknowledgement requires reconciliation before any resubmission.
+            Retransmission does not create a second economic order. These events do not establish
+            fills, executed trades, financial losses, or revenue impact.
+          </p>
+        </div>
+      </div>
     </Panel>
   );
 }

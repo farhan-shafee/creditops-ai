@@ -60,6 +60,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:dependencies
+      - run: pnpm test:showcase-startup
       - run: pnpm --filter @creditops/web lint
       - run: pnpm typecheck
       - run: pnpm --filter @creditops/web test
@@ -84,6 +85,7 @@ jobs:
       - run: pnpm test:lifecycle
       - run: pnpm --filter @creditops/web exec playwright install --with-deps chromium
       - run: pnpm e2e
+      - run: pnpm e2e:showcase
       - uses: actions/upload-artifact@v4
         if: always()
         with:

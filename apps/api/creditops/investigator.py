@@ -25,7 +25,7 @@ from .diagnostic_clients import (
     MCPDiagnosticClient,
     safe_arguments,
 )
-from .models import Assessment
+from .models import Assessment, Investigation
 from .providers import (
     ABSTAIN_DOMAIN,
     AdaptiveDecision,
@@ -769,19 +769,114 @@ def read_replay_artifact(incident_id: str, directory: Path = REPLAY_DIR) -> dict
         )
     if path.stat().st_size > 2_000_000:
         raise InvalidAssessment("Replay artifact exceeded size budget")
-    envelope = json.loads(path.read_text(encoding="utf-8"))
-    payload = envelope["payload"]
-    if envelope["sha256"] != artifact_digest(payload) or payload["schema_version"] not in (1, 2):
-        raise InvalidAssessment("Replay artifact integrity check failed")
-    result = payload["investigation"]
-    if result["incident_id"] != incident_id or result["status"] != "complete":
-        raise InvalidAssessment("Replay artifact incident or state mismatch")
-    validated = validate_assessment(Assessment.model_validate(result["assessment"]), result["evidence"])
-    result["assessment"] = validated.model_dump(mode="json")
+    try:
+        envelope = json.loads(path.read_text(encoding="utf-8"))
+        payload = envelope["payload"]
+        if envelope["sha256"] != artifact_digest(payload) or payload["schema_version"] not in (1, 2):
+            raise InvalidAssessment("Replay artifact integrity check failed")
+        result = payload["investigation"]
+        if result["incident_id"] != incident_id or result["status"] != "complete":
+            raise InvalidAssessment("Replay artifact incident or state mismatch")
+        structural = copy.deepcopy(result)
+        # Original artifact generators used PIPELINE for persisted source runs.
+        # Playback has always presented them as REPLAY; retain that compatibility.
+        if structural.get("mode") == "PIPELINE":
+            structural["mode"] = "REPLAY"
+        Investigation.model_validate(structural)
+        evidence_ids = {item["id"] for item in result["evidence"]}
+        if len(evidence_ids) != len(result["evidence"]) or any(
+            set(step["evidence_ids"]) - evidence_ids for step in result["steps"]
+        ):
+            raise InvalidAssessment("Replay artifact evidence references are inconsistent")
+        # The gate mutates its Assessment. Check separate copies so historical
+        # proposal, validation outcome and final prose remain byte-for-byte data.
+        checked = validate_assessment(
+            Assessment.model_validate(copy.deepcopy(result["assessment"])), result["evidence"]
+        ).model_dump(mode="json")
+        if result.get("provider_proposal") is not None:
+            validate_assessment(
+                Assessment.model_validate(copy.deepcopy(result["provider_proposal"])), result["evidence"]
+            )
+    except InvalidAssessment:
+        raise
+    except (KeyError, TypeError, ValueError, OSError, AttributeError) as error:
+        raise InvalidAssessment("Replay artifact is malformed or unavailable") from error
+    payload["playback_validation"] = {
+        "checked_at": utc_now(),
+        "recorded_output_preserved": True,
+        "assessment_would_change": checked != result["assessment"],
+        "current_validation_assessment": checked,
+        "scope": "Current structural, citation and integrity checks; this separate check does not replace the recorded result or independently verify its narrative.",
+    }
     return payload
 
 
-async def create_investigation(store: Any, session_id: str, incident_id: str, mode: str) -> dict[str, Any]:
+def read_selected_recordings(directory: Path = REPLAY_DIR) -> list[dict[str, Any]]:
+    path = directory / "manifest.json"
+    if not path.is_file():
+        if directory.name == "showcase" or any(
+            read_replay_artifact(identifier, directory)["investigation"].get("provenance", {}).get("showcase")
+            for identifier in ("INC-DEMO-001", "INC-DEMO-002", "INC-DEMO-003")
+            if (directory / f"{identifier}.json").is_file()
+        ):
+            raise InvalidAssessment("Showcase manifest is missing")
+        return []
+    try:
+        if path.stat().st_size > 2_000_000:
+            raise InvalidAssessment("Showcase manifest exceeded size budget")
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        selected = manifest["selected_recordings"]
+        if manifest["export_version"] != 1 or not isinstance(selected, list) or len(selected) != 3:
+            raise InvalidAssessment("Showcase manifest is malformed")
+        ids = set()
+        for summary in selected:
+            identifier = summary["incident_id"]
+            if identifier in ids or not re.fullmatch(r"[a-f0-9]{64}", summary["source_sha256"]):
+                raise InvalidAssessment("Showcase manifest provenance is malformed")
+            ids.add(identifier)
+            payload = read_replay_artifact(identifier, directory)
+            result = payload["investigation"]
+            source = result["provenance"]["showcase"]
+            if source["export_version"] != 1 or source["source_sha256"] != summary["source_sha256"]:
+                raise InvalidAssessment("Showcase manifest source provenance mismatch")
+            if summary["replay_payload_sha256"] != artifact_digest(
+                {key: value for key, value in payload.items() if key != "playback_validation"}
+            ):
+                raise InvalidAssessment("Showcase manifest replay integrity mismatch")
+            expected = {
+                key: source[key] for key in (
+                    "title", "scenario_id", "source_commit", "source_receipt", "source_sha256",
+                    "original_duration_seconds", "sample_start", "sample_end", "generated_at", "exported_at",
+                )
+            }
+            expected.update(
+                incident_id=result["incident_id"],
+                execution_outcome=source["recorded_execution_outcome"],
+                proposed_domain=result["provider_proposal"]["probable_failure_domain"],
+                final_domain=result["assessment"]["probable_failure_domain"],
+                validation_status=result["validation_outcome"]["status"],
+                snapshot_cutoff=result["provenance"]["snapshot_cutoff"],
+                model=payload["provenance"]["original_model"],
+                workflow=result["provenance"]["workflow"],
+                application_selected_diagnostic_count=sum(step.get("selected_by") == "application_runbook" for step in result["steps"]),
+                model_selected_diagnostic_count=sum(step.get("selected_by") == "model" and step.get("tool") != "assessment_validation" for step in result["steps"]),
+                model_decision_count=sum(call.get("schema") == "AvailableAdaptiveDecision" for call in result["provider_calls"]),
+                model_assessment_count=sum(call.get("schema") == "Assessment" for call in result["provider_calls"]),
+                major_limitations=[*source["review_notes"]["overstatements"], *source["review_notes"]["unknowns"]],
+            )
+            if any(summary.get(key) != value for key, value in expected.items()):
+                raise InvalidAssessment("Showcase manifest summary disagrees with recorded output")
+        if ids != {"INC-DEMO-001", "INC-DEMO-002", "INC-DEMO-003"}:
+            raise InvalidAssessment("Showcase manifest selected incidents mismatch")
+        return selected
+    except (KeyError, TypeError, ValueError, OSError, ProviderUnavailable) as error:
+        raise InvalidAssessment("Showcase manifest or selected recording unavailable") from error
+
+
+async def create_investigation(
+    store: Any, session_id: str, incident_id: str, mode: str, settings: Settings | None = None
+) -> dict[str, Any]:
+    configuration = settings or Settings()
     if mode not in ("REPLAY", "MCP_DEMO", "LIVE_AI"):
         raise ValueError("Investigation mode must be REPLAY, MCP_DEMO or LIVE_AI")
     if await store.get_incident(session_id, incident_id) is None:
@@ -791,7 +886,7 @@ async def create_investigation(store: Any, session_id: str, incident_id: str, mo
         "incident_id": incident_id,
         "mode": mode,
         "status": "running",
-        "provider": "deterministic" if mode in ("REPLAY", "MCP_DEMO") else Settings().ai_provider,
+        "provider": "deterministic" if mode in ("REPLAY", "MCP_DEMO") else configuration.ai_provider,
         "created_at": utc_now(),
         "steps": [],
         "evidence": [],
@@ -807,7 +902,10 @@ async def create_investigation(store: Any, session_id: str, incident_id: str, mo
     return row
 
 
-async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
+async def run_investigation(
+    store: Any, session_id: str, inv_id: str, settings: Settings | None = None
+) -> None:
+    configuration = settings or Settings()
     row = await store.get_investigation(session_id, inv_id)
     if row is None:
         return
@@ -818,7 +916,7 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
 
     async def work() -> None:
         if row["mode"] == "REPLAY":
-            payload = read_replay_artifact(row["incident_id"], Settings().replay_dir)
+            payload = read_replay_artifact(row["incident_id"], configuration.replay_dir)
             artifact = payload["investigation"]
             row["provider"] = payload["provenance"]["provider"]
             row["usage"] = artifact["usage"]
@@ -851,7 +949,12 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
                 # artifacts with no source stay unknown; playback authors none.
                 "assessment_source": copy.deepcopy(artifact.get("provenance", {}).get("assessment_source")),
                 "playback_model_calls": 0,
+                "showcase": copy.deepcopy(artifact.get("provenance", {}).get("showcase")),
+                "playback_validation": payload["playback_validation"],
             }
+            # Expose the complete recorded snapshot for inspection immediately;
+            # its observation coverage is independent of animation progress.
+            row["evidence"] = copy.deepcopy(artifact["evidence"])
             for step in artifact["steps"]:
                 row["steps"].append(
                     {**step, "transport": "recorded_replay", "provider": row["provider"], "recorded": True}
@@ -864,30 +967,28 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
                 await store.save_investigation(session_id, row)
                 await asyncio.sleep(0.18)
             row["evidence"] = artifact["evidence"]
-            row["assessment"] = artifact["assessment"]
-            row["assessment"]["limitations"] = [
-                *row["assessment"]["limitations"],
-                "Recorded investigation playback uses the original persisted evidence and timestamps. No new model calls occur during playback; original provider, run time and cutoff are recorded in provenance.",
-            ]
+            row["assessment"] = copy.deepcopy(artifact["assessment"])
             row["status"] = "complete"
             await store.save_investigation(session_id, row)
         else:
             provider = (
                 DeterministicProvider()
                 if row["mode"] == "MCP_DEMO"
-                else create_provider(Settings().ai_provider)
+                else create_provider(configuration.ai_provider)
             )
             try:
                 if row["mode"] == "LIVE_AI":
-                    provider.enable_budget(Settings().live_max_spend_usd)
-                await collect_adaptive_investigation(store, session_id, row["incident_id"], provider, persist)
+                    provider.enable_budget(configuration.live_max_spend_usd)
+                await collect_adaptive_investigation(
+                    store, session_id, row["incident_id"], provider, persist, limits=configuration
+                )
             finally:
                 client = getattr(provider, "client", None)
                 if client is not None:
                     await client.close()
 
     try:
-        await asyncio.wait_for(work(), timeout=Settings().investigation_timeout_seconds)
+        await asyncio.wait_for(work(), timeout=configuration.investigation_timeout_seconds)
     except asyncio.CancelledError:
         row["status"] = "failed"
         row["error"] = "Investigation interrupted by server shutdown. Please retry."

@@ -22,7 +22,7 @@ const pythonArgs = mode === 'test'
 const pnpmCommand = windows ? 'cmd.exe' : 'pnpm';
 const pnpmArgs = windows ? ['/d', '/s', '/c', `pnpm --filter @creditops/web ${mode}`] : ['--filter', '@creditops/web', mode];
 const checks = [[python, pythonArgs]];
-if (mode === 'test') checks.push([process.execPath, ['--test', 'scripts/check-lint-dependencies.mjs']]);
+if (mode === 'test') checks.push([process.execPath, ['--test', 'scripts/check-lint-dependencies.mjs', 'scripts/check-showcase-startup.mjs']]);
 checks.push([pnpmCommand, pnpmArgs]);
 for (const [command, args] of checks) {
   const result = spawnSync(command, args, {

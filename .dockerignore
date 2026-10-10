@@ -13,6 +13,7 @@ artifacts/test-results
 artifacts/test-tmp
 artifacts/local-validation
 artifacts/runtime
+artifacts/live-verification
 **/*.db
 **/*.db-*
 **/*.log

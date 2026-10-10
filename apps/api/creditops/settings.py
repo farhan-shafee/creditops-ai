@@ -1,5 +1,6 @@
 """Server-side configuration. Secrets are never exported through REST."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -12,7 +13,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=PROJECT_ROOT / ".env", extra="ignore", case_sensitive=False, env_ignore_empty=True
+        # An explicitly empty value lets isolated public launchers bypass the
+        # owner's dotenv file before the API module creates its global app.
+        env_file=os.environ.get("CREDITOPS_ENV_FILE", PROJECT_ROOT / ".env") or None,
+        extra="ignore",
+        case_sensitive=False,
+        env_ignore_empty=True,
     )
     database_url: str = f"sqlite+aiosqlite:///{(PROJECT_ROOT / 'artifacts' / 'creditops.db').as_posix()}"
     telemetry_mode: Literal["persisted", "kafka"] = "persisted"
