@@ -55,6 +55,8 @@ export interface Step {
   error?: string | null;
   provider_turn?: number;
   recorded?: boolean;
+  selected_by?:
+    'application_runbook' | 'model' | 'deterministic' | 'scripted_provider' | 'validator' | null;
 }
 export interface EvidenceClaim {
   statement: string;
@@ -98,13 +100,26 @@ export interface Investigation {
   steps: Step[];
   evidence: Evidence[];
   assessment: Assessment | null;
+  provider_proposal?: Record<string, unknown> | null;
+  validation_outcome?: {
+    status: string;
+    changed_fields?: Record<string, unknown>[];
+    rejected_fields?: Record<string, unknown>[];
+    [key: string]: unknown;
+  } | null;
   error: string | null;
   usage: Record<string, unknown>;
   provenance?: {
     transport?: string;
     workflow?: string;
+    original_workflow?: string;
     provider?: string;
     model_called?: boolean;
+    assessment_source?: {
+      kind: string;
+      provider: string;
+      reason?: string;
+    } | null;
     snapshot_cutoff?: string | null;
     snapshot_kind?: string;
     tool_schema_verified?: boolean;

@@ -18,7 +18,11 @@ from urllib.parse import urlsplit
 from uuid import UUID, uuid4
 
 import httpx
-from creditops.investigator import collect_adaptive_investigation
+from creditops.investigator import (
+    EVIDENCE_FIRST_WORKFLOW,
+    INITIAL_DIAGNOSTICS,
+    collect_adaptive_investigation,
+)
 from creditops.providers import create_provider
 from creditops.security import sanitize
 from creditops.settings import PROJECT_ROOT, Settings, get_settings
@@ -230,6 +234,8 @@ async def run(args):
         "source_commit": source_commit(),
         "retries": 0,
         "stop_on_tool_error": True,
+        "workflow": EVIDENCE_FIRST_WORKFLOW,
+        "initial_diagnostics": list(INITIAL_DIAGNOSTICS),
     }
     receipt = {"execution": "NOT RUN", "quality": "UNVERIFIED", "configuration": plan, "results": []}
     if not args.execute_paid and not args.preflight:

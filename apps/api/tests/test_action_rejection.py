@@ -5,8 +5,10 @@ import copy
 import pytest
 from creditops.diagnostic_clients import DiagnosticClientError
 from creditops.investigator import collect_adaptive_investigation
-from creditops.providers import DeterministicProvider
+from creditops.providers import AdaptiveDecision, DeterministicProvider, DiagnosticRequest
 from test_adaptive_investigator import FakeStore, ScriptedClient
+
+INITIAL_CALLS = [(name, {}) for name in ("get_incident", "get_service_topology", "query_metrics", "search_logs")]
 
 
 @pytest.mark.parametrize(
@@ -36,9 +38,9 @@ async def test_rejected_structured_action_has_local_provenance_without_mcp_dispa
         )
     result = snapshots[-1]
     assert result["status"] == "failed"
-    assert client.calls == [("get_incident", {})]
-    assert len(result["steps"]) == 1
-    assert result["provenance"]["tool_calls"] == 1
+    assert client.calls == INITIAL_CALLS
+    assert len(result["steps"]) == 4
+    assert result["provenance"]["tool_calls"] == 4
     rejection = result["provenance"]["action_rejections"][0]
     assert rejection["stage"] == "parsed_decision"
     assert rejection["reason"] == "invalid_tool_contract"
@@ -75,11 +77,16 @@ async def test_runtime_argument_guard_rejection_retains_local_provenance(monkeyp
     original = investigator.safe_arguments
 
     def guard(name, arguments):
-        if name == "query_metrics":
+        if name == "query_metrics" and arguments:
             raise DiagnosticClientError("Local execution guard rejected action")
         return original(name, arguments)
 
     monkeypatch.setattr(investigator, "safe_arguments", guard)
+
+    class FilteredScript(DeterministicProvider):
+        async def next_action(self, *args):
+            return AdaptiveDecision(action="tool", request=DiagnosticRequest(name="query_metrics", metric="latency")), {}
+
     snapshots = []
 
     async def retain(result):
@@ -88,15 +95,15 @@ async def test_runtime_argument_guard_rejection_retains_local_provenance(monkeyp
     client = ScriptedClient()
     with pytest.raises(DiagnosticClientError):
         await collect_adaptive_investigation(
-            FakeStore(), "test", "INC-DEMO-001", DeterministicProvider(), retain, diagnostic_client=client
+            FakeStore(), "test", "INC-DEMO-001", FilteredScript(), retain, diagnostic_client=client
         )
     result = snapshots[-1]
-    assert client.calls == [("get_incident", {})]
-    assert result["provenance"]["tool_calls"] == 1
+    assert client.calls == INITIAL_CALLS
+    assert result["provenance"]["tool_calls"] == 4
     assert result["provenance"]["action_rejections"] == [
         {"stage": "argument_guard", "reason": "invalid_tool_contract", "provider_turn": 1, "mcp_dispatched": False}
     ]
-    assert all(step["tool"] != "query_metrics" for step in result["steps"])
+    assert [step["safe_arguments"] for step in result["steps"] if step["tool"] == "query_metrics"] == [{}]
     assert result["assessment"] is None
 
 
@@ -125,6 +132,6 @@ async def test_provider_parse_error_is_recorded_before_any_diagnostic_dispatch()
     assert result["provenance"]["action_rejections"] == [
         {"stage": "provider_structured_output", "reason": "invalid_tool_contract", "provider_turn": 1, "mcp_dispatched": False}
     ]
-    assert client.calls == [("get_incident", {})]
-    assert result["provenance"]["tool_calls"] == 1
+    assert client.calls == INITIAL_CALLS
+    assert result["provenance"]["tool_calls"] == 4
     assert result["assessment"] is None

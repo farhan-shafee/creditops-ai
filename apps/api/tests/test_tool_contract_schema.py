@@ -271,7 +271,7 @@ async def test_actual_provider_request_includes_owned_catalog_and_no_match_seman
     assert "exact identifiers" in metrics["description"]
     assert "metric" in metrics["input_schema"]["properties"]
     assert not {"q", "aggregation"} & metrics["input_schema"]["properties"].keys()
-    assert "No matches and tool failures are unknown" in captured[0]["input"][0]["content"]
+    assert "no matches and tool failures are unknown, never healthy evidence" in captured[0]["input"][0]["content"].lower()
 
 
 async def test_topology_omitted_catalog_rejects_topology_in_actual_sdk_schema_and_parsing(monkeypatch):

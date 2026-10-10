@@ -44,6 +44,34 @@ from .tool_contracts import (
 
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "investigator.md").read_text(encoding="utf-8")
 
+TEMPORAL_EVIDENCE_INSTRUCTIONS = (
+    "The application owns the frozen cutoff and investigation window; you cannot change them. "
+    "The window describes reported incident start to cutoff, not query lower bounds: initial unfiltered queries apply the cutoff and may return older samples. "
+    "Timestamp coverage describes RETURNED SAMPLES, not continuous collection or current health. "
+    "Distinguish one normal timestamped sample, interval evidence, historical incident conditions, and state at the cutoff. "
+    "An observed failure condition does not establish its initiating cause. "
+    "Topology supports relationships only: distinguish direct edges from transitive paths; it does not measure latency, backlog or causality. "
+    "Incident summaries and timelines report symptoms, not independent measurements. A timeline's referenced ID is not retrieved evidence unless that row is in the evidence array. "
+    "Cite incident reports as reports and cite measurements to their actual returned rows."
+)
+DECISION_INSTRUCTION = (
+    "The application-runbook initial triage packet and completed request signatures are supplied. "
+    "Choose ONE next read-only diagnostic action from the supplied locally reviewed descriptions and verified schemas based on actual returned observations and errors. "
+    "Use only that tool's typed filters; supported nullable filters left null retain bounded application scope. "
+    "Do not repeat an identical completed request; genuinely different metric/log filters remain available. "
+    "After no matches a distinct broader filter may be useful within remaining bounds; no matches and tool failures are unknown, never healthy evidence. "
+    "Consider an available diagnostic for a material evidence gap rather than delegating readily available basic checks to a human. "
+    "Distinguish evidence not retrieved from evidence unavailable. Assess with null request when supported, or abstain honestly if evidence is insufficient or contradictory. "
+    "No particular diagnosis or follow-up is required. Do not output reasoning, invented results, or change session/incident/snapshot/limits. "
+    + TEMPORAL_EVIDENCE_INSTRUCTIONS
+)
+ASSESSMENT_INSTRUCTION = (
+    "Produce the structured evidence-backed RCA draft using only returned evidence IDs. "
+    "Keep abstention available: a completed investigation need not identify a failure domain. "
+    "Describe material missing coverage, distinguish evidence not retrieved from unavailable evidence, and do not claim unqueried systems were checked. "
+    + TEMPORAL_EVIDENCE_INSTRUCTIONS
+)
+
 # Backward-compatible imports for existing evaluation/tests; diagnostic rules
 # now have their own independently tested module.
 __all__ = [
@@ -231,6 +259,10 @@ def usage_record(provider: str, input_tokens: int | None, output_tokens: int | N
 
 
 def data_message(value: Any) -> str:
+    # The shared sanitizer bounds lists at 100. Refuse oversized evidence
+    # explicitly instead of silently dropping returned rows before the SDK.
+    if isinstance(value, dict) and isinstance(value.get("evidence"), list) and len(value["evidence"]) > 100:
+        raise ProviderUnavailable("Returned evidence exceeds the sanitizer's bounded model packet capacity")
     encoded = json.dumps(sanitize(value), ensure_ascii=True, allow_nan=False)
     if len(encoded) > 120000:
         raise ProviderUnavailable("Diagnostic context exceeded the bounded model input budget")
@@ -425,7 +457,7 @@ class AdaptiveProviderMixin:
             raise ProviderUnavailable("Invalid application-owned diagnostic catalog") from error
         return await self._parse(
             decision_type,
-            "Choose ONE next read-only diagnostic action from the supplied locally reviewed descriptions and verified schemas based on actual returned observations and errors. Use only that tool's typed filters. Supported nullable filters left null retain the bounded application scope. Do not repeat the same request; after no matches, a distinct broader filter may be useful within remaining limits. No matches and tool failures are unknown, never healthy evidence. If evidence is sufficient, contradictory after checks, or exhausted, choose assess with null request. Do not output reasoning, invented results, or change session/incident/snapshot/limits.",
+            DECISION_INSTRUCTION,
             {
                 "incident": incident,
                 "available_tools": available_tools,
@@ -525,7 +557,7 @@ class OpenAIProvider(AdaptiveProviderMixin):
     ) -> tuple[Assessment, dict[str, Any]]:
         return await self._parse(
             Assessment,
-            "Produce the structured evidence-backed RCA draft. Cite only evidence IDs present in the supplied array.",
+            ASSESSMENT_INSTRUCTION,
             {"incident": incident, "evidence": evidence},
         )
 
@@ -588,7 +620,7 @@ class AnthropicProvider(AdaptiveProviderMixin):
     ) -> tuple[Assessment, dict[str, Any]]:
         return await self._parse(
             Assessment,
-            "Generate a structured evidence-backed RCA draft using only returned evidence IDs.",
+            ASSESSMENT_INSTRUCTION,
             {"incident": incident, "evidence": evidence},
         )
 

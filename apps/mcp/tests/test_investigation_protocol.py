@@ -120,12 +120,15 @@ async def test_api_worker_investigates_through_real_stdio_callback_without_deadl
         await asyncio.sleep(0.05)
     assert row["status"] == "complete", row
     assert row["provenance"]["transport"] == "mcp_stdio"
-    assert row["provenance"]["workflow"] == "adaptive"
+    assert row["provenance"]["workflow"] == "evidence_first_v1"
     assert row["provenance"]["tool_schema_verified"] is True
     assert row["provenance"]["model_called"] is False
     assert row["provider"] == "deterministic"
     tools = [step for step in row["steps"] if step["tool"] != "assessment_validation"]
     assert len(tools) == 10
+    assert [step["tool"] for step in tools[:4]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
+    assert all(step["selected_by"] == "application_runbook" and step["provider_turn"] == 0 for step in tools[:4])
+    assert all(step["selected_by"] == "deterministic" and step["provider_turn"] > 0 for step in tools[4:])
     assert all(step["transport"] == "mcp_stdio" and step["status"] == "complete" for step in tools)
     expected = (
         await http.get(
@@ -145,11 +148,15 @@ async def test_scripted_typed_actions_traverse_real_stdio_and_preserve_filters(r
     _, store, session_id, url = real_api
     incident_id = "INC-DEMO-001"
     cutoff = await store.freeze_snapshot(session_id, incident_id)
-    sample = (
-        await store.evidence(
-            session_id, incident_id=incident_id, kind="metric", service="quote-service", as_of=cutoff
-        )
-    )[0]
+    initial_metrics = await store.evidence(session_id, incident_id=incident_id, kind="metric", as_of=cutoff)
+    initial_ids = {item.id for item in initial_metrics}
+    service_metrics = await store.evidence(
+        session_id, incident_id=incident_id, kind="metric", service="quote-service", as_of=cutoff
+    )
+    # Choose a returned service-filtered observation omitted by the bounded broad
+    # query. This is a genuinely new sample, not a fixture answer or a raised
+    # no-progress allowance, so its real MCP result can reach another decision.
+    sample = next(item for item in service_metrics if item.id not in initial_ids)
     metric_filters = {
         "service": sample.service,
         "metric": sample.data["metric"],
@@ -194,18 +201,25 @@ async def test_scripted_typed_actions_traverse_real_stdio_and_preserve_filters(r
         store, session_id, incident_id, provider, diagnostic_client=adapter
     )
     tools = [step for step in result["steps"] if step["tool"] != "assessment_validation"]
-    assert [step["tool"] for step in tools] == ["get_incident", "search_logs", "query_metrics"]
+    assert [step["tool"] for step in tools] == ["get_incident", "get_service_topology", "query_metrics", "search_logs", "search_logs", "query_metrics"]
     assert all(step["status"] == "complete" and step["transport"] == "mcp_stdio" for step in tools)
-    assert tools[1]["evidence_ids"] == []
+    assert all(step["selected_by"] == "application_runbook" and step["provider_turn"] == 0 for step in tools[:4])
+    assert all(step["selected_by"] == "scripted_provider" and step["provider_turn"] > 0 for step in tools[4:])
+    assert [step["tool"] for step in provider.observations[0]["steps"]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
+    assert tools[4]["evidence_ids"] == []
     assert provider.observations[1]["steps"][-1]["evidence_ids"] == []
-    assert provider.observations[1]["evidence"] == []
-    assert tools[2]["safe_arguments"] == metric_filters
+    assert provider.observations[1]["evidence"] == provider.observations[0]["evidence"]
+    assert tools[5]["safe_arguments"] == metric_filters
     expected = await store.evidence(
         session_id, incident_id=incident_id, kind="metric", as_of=cutoff, **metric_filters
     )
-    assert expected and set(tools[2]["evidence_ids"]) == {item.id for item in expected}
-    assert provider.observations[2]["evidence"]
-    assert result["provenance"]["tool_calls"] == 3
+    assert expected and set(tools[5]["evidence_ids"]) == {item.id for item in expected}
+    assert sample.id in tools[5]["evidence_ids"]
+    assert sample.id not in {item["id"] for item in provider.observations[1]["evidence"]}
+    assert sample.id in {item["id"] for item in provider.observations[2]["evidence"]}
+    assert set(provider.observations[2]["steps"][-1]["evidence_ids"]) == {item.id for item in expected}
+    assert len(provider.observations) == 3
+    assert result["provenance"]["tool_calls"] == 6
     assert result["provenance"]["model_called"] is False
     assert result["provenance"]["assessment_source"] == {
         "kind": "scripted_provider",
@@ -254,8 +268,9 @@ async def test_malformed_scripted_decision_is_visible_without_false_real_mcp_cal
         )
     failed = snapshots[-1]
     assert failed["status"] == "failed" and failed["assessment"] is None
-    assert [step["tool"] for step in failed["steps"]] == ["get_incident"]
-    assert failed["provenance"]["tool_calls"] == 1
+    assert [step["tool"] for step in failed["steps"]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
+    assert all(step["status"] == "complete" and step["selected_by"] == "application_runbook" for step in failed["steps"])
+    assert failed["provenance"]["tool_calls"] == 4
     assert failed["provenance"]["action_rejections"] == [
         {
             "stage": "parsed_decision",
@@ -302,7 +317,11 @@ async def test_real_stdio_disconnect_after_context_cannot_complete_investigation
     assert snapshots[-1]["assessment"] is None
     assert not any(row["status"] == "complete" for row in snapshots)
     assert snapshots[-1]["steps"][0]["evidence_ids"]
-    assert snapshots[-1]["steps"][1]["status"] == "failed"
+    assert [step["tool"] for step in snapshots[-1]["steps"]] == ["get_incident", "get_service_topology", "query_metrics"]
+    assert [step["status"] for step in snapshots[-1]["steps"]] == ["complete", "complete", "failed"]
+    assert snapshots[-1]["provenance"]["provider_turns"] == 0
+    assert snapshots[-1]["provenance"]["tool_calls"] == 3
+    assert all(step["selected_by"] == "application_runbook" for step in snapshots[-1]["steps"])
     assert adapter._entered is False
 
 

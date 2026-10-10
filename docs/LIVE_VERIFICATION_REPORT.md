@@ -319,3 +319,111 @@ limits or retry policy were raised.
 
 **LIVE RETRY NOT RUN IN THIS PASS — REPAIRED SOURCE REQUIRES FRESH OWNER APPROVAL.
 LIVE-MODEL QUALITY REMAINS UNVERIFIED.**
+
+## Evidence-first correction after completed model abstention
+
+Historical attempt `af672e5c-1720-40ff-9b0f-688580254ba0` completed in 20.681 s
+with model-authored abstention. It retrieved context, topology, no quote-service
+deployments, and one healthy `DB-001-CPU` sample at 14:00:48Z. No logs/metrics,
+Kafka/FIX diagnostics or business events were fetched before assessment. Earlier
+results were supplied, but that database sample does not establish whole-incident
+or 15:00 health. This remains completed execution with abstention; older retry and
+unused-attempt statements above are historical.
+
+Fresh adaptive runs use `evidence_first_v1`: `get_incident {}` →
+`get_service_topology {}` → `query_metrics {}` → `search_logs {}` before the first
+provider decision. One generic policy uses the existing real-MCP execution helper,
+fixed session/incident/cutoff and bounds for all three demos. No guessed filters,
+known evidence IDs, generator tags or evaluation answers select these calls.
+Their `selected_by=application_runbook`, `provider_turn=0` records distinguish them
+from model/deterministic/scripted follow-ups and validator-authored checks. Four
+calls consume the existing 12-call budget, leaving eight; all 12 provider turns
+remain available, including assessment. No limits or diagnosis rules changed.
+
+Actual isolated MCP retrieval at `2026-10-09T15:00:00Z`:
+
+| Case | Context / topology IDs | Metrics returned / available | Logs / business | First SDK rows / input bytes |
+|---|---|---|---|---|
+| 001 | `INC-DEMO-001`, `TOPOLOGY-001` | 50 / 198 | 4 / 11 | 67 / 40,343 |
+| 002 | `INC-DEMO-002`, `TOPOLOGY-001` | 50 / 154 | 3 / 16 | 71 / 43,717 |
+| 003 | `INC-DEMO-003`, `TOPOLOGY-001` | 50 / 154 | 3 / 10 | 65 / 38,642 |
+
+Full IDs/timestamps and actual offline SDK requests are local under
+`artifacts/test-results/evidence-first-initial-packet-summary.json`,
+`evidence-first-mcp-INC-DEMO-{001,002,003}.json` and
+`evidence-first-sdk-INC-DEMO-{001,002,003}.json`. Case 001 includes
+`METRIC-001-LAG` (18,923), `METRIC-001-AGE` (8,120 ms), logs `LOG-001-001/002/003/INJECTION`
+and `BUSINESS-001-001` through `BUSINESS-001-011`. Fixture existence, cutoff-visible
+availability, retrieval and claim support are separate; input delivery is not
+independent support for every narrative claim.
+
+Sampling stays bounded: metrics return non-series rows then newest series rows,
+50 maximum, omitting 148/104/104 available rows; logs/business share a 50-row limit
+ordered oldest first. Returned metric timestamps span 13:59:00–14:02:24Z, not
+continuous coverage or current health at 15:00. All demo rows fit and exactly match
+actual SDK input with no further sanitizer truncation. Sanitizer protections remain;
+packets above its 100-row evidence limit now stop before requesting instead of
+silently dropping rows. Existing 90 KB/250-row collection and 120 KB model-data
+limits remain. Overflow retains partial state.
+
+The first request supplies actual evidence, four completed signatures/returned IDs,
+locally owned catalog/schema, cutoff, reported incident interval and explicit lack
+of an initial lower time filter. Coverage is `returned_samples_only`; older samples
+may predate that interval. Shared instructions distinguish reports/measurements,
+direct/transitive topology, point/interval/current/historical evidence, unqueried
+versus unavailable evidence, and observed conditions versus initiating causes.
+They suggest useful gap checks without requiring follow-ups or diagnosis. Completed
+topology disappears from the actual SDK schema/catalog while its evidence remains;
+different parameterized queries remain available and exact duplicates stay guarded.
+
+Successful initial empties allow later abstention; unrelated/conflicting packets
+can also abstain. Strict initial errors stop with zero provider calls; normal
+recovery remains. A distinct query returning only already-retrieved IDs can still
+hit the unchanged no-progress guard. Existing UI details separate selections,
+original proposal, validator changes, final advisory output, completion and
+abstention. Replay preserves recorded origin/workflow; missing historical selectors
+remain unknown. No archived run is relabeled.
+
+RED reproduced only `get_incident` before the old collector's actual SDK boundary
+and 10/11 initial unit failures; replay-origin/display regressions also failed first.
+GREEN real-MCP scripts choose different Kafka/FIX/database follow-ups from returned
+metrics and supply actual results to the next decision: five dispatches, two
+scripted decisions and one scripted abstention per case. Strict initial metric
+failure stops after three dispatch attempts, zero provider calls, a STOPPED partial
+receipt and clean MCP/provider/Store/lock teardown. These tests establish offline
+orchestration, not live-model instruction following. Independent review found no
+remaining material blockers.
+
+Final local verification: 295 Python tests passed with no skips (137.88 s;
+`artifacts/test-results/evidence-first-python-final.xml`), 20 frontend tests, two
+dependency checks and 19 Chromium regressions (45.96 s). Lint/types/build,
+pip/pnpm audits, Bandit and redacted Git-history/staged-source Gitleaks passed.
+Linux lifecycle skips locally on Windows; hosted CI will verify the final source.
+The credential-free dry-run records the four-call workflow and strict policy,
+with no Store, experiment ID, ledger or provider request.
+
+Future bound at unchanged recorded USD 0.75/4.50 rates: 148,937 input tokens by
+byte ceiling, USD 0.13420275/call, USD 1.610433/12 calls, including the larger
+full-catalog schema, 16,384 protocol bytes and 5,000 output tokens. A proposed USD 2
+allocation fits. With USD 0.47059650 retained, the calculated combined bound is
+USD 2.08102950; retained reserve plus allocation is USD 2.47059650 < USD 5.
+Prior active time plus 330 s is 370.842 s < 900 s. These are prospective bounds,
+not billing or approval; `artifacts/test-results/evidence-first-reservations.json`.
+
+All 34 protected history/data/approval/replay files and `.env` match before/after
+checks. Three receipts/ledgers remain STOPPED, STOPPED, and completed with model
+abstention, totaling USD 0.47059650 reserved; live latest is unchanged. `.env`
+remains ignored/untracked. No new real attempt ID, approval note, ledger,
+reservation or provider request exists. Manifests stay local; no hashes are
+published in this report. Separate evaluation outputs retain legacy 12/15 baseline,
+11/15 initial-plan pipeline and developer-authored 13/13 robustness with four
+abstentions; those scores are not rebranded as new-workflow or held-out accuracy.
+
+Fresh paid execution needs owner approval bound to the repaired CI source, unused
+attempt identity, strict policy, cumulative local ledger review and credential,
+resource identity/current-pricing checks. Cross-ledger spend/time aggregation remains
+manual. Proposed scope stays one case, same pinned OpenAI model, USD 2 additional,
+12 tool/provider calls, 5,000 output tokens, 300/90/15/330 s deadlines, zero retries
+and no paid extras. No earlier approval authorizes the revised workflow.
+
+**EVIDENCE-FIRST WORKFLOW VERIFIED OFFLINE — LIVE QUALITY NOT YET MEASURED.**

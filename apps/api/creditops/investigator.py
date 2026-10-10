@@ -56,6 +56,8 @@ ACTION_LABELS = {
     "search_runbooks": "Retrieved relevant diagnostic runbooks",
 }
 ALLOWED_TOOLS = frozenset(ACTION_LABELS)
+EVIDENCE_FIRST_WORKFLOW = "evidence_first_v1"
+INITIAL_DIAGNOSTICS = ("get_incident", "get_service_topology", "query_metrics", "search_logs")
 
 
 def utc_now() -> str:
@@ -132,6 +134,33 @@ def _assessment_source(provider: AssessmentProvider) -> dict[str, str]:
     return {"kind": kind, "provider": provider.name}
 
 
+def _diagnostic_selector(provider: AssessmentProvider) -> str:
+    source = _assessment_source(provider)["kind"]
+    return "model" if source == "live_provider" else source
+
+
+def _returned_sample_coverage(evidence: list[dict[str, Any]]) -> dict[str, Any]:
+    """Describe returned rows only; timestamps do not establish continuous health."""
+    grouped: dict[str, list[str]] = {}
+    for item in evidence:
+        grouped.setdefault(item["kind"], []).append(item["timestamp"])
+    return {
+        "kind": "returned_samples_only",
+        "continuous_coverage": False,
+        "total_samples": len(evidence),
+        "by_kind": [
+            {
+                "kind": kind,
+                "count": len(times),
+                "earliest_timestamp": min(times, key=lambda value: datetime.fromisoformat(value.replace("Z", "+00:00"))),
+                "latest_timestamp": max(times, key=lambda value: datetime.fromisoformat(value.replace("Z", "+00:00"))),
+                "distinct_timestamps": len(set(times)),
+            }
+            for kind, times in sorted(grouped.items())
+        ],
+    }
+
+
 def _record_orchestration_change(result: dict[str, Any], field: str, reason: str) -> None:
     result["validation_outcome"]["changed_fields"].append(
         {"field": field, "reason": reason, "stage": "orchestration"}
@@ -189,7 +218,8 @@ async def collect_adaptive_investigation(
         "error": None,
         "usage": {},
         "provenance": {
-            "workflow": "adaptive",
+            "workflow": EVIDENCE_FIRST_WORKFLOW,
+            "initial_diagnostics": list(INITIAL_DIAGNOSTICS),
             "transport": client.transport,
             "provider": provider.name,
             "model_called": False,
@@ -208,6 +238,19 @@ async def collect_adaptive_investigation(
     no_progress = 0
     provider_turns = 0
     stop_reason: str | None = None
+
+    def model_context() -> dict[str, Any]:
+        return {
+            **context,
+            "workflow": EVIDENCE_FIRST_WORKFLOW,
+            "temporal_context": {
+                "snapshot_cutoff": cutoff,
+                "investigation_window": {"start": context.get("started_at"), "end": cutoff},
+                "window_basis": "reported_incident_start_to_frozen_cutoff",
+                "initial_queries_apply_lower_time_bound": False,
+                "returned_sample_coverage": _returned_sample_coverage(result["evidence"]),
+            },
+        }
 
     async def publish() -> None:
         result["provenance"].update(provider_turns=provider_turns, tool_calls=len(requested))
@@ -249,7 +292,7 @@ async def collect_adaptive_investigation(
         await publish()
         raise DiagnosticClientError("Strict verification stopped after investigation control guard")
 
-    async def execute(name: str, arguments: dict[str, Any]) -> None:
+    async def execute(name: str, arguments: dict[str, Any], *, selected_by: str) -> None:
         nonlocal no_progress
         try:
             arguments = safe_arguments(name, arguments)
@@ -283,6 +326,7 @@ async def collect_adaptive_investigation(
             "transport": client.transport,
             "provider": provider.name,
             "provider_turn": provider_turns,
+            "selected_by": selected_by,
             "recorded": False,
             "error": None,
         }
@@ -328,7 +372,10 @@ async def collect_adaptive_investigation(
         finally:
             step["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
             observations.append(
-                {key: step[key] for key in ("tool", "safe_arguments", "status", "evidence_ids", "error")}
+                {
+                    key: step[key]
+                    for key in ("tool", "safe_arguments", "status", "evidence_ids", "error", "selected_by", "provider_turn")
+                }
             )
             no_progress = no_progress + 1 if len(seen) == before else 0
             await publish()
@@ -336,9 +383,23 @@ async def collect_adaptive_investigation(
     try:
         async with asyncio.timeout(configuration.investigation_timeout_seconds), client:
             result["provenance"].update(client.provenance)
-            await execute("get_incident", {})
-            no_progress = 0  # Initial metadata is context, not a diagnostic attempt.
-            while provider_turns < configuration.max_provider_turns - 1:
+            # One reviewed initial policy for every incident, using the same
+            # execution/scope/bounds as adaptive actions. No fixture/oracle IDs.
+            for name in INITIAL_DIAGNOSTICS:
+                if len(requested) >= configuration.max_diagnostic_calls:
+                    if stop_on_tool_error:
+                        await stop_guard(
+                            "diagnostic_call_limit",
+                            "Finite diagnostic call limit interrupted initial triage; no assessment was requested.",
+                            {"name": name, "arguments": {}},
+                        )
+                    stop_reason = "Finite diagnostic call budget interrupted initial triage; abstained safely."
+                    break
+                await execute(name, {}, selected_by="application_runbook")
+            # Successful initial no-matches are coverage gaps. They must not
+            # consume the follow-up no-progress allowance before any decision.
+            no_progress = 0
+            while not stop_reason and provider_turns < configuration.max_provider_turns - 1:
                 if no_progress >= configuration.max_no_progress_calls:
                     if stop_on_tool_error:
                         await stop_guard(
@@ -353,14 +414,14 @@ async def collect_adaptive_investigation(
                 try:
                     async with asyncio.timeout(configuration.provider_timeout_seconds):
                         decision, usage = await provider.next_action(
-                            context,
+                            model_context(),
                             [
                                 schema
                                 for schema in client.schemas
                                 if schema.get("name") not in completed_singletons
                             ],
                             observations,
-                            [item for item in result["evidence"] if item["kind"] != "incident"],
+                            result["evidence"],
                         )
                 except ValidationError:
                     await reject_action("provider_structured_output")
@@ -395,18 +456,19 @@ async def collect_adaptive_investigation(
                         )
                     stop_reason = "Duplicate diagnostic request detected; abstained safely."
                     break
-                await execute(request.name, arguments)
+                await execute(request.name, arguments, selected_by=_diagnostic_selector(provider))
             else:
-                if stop_on_tool_error:
-                    await stop_guard(
-                        "provider_turn_limit",
-                        "Finite provider turn limit reached; no assessment was requested.",
-                    )
-                stop_reason = "Finite provider turn budget exhausted; abstained safely."
+                if not stop_reason:
+                    if stop_on_tool_error:
+                        await stop_guard(
+                            "provider_turn_limit",
+                            "Finite provider turn limit reached; no assessment was requested.",
+                        )
+                    stop_reason = "Finite provider turn budget exhausted; abstained safely."
             started = time.perf_counter()
             if stop_reason:
                 assessment, _ = await DeterministicProvider().assess(
-                    context, [item for item in result["evidence"] if item["kind"] != "incident"]
+                    model_context(), result["evidence"]
                 )
                 assessment.probable_failure_domain = ABSTAIN_DOMAIN
                 assessment.limitations.append(stop_reason)
@@ -420,7 +482,7 @@ async def collect_adaptive_investigation(
                 provider_turns += 1
                 async with asyncio.timeout(configuration.provider_timeout_seconds):
                     assessment, usage = await provider.assess(
-                        context, [item for item in result["evidence"] if item["kind"] != "incident"]
+                        model_context(), result["evidence"]
                     )
                 usages.append(usage)
                 assessment_source = _assessment_source(provider)
@@ -454,6 +516,7 @@ async def collect_adaptive_investigation(
                     "transport": "local_validation",
                     "provider": provider.name,
                     "provider_turn": provider_turns,
+                    "selected_by": "validator",
                     "recorded": False,
                     "error": None,
                 }
@@ -561,6 +624,7 @@ async def collect_investigation(
             "safe_arguments": arguments,
             "transport": "direct",
             "provider": provider.name,
+            "selected_by": "application_runbook" if name == "get_incident" else _diagnostic_selector(provider),
             "recorded": False,
         }
         result["steps"].append(step)
@@ -623,6 +687,7 @@ async def collect_investigation(
             "evidence_ids": assessment.supporting_evidence_ids,
             "timestamp": utc_now(),
             "duration_ms": round((time.perf_counter() - started) * 1000, 3),
+            "selected_by": "validator",
         }
     )
     result["status"] = "complete"
@@ -646,9 +711,10 @@ def write_replay_artifact(result: dict[str, Any], directory: Path = REPLAY_DIR) 
         "generated_at": utc_now(),
         "provenance": {
             "pipeline": "creditops.investigator.collect_adaptive_investigation"
-            if result.get("provenance", {}).get("workflow") == "adaptive"
+            if result.get("provenance", {}).get("workflow") in {"adaptive", EVIDENCE_FIRST_WORKFLOW}
             else "creditops.investigator.collect_investigation",
             "provider": result["provider"],
+            "workflow": result.get("provenance", {}).get("workflow", "unknown"),
             "model_called": result.get("provenance", {}).get("model_called", False),
             "telemetry_window": "frozen synthetic evidence cutoff"
             if result.get("provenance", {}).get("snapshot_kind") == "frozen_current"
@@ -759,6 +825,12 @@ async def run_investigation(store: Any, session_id: str, inv_id: str) -> None:
                     "original_created_at", artifact.get("created_at")
                 ),
                 "original_model": payload["provenance"].get("original_model"),
+                "original_workflow": payload["provenance"].get(
+                    "workflow", artifact.get("provenance", {}).get("workflow", "unknown")
+                ),
+                # Preserve only explicitly recorded assessment origin. Older
+                # artifacts with no source stay unknown; playback authors none.
+                "assessment_source": copy.deepcopy(artifact.get("provenance", {}).get("assessment_source")),
                 "playback_model_calls": 0,
             }
             for step in artifact["steps"]:

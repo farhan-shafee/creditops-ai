@@ -77,10 +77,12 @@ async def test_identical_symptoms_different_results_change_the_next_tool():
     database.metrics[0]["data"]["unit"] = "%"
     await run(kafka)
     await run(database)
-    assert [name for name, _ in kafka.calls][:3] == ["get_incident", "query_metrics", "inspect_kafka_lag"]
-    assert [name for name, _ in database.calls][:3] == [
+    assert [name for name, _ in kafka.calls][:5] == ["get_incident", "get_service_topology", "query_metrics", "search_logs", "inspect_kafka_lag"]
+    assert [name for name, _ in database.calls][:5] == [
         "get_incident",
+        "get_service_topology",
         "query_metrics",
+        "search_logs",
         "inspect_database_health",
     ]
     assert kafka.closed and database.closed
@@ -105,7 +107,7 @@ async def test_repeated_unproductive_calls_terminate_with_abstention():
 
     adapter = ScriptedClient()
     result = await run(adapter, Repeats())
-    assert len(adapter.calls) == 2
+    assert len(adapter.calls) == 4
     assert result["assessment"]["probable_failure_domain"] == "insufficient evidence"
     assert "duplicate" in " ".join(result["assessment"]["limitations"]).lower()
 
@@ -149,7 +151,7 @@ async def test_invalid_provider_tool_arguments_are_rejected_before_call():
     adapter = ScriptedClient()
     with pytest.raises(ValueError):
         await run(adapter, Invalid())
-    assert [name for name, _ in adapter.calls] == ["get_incident"]
+    assert [name for name, _ in adapter.calls] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
 
 
 async def test_cancellation_closes_diagnostics_and_never_completes():
@@ -197,11 +199,11 @@ async def test_tool_deadline_is_visible_unknown_and_total_calls_are_bounded():
                 await asyncio.Event().wait()
             return await super().call(name, arguments)
 
-    result = await run(Slow(), limits=Settings(diagnostic_timeout_seconds=0.1, max_diagnostic_calls=2))
+    result = await run(Slow(), limits=Settings(diagnostic_timeout_seconds=0.1, max_diagnostic_calls=3))
     failed = [step for step in result["steps"] if step["status"] == "failed"]
     assert len(failed) == 1 and failed[0]["tool"] == "query_metrics"
     assert result["assessment"]["probable_failure_domain"] == "insufficient evidence"
-    assert result["provenance"]["tool_calls"] == 2
+    assert result["provenance"]["tool_calls"] == 3
 
 
 @pytest.mark.parametrize(

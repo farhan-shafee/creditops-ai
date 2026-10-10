@@ -129,7 +129,26 @@ test('adaptive MCP uses a real current snapshot and persists honest transport pr
   expect(response.ok()).toBe(true);
   const result = await response.json();
   expect(result.provenance.model_called).toBe(false);
-  expect(result.provenance.workflow).toBe('adaptive');
+  expect(result.provenance.workflow).toBe('evidence_first_v1');
+  expect(result.steps.slice(0, 4).map((step: { tool: string }) => step.tool)).toEqual([
+    'get_incident',
+    'get_service_topology',
+    'query_metrics',
+    'search_logs',
+  ]);
+  for (const step of result.steps.slice(0, 4)) {
+    expect(step.selected_by).toBe('application_runbook');
+    expect(step.provider_turn).toBe(0);
+    expect(step.transport).toBe('mcp_stdio');
+    expect(step.status).toBe('complete');
+  }
+  await expect(provenance).toContainText('Workflow: evidence_first_v1');
+  await expect(
+    page.getByText('Application-runbook initial diagnostic', { exact: true }),
+  ).toHaveCount(4);
+  await expect(page.getByTestId('assessment-comparison')).toContainText(
+    'Validator-authored changes and rejections',
+  );
   expect(result.provenance.snapshot_kind).toBe('frozen_current');
   expect(
     result.steps.some(

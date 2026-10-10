@@ -76,6 +76,8 @@ class Step(Contract):
     error: str | None = None
     provider_turn: int = 0
     recorded: bool = False
+    # Historical recordings do not identify the action selector.
+    selected_by: Literal["application_runbook", "model", "deterministic", "scripted_provider", "validator"] | None = None
 
 
 class AlternativeHypothesis(Contract):

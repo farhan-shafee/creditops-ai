@@ -4,11 +4,56 @@ import json
 
 import httpx
 import pytest
-from creditops.providers import AnthropicProvider, DiagnosticPlan, OpenAIProvider, usage_record
+from creditops.providers import (
+    DECISION_INSTRUCTION,
+    AdaptiveDecision,
+    AnthropicProvider,
+    DiagnosticPlan,
+    OpenAIProvider,
+    ProviderUnavailable,
+    usage_record,
+)
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as SchemaError
 
 PLAN = {"requests": [{"name": "query_metrics", "service": None, "metric": None, "start": None, "end": None}]}
+
+
+async def test_evidence_above_sanitizer_row_bound_stops_before_sdk_without_silent_loss(monkeypatch):
+    from openai import AsyncOpenAI
+
+    monkeypatch.setenv("OPENAI_API_KEY", "demo-offline-key")
+    monkeypatch.setenv("OPENAI_MODEL", "demo-configured-model")
+    monkeypatch.setenv("OPENAI_INPUT_USD_PER_MILLION", "0.75")
+    monkeypatch.setenv("OPENAI_OUTPUT_USD_PER_MILLION", "4.50")
+    dispatched = []
+
+    def forbidden_request(request):
+        dispatched.append(request)
+        raise AssertionError("Oversized evidence must stop before the SDK transport")
+
+    provider = OpenAIProvider()
+    await provider.client.close()
+    provider.client = AsyncOpenAI(
+        api_key="demo-offline-key",
+        max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(forbidden_request)),
+    )
+    provider.enable_budget(2)
+    evidence = [{"id": f"RETURNED-{index:03d}"} for index in range(101)]
+    try:
+        with pytest.raises(ProviderUnavailable, match="bounded model packet capacity"):
+            await provider._parse(AdaptiveDecision, DECISION_INSTRUCTION, {"evidence": evidence})
+        assert len(evidence) == 101
+        assert not dispatched
+        assert provider._reserved_spend == 0
+        receipt = provider.execution_receipts[-1]
+        assert receipt["request_started"] is False
+        assert receipt["status"] != "success"
+        assert receipt["usage"]["input_tokens"] is None
+        assert receipt["usage"]["estimated_cost_usd"] is None
+    finally:
+        await provider.client.close()
 
 
 async def test_openai_responses_structured_output_and_server_configuration(monkeypatch):

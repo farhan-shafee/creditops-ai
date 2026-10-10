@@ -10,6 +10,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from creditops.diagnostic_clients import DiagnosticClientError, MCPDiagnosticClient
+from creditops.diagnostics import build_assessment
 from creditops.investigator import collect_adaptive_investigation
 from creditops.main import create_app
 from creditops.providers import AdaptiveDecision, DeterministicProvider
@@ -132,6 +133,10 @@ class ScriptedActions(DeterministicProvider):
             {"action": "tool" if request is not None else "assess", "request": request}
         ), {}
 
+    async def assess(self, incident, evidence):
+        # A scripted abstention, not an expectation derived from a fixture label.
+        return build_assessment(incident, [])
+
 
 async def test_empty_log_matches_remain_unknown_and_broader_typed_action_retrieves_evidence(
     local_contract_mcp,
@@ -144,25 +149,30 @@ async def test_empty_log_matches_remain_unknown_and_broader_typed_action_retriev
     assert first["provenance"]["model_called"] is False
     assert first["assessment"]["probable_failure_domain"] == "insufficient evidence"
     assert first["assessment"]["requires_human_review"] is True
-    log_step = next(step for step in first["steps"] if step["tool"] == "search_logs")
+    log_step = next(step for step in first["steps"] if step["tool"] == "search_logs" and step["provider_turn"])
     assert log_step["status"] == "complete" and log_step["evidence_ids"] == []
     assert empty.observed[-1]["observations"][-1]["evidence_ids"] == []
-    assert empty.observed[-1]["evidence"] == []
+    assert empty.observed[-1]["evidence"] == empty.observed[0]["evidence"]
+    assert [item["tool"] for item in empty.observed[0]["observations"]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
+    assert any(item["kind"] == "metric" for item in empty.observed[0]["evidence"])
 
     broad = ScriptedActions(
-        [{"name": "search_logs", "q": "rfq response OR timeout"}, {"name": "search_logs", "q": ""}]
+        [{"name": "search_logs", "q": "rfq response OR timeout"}, {"name": "search_logs", "q": "rfq response"}]
     )
     second = await collect_adaptive_investigation(
         database, session, INCIDENT, broad, diagnostic_client=adapter()
     )
-    log_steps = [step for step in second["steps"] if step["tool"] == "search_logs"]
+    log_steps = [step for step in second["steps"] if step["tool"] == "search_logs" and step["provider_turn"]]
     assert [step["status"] for step in log_steps] == ["complete", "complete"]
     assert log_steps[0]["evidence_ids"] == [] and log_steps[1]["evidence_ids"]
     assert broad.observed[1]["observations"][-1]["evidence_ids"] == []
-    assert broad.observed[2]["evidence"]
+    assert len(broad.observed) == 2
+    assert set(log_steps[1]["evidence_ids"]) <= {item["id"] for item in second["evidence"]}
+    assert second["provenance"]["stop_reason"] == "Repeated unproductive diagnostics reached the no-progress limit; abstained safely."
     assert second["provenance"]["assessment_source"] == {
-        "kind": "scripted_provider",
-        "provider": "scripted_contract_test",
+        "kind": "orchestrator_fallback",
+        "provider": "deterministic",
+        "reason": second["provenance"]["stop_reason"],
     }
     assert all(request["arguments"]["incident_id"] == INCIDENT for request in requests)
 

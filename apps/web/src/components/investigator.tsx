@@ -15,6 +15,7 @@ import type {
   Incident,
   Investigation,
   InvestigationMode,
+  Step,
 } from '@/lib/types';
 import { Citation, Panel, Spinner, Status, time } from './primitives';
 import { EvidenceText } from './evidence-text';
@@ -143,6 +144,10 @@ export function Investigator({
                 ? 'Tool schemas not verified'
                 : 'Tool schema verification not recorded'}
           </span>
+          <span>Workflow: {metadata?.workflow ?? 'not recorded'}</span>
+          {recorded && <span>Original workflow: {metadata?.original_workflow ?? 'not recorded'}</span>}
+          <span>{assessmentOutcome(investigation)}</span>
+          {investigation.assessment && <span>{assessmentOrigin(metadata?.assessment_source)}</span>}
           {recorded && (
             <p>
               Recorded steps retain their original timestamps and durations. Playback does not
@@ -177,7 +182,7 @@ export function Investigator({
           <div className="trace-heading">
             <h3>Diagnostic activity</h3>
             <span className="mono">
-              {investigation.steps.length} actions · {investigation.status}
+              {investigation.steps.length} actions · Execution {investigation.status}
             </span>
           </div>
           <ol className="investigation-trace" aria-live="polite">
@@ -201,6 +206,7 @@ export function Investigator({
                     <Status value={step.status} />
                   </p>
                   <p className="trace-provenance">
+                    <span>{selectionLabel(step.selected_by)}</span>
                     <span>
                       {recorded || step.recorded
                         ? step.transport === 'local_validation'
@@ -211,7 +217,9 @@ export function Investigator({
                           : 'Diagnostic workflow action'}
                     </span>
                     <span>{transportLabel(step.transport)}</span>
-                    {step.provider && <span>Provider {step.provider}</span>}
+                    {step.provider &&
+                      step.selected_by !== 'application_runbook' &&
+                      step.selected_by !== 'validator' && <span>Provider {step.provider}</span>}
                     {Boolean(step.provider_turn) && <span>Provider turn {step.provider_turn}</span>}
                   </p>
                   {step.safe_arguments && Object.keys(step.safe_arguments).length > 0 && (
@@ -241,12 +249,90 @@ export function Investigator({
             </div>
           )}
           {investigation.error && <p className="error-banner">{investigation.error}</p>}
+          {(investigation.provider_proposal || investigation.validation_outcome) && (
+            <AssessmentComparison investigation={investigation} />
+          )}
           {investigation.assessment && (
             <AssessmentResult assessment={investigation.assessment} onEvidence={onEvidence} />
           )}
         </>
       )}
     </section>
+  );
+}
+
+function selectionLabel(value: Step['selected_by']): string {
+  switch (value) {
+    case 'application_runbook':
+      return 'Application-runbook initial diagnostic';
+    case 'model':
+      return 'Model-selected follow-up diagnostic';
+    case 'deterministic':
+      return 'Deterministic-provider-selected diagnostic';
+    case 'scripted_provider':
+      return 'Scripted-provider-selected diagnostic';
+    case 'validator':
+      return 'Validator-authored assessment check';
+    default:
+      return 'Selection source not recorded';
+  }
+}
+
+function assessmentOutcome(investigation: Investigation): string {
+  if (!investigation.assessment) {
+    return ['complete', 'completed', 'failed', 'cancelled'].includes(investigation.status)
+      ? 'No assessment produced'
+      : 'Assessment pending';
+  }
+  return investigation.assessment.probable_failure_domain.trim().toLowerCase() ===
+    'insufficient evidence'
+    ? 'Abstained · no failure domain identified'
+    : 'Advisory failure-domain assessment · human review required';
+}
+
+function assessmentOrigin(
+  source: NonNullable<Investigation['provenance']>['assessment_source'],
+): string {
+  if (!source) return 'Assessment origin not recorded';
+  switch (source.kind) {
+    case 'live_provider':
+      return `Model-authored proposal · ${source.provider}`;
+    case 'deterministic':
+      return `Deterministic assessment · ${source.provider}`;
+    case 'scripted_provider':
+      return `Scripted-provider assessment · ${source.provider}`;
+    case 'orchestrator_fallback':
+      return `Deterministic fallback assessment · ${source.provider}`;
+    default:
+      return 'Assessment origin not recorded';
+  }
+}
+
+function AssessmentComparison({ investigation }: { investigation: Investigation }) {
+  const outcome = investigation.validation_outcome;
+  return (
+    <details className="raw-artifact" data-testid="assessment-comparison">
+      <summary>Inspect original proposal and validation outcome</summary>
+      {investigation.provider_proposal ? (
+        <>
+          <h4>{assessmentOrigin(investigation.provenance?.assessment_source)}</h4>
+          <p>Sanitized structured proposal · untrusted advisory output before validation.</p>
+          <pre>{JSON.stringify(investigation.provider_proposal, null, 2)}</pre>
+        </>
+      ) : (
+        <p>No provider assessment proposal recorded.</p>
+      )}
+      {outcome && (
+        <>
+          <h4>Validation outcome: {outcome.status}</h4>
+          <p>
+            Validator-authored changes and rejections. Normalization does not independently confirm
+            the original claims.
+          </p>
+          <pre>{JSON.stringify(outcome, null, 2)}</pre>
+        </>
+      )}
+    </details>
   );
 }
 
@@ -304,7 +390,7 @@ function AssessmentResult({
     <div className="assessment" data-testid="assessment">
       <div className="assessment-main">
         <span className="eyebrow">
-          <Check size={14} /> Evidence-backed assessment
+          <Check size={14} /> Final advisory assessment
         </span>
         <div className="assessment-title">
           <div>

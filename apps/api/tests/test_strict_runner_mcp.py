@@ -86,7 +86,7 @@ def process_is_running(pid):
 
 
 @pytest.fixture
-async def isolated_failure_api(tmp_path):
+async def isolated_failure_api(tmp_path, request):
     """Own only this fixture's fresh database, ephemeral port and child process."""
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
@@ -95,6 +95,12 @@ async def isolated_failure_api(tmp_path):
     database_url = f"sqlite+aiosqlite:///{(tmp_path / 'strict-runner.db').as_posix()}"
     store = Store(database_url)
     await store.initialize()
+    failed_tool = getattr(request, "param", "query_metrics_follow_up")
+    failure_condition = (
+        "request.url.path == '/api/diagnostics/query_metrics' and request.query_params.get('metric') == 'offline-controlled-failure'"
+        if failed_tool == "query_metrics_follow_up"
+        else f"request.url.path == {'/api/diagnostics/' + failed_tool if failed_tool else ''!r}"
+    )
     requests_path = tmp_path / "diagnostic-requests.jsonl"
     bootstrap = tmp_path / "isolated_api.py"
     bootstrap.write_text(
@@ -107,7 +113,7 @@ async def isolated_failure_api(tmp_path):
         "    if request.url.path.startswith('/api/diagnostics/'):\n"
         f"        with Path({str(requests_path)!r}).open('a', encoding='utf-8') as output:\n"
         "            output.write(json.dumps({'path': request.url.path, 'arguments': dict(request.query_params), 'session': request.headers.get('x-demo-session')}) + '\\n')\n"
-        "    if request.url.path == '/api/diagnostics/query_metrics':\n"
+        f"    if {failure_condition}:\n"
         "        return JSONResponse({'detail': 'Scripted isolated diagnostic failure'}, status_code=503)\n"
         "    return await call_next(request)\n"
         f"uvicorn.run(app, host='127.0.0.1', port={port}, log_level='warning')\n",
@@ -210,7 +216,7 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
                         "fixture_only": True,
                     }
                 )
-            request = {"name": "query_metrics"} if self.decisions == 1 else None
+            request = {"name": "query_metrics", "metric": "offline-controlled-failure"} if self.decisions == 1 else None
             return AdaptiveDecision.model_validate(
                 {"action": "tool" if request else "assess", "request": request}
             ), {}
@@ -329,7 +335,7 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     assert partial["provenance"]["model_called"] is False
     assert partial["provenance"]["stop_on_tool_error"] is True
     assert partial["provenance"]["provider_turns"] == 1
-    assert partial["provenance"]["tool_calls"] == 2
+    assert partial["provenance"]["tool_calls"] == 5
     assert partial["provenance"]["diagnostic_failure"] == {
         "tool": "query_metrics",
         "category": "error",
@@ -339,11 +345,15 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     assert partial["validation_outcome"]["status"] == "not_validated"
     assert partial["validation_outcome"]["provider_response"] == "not_requested_due_to_diagnostic_failure"
     assert partial["validation_outcome"]["rejected_fields"] == []
-    assert [step["tool"] for step in partial["steps"]] == ["get_incident", "query_metrics"]
-    assert [step["status"] for step in partial["steps"]] == ["complete", "failed"]
-    assert partial["steps"][1]["duration_ms"] > 0 and partial["steps"][1]["error"]
+    assert [step["tool"] for step in partial["steps"]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs", "query_metrics"]
+    assert [step["status"] for step in partial["steps"]] == ["complete"] * 4 + ["failed"]
+    assert all(step["selected_by"] == "application_runbook" for step in partial["steps"][:4])
+    assert partial["steps"][-1]["selected_by"] == "scripted_provider"
+    assert partial["steps"][-1]["duration_ms"] > 0 and partial["steps"][-1]["error"]
     assert partial["steps"][0]["evidence_ids"] == ["INC-DEMO-001"]
-    assert [item["id"] for item in partial["evidence"]] == ["INC-DEMO-001"]
+    assert {item["id"] for item in partial["evidence"]} >= {"INC-DEMO-001", "TOPOLOGY-001"}
+    assert any(item["kind"] == "metric" for item in partial["evidence"])
+    assert any(item["kind"] == "log" for item in partial["evidence"])
     assert partial["provider_calls"] == receipt["provider_calls"]
     saved = await store.get_investigation(partial["provenance"]["session_id"], partial["id"])
     assert saved["status"] == "failed" and saved["assessment"] is None
@@ -351,6 +361,9 @@ async def test_actual_runner_stops_after_real_mcp_tool_error_with_partial_receip
     requests = [json.loads(line) for line in requests_path.read_text(encoding="utf-8").splitlines()]
     assert [item["path"] for item in requests] == [
         "/api/diagnostics/get_incident",
+        "/api/diagnostics/get_service_topology",
+        "/api/diagnostics/query_metrics",
+        "/api/diagnostics/search_logs",
         "/api/diagnostics/query_metrics",
     ]
     assert all(item["session"] == partial["provenance"]["session_id"] for item in requests)
@@ -501,11 +514,12 @@ def owned_runner_path(resources, provider, monkeypatch, tmp_path):
     return arguments, output, adapters, marker, closed_stores
 
 
+@pytest.mark.parametrize("isolated_failure_api", [None], indirect=True)
 async def test_actual_runner_duplicate_topology_stops_without_substitute_assessment(
     isolated_failure_api, monkeypatch, tmp_path
 ):
     """Catch strict duplicate guards producing a complete deterministic fallback."""
-    provider = ScriptedRunnerActions([{"name": "get_service_topology"}, {"name": "get_service_topology"}])
+    provider = ScriptedRunnerActions([{"name": "get_service_topology"}])
     arguments, output, adapters, marker, closed_stores = owned_runner_path(
         isolated_failure_api, provider, monkeypatch, tmp_path
     )
@@ -517,7 +531,7 @@ async def test_actual_runner_duplicate_topology_stops_without_substitute_assessm
     assert partial["status"] == "failed"
     assert isinstance(failure.value, DiagnosticClientError)
     assert receipt["execution"] == ledger["state"] == "STOPPED"
-    assert provider.decisions == 2 and provider.assessments == 0
+    assert provider.decisions == 1 and provider.assessments == 0
     assert partial["assessment"] is None and partial["provider_proposal"] is None
     assert partial["validation_outcome"]["status"] == "not_validated"
     assert partial["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
@@ -526,20 +540,22 @@ async def test_actual_runner_duplicate_topology_stops_without_substitute_assessm
         {
             "stage": "investigation_guard",
             "reason": "duplicate_diagnostic_request",
-            "provider_turn": 2,
+            "provider_turn": 1,
             "mcp_dispatched": False,
             "action": {"name": "get_service_topology", "arguments": {}},
         }
     ]
-    assert partial["provenance"]["tool_calls"] == 2
-    assert partial["provenance"]["provider_turns"] == 2
-    assert [step["tool"] for step in partial["steps"]] == ["get_incident", "get_service_topology"]
+    assert partial["provenance"]["tool_calls"] == 4
+    assert partial["provenance"]["provider_turns"] == 1
+    assert [step["tool"] for step in partial["steps"]] == ["get_incident", "get_service_topology", "query_metrics", "search_logs"]
     assert all(step["status"] == "complete" for step in partial["steps"])
-    assert {item["id"] for item in partial["evidence"]} == {"INC-DEMO-001", "TOPOLOGY-001"}
+    assert {item["id"] for item in partial["evidence"]} >= {"INC-DEMO-001", "TOPOLOGY-001"}
+    assert any(item["kind"] == "metric" for item in partial["evidence"])
+    assert any(item["kind"] == "log" for item in partial["evidence"])
     assert (
         Decimal(receipt["reserved_spend_usd"])
         == Decimal(ledger["reserved_spend_usd"])
-        == FIXTURE_RESERVATION * 2
+        == FIXTURE_RESERVATION
     )
     assert receipt["provider_calls"] == partial["provider_calls"] == provider.execution_receipts
     assert receipt["estimated_cost_usd"] is None and receipt["known_cost_subtotal_usd"] is None
@@ -550,6 +566,8 @@ async def test_actual_runner_duplicate_topology_stops_without_substitute_assessm
     assert [item["path"] for item in requests] == [
         "/api/diagnostics/get_incident",
         "/api/diagnostics/get_service_topology",
+        "/api/diagnostics/query_metrics",
+        "/api/diagnostics/search_logs",
     ]
     assert all(item["session"] == partial["provenance"]["session_id"] for item in requests)
     assert all(item["arguments"]["incident_id"] == "INC-DEMO-001" for item in requests)
@@ -560,27 +578,32 @@ async def test_actual_runner_duplicate_topology_stops_without_substitute_assessm
     assert not list(output.glob("*.lock"))
 
 
+@pytest.mark.parametrize("isolated_failure_api", [None], indirect=True)
 async def test_actual_mcp_retains_topology_and_allows_distinct_broader_log_query(
     isolated_failure_api, monkeypatch, tmp_path
 ):
     """Topology exhaustion must not remove parameterized tools or prior evidence."""
     provider = ScriptedRunnerActions(
         [
-            {"name": "get_service_topology"},
             {"name": "search_logs", "q": "rfq response OR timeout"},
-            {"name": "search_logs", "q": ""},
+            {"name": "search_logs", "q": "rfq response"},
         ]
     )
     arguments, output, adapters, marker, closed_stores = owned_runner_path(
         isolated_failure_api, provider, monkeypatch, tmp_path
     )
-    receipt = await runner.run(arguments)
+    # The initial packet already returned these log rows. Two distinct queries
+    # can execute, but neither adds evidence; the unchanged strict no-progress
+    # boundary must then stop before a third decision or substitute assessment.
+    with pytest.raises(DiagnosticClientError):
+        await runner.run(arguments)
+    receipt = json.loads(next(output.glob("run-*.json")).read_text(encoding="utf-8"))
+    ledger = json.loads(next(output.glob("experiment-*.json")).read_text(encoding="utf-8"))
     result = receipt["results"][0]
-    assert receipt["execution"] == "COMPLETED_APPROVED_CASES"
-    assert result["status"] == "complete"
-    assert provider.decisions == 4 and provider.assessments == 1
-    assert "get_service_topology" in {item["name"] for item in provider.inputs[0]["schemas"]}
-    for current in provider.inputs[1:]:
+    assert receipt["execution"] == ledger["state"] == "STOPPED"
+    assert result["status"] == "failed"
+    assert provider.decisions == 2 and provider.assessments == 0
+    for current in provider.inputs:
         assert {item["name"] for item in current["schemas"]} == {
             "search_logs",
             "query_metrics",
@@ -592,35 +615,42 @@ async def test_actual_mcp_retains_topology_and_allows_distinct_broader_log_query
             "inspect_database_health",
         }
         assert "TOPOLOGY-001" in {item["id"] for item in current["evidence"]}
-    assert provider.inputs[2]["observations"][-1]["tool"] == "search_logs"
-    assert provider.inputs[2]["observations"][-1]["status"] == "complete"
-    assert provider.inputs[2]["observations"][-1]["evidence_ids"] == []
-    assert provider.inputs[3]["observations"][-1]["evidence_ids"]
+    assert provider.inputs[1]["observations"][-1]["tool"] == "search_logs"
+    assert provider.inputs[1]["observations"][-1]["status"] == "complete"
+    assert provider.inputs[1]["observations"][-1]["evidence_ids"] == []
+    assert result["steps"][5]["evidence_ids"]
+    assert result["provenance"]["guard_stop"] == "no_progress_limit"
+    assert result["assessment"] is None and result["provider_proposal"] is None
+    assert result["validation_outcome"]["provider_response"] == "not_requested_due_to_guard_stop"
     assert result["provenance"]["action_rejections"] == []
-    assert result["provenance"]["tool_calls"] == 4
+    assert result["provenance"]["tool_calls"] == 6
     assert [step["tool"] for step in result["steps"]] == [
         "get_incident",
         "get_service_topology",
+        "query_metrics",
         "search_logs",
         "search_logs",
-        "assessment_validation",
+        "search_logs",
     ]
-    assert result["steps"][2]["safe_arguments"] == {"q": "rfq response OR timeout"}
-    assert result["steps"][3]["safe_arguments"] == {"q": ""}
-    assert result["steps"][2]["evidence_ids"] == [] and result["steps"][3]["evidence_ids"]
+    assert result["steps"][4]["safe_arguments"] == {"q": "rfq response OR timeout"}
+    assert result["steps"][5]["safe_arguments"] == {"q": "rfq response"}
+    assert result["steps"][4]["evidence_ids"] == [] and result["steps"][5]["evidence_ids"]
     assert {item["id"] for item in result["evidence"]} >= {"INC-DEMO-001", "TOPOLOGY-001"}
     assert result["provenance"]["model_called"] is False
-    assert result["provenance"]["assessment_source"]["kind"] == "scripted_provider"
+    assert "assessment_source" not in result["provenance"]
+    assert Decimal(receipt["reserved_spend_usd"]) == Decimal(ledger["reserved_spend_usd"]) == FIXTURE_RESERVATION * 2
     _, _, _, requests_path, _ = isolated_failure_api
     requests = [json.loads(line) for line in requests_path.read_text(encoding="utf-8").splitlines()]
     assert [item["path"] for item in requests] == [
         "/api/diagnostics/get_incident",
         "/api/diagnostics/get_service_topology",
+        "/api/diagnostics/query_metrics",
+        "/api/diagnostics/search_logs",
         "/api/diagnostics/search_logs",
         "/api/diagnostics/search_logs",
     ]
-    assert requests[2]["arguments"]["q"] == "rfq response OR timeout"
-    assert requests[3]["arguments"]["q"] == ""
+    assert requests[4]["arguments"]["q"] == "rfq response OR timeout"
+    assert requests[5]["arguments"]["q"] == "rfq response"
     assert all(item["session"] == result["provenance"]["session_id"] for item in requests)
     assert all(item["arguments"]["incident_id"] == "INC-DEMO-001" for item in requests)
     assert all(item["arguments"]["as_of"] == result["provenance"]["snapshot_cutoff"] for item in requests)

@@ -15,6 +15,8 @@ from creditops.providers import AdaptiveDecision, DeterministicProvider, Diagnos
 from creditops.settings import Settings
 from test_adaptive_investigator import CUTOFF, FakeStore, ScriptedClient
 
+INITIAL_CALLS = [(name, {}) for name in ("get_incident", "get_service_topology", "query_metrics", "search_logs")]
+
 
 class CountingScript(DeterministicProvider):
     name = "scripted_strict_stop"
@@ -126,8 +128,8 @@ def assert_stopped(result, *, tool, category, error_category, tool_calls):
 
 
 async def test_strict_failure_stops_before_the_next_provider_decision_or_assessment():
-    provider = CountingScript([DiagnosticRequest(name="query_metrics")])
-    client = ScriptedClient(fail="query_metrics")
+    provider = CountingScript([DiagnosticRequest(name="inspect_database_health")])
+    client = ScriptedClient(fail="inspect_database_health")
     snapshots = []
 
     async def retain(result):
@@ -148,7 +150,7 @@ async def test_strict_failure_stops_before_the_next_provider_decision_or_assessm
 
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert client.calls == [("get_incident", {}), ("query_metrics", {})]
+    assert client.calls == [*INITIAL_CALLS, ("inspect_database_health", {})]
     assert client.closed
     stopped = snapshots[-1]
     assert stopped["status"] == "failed"
@@ -160,7 +162,7 @@ async def test_strict_failure_stops_before_the_next_provider_decision_or_assessm
 
 
 async def test_initial_context_failure_stops_before_any_provider_call():
-    provider = CountingScript([DiagnosticRequest(name="query_metrics")])
+    provider = CountingScript([DiagnosticRequest(name="inspect_database_health")])
     client = ValidatingScriptClient(fail="get_incident")
     snapshots = []
     with pytest.raises(DiagnosticClientError):
@@ -188,24 +190,24 @@ async def test_initial_context_failure_stops_before_any_provider_call():
 )
 async def test_strict_diagnostic_failure_retains_context_and_stops(failure, category, error_category):
     provider = CountingScript(
-        [DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="get_service_topology")]
+        [DiagnosticRequest(name="inspect_database_health"), DiagnosticRequest(name="search_runbooks")]
     )
-    client = ValidatingScriptClient(fail="query_metrics", failure=failure)
+    client = ValidatingScriptClient(fail="inspect_database_health", failure=failure)
     snapshots = []
     with pytest.raises(DiagnosticClientError):
         await collect_script(client, provider, snapshots, limits=Settings(diagnostic_timeout_seconds=0.1))
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert client.calls == [("get_incident", {}), ("query_metrics", {})]
+    assert client.calls == [*INITIAL_CALLS, ("inspect_database_health", {})]
     assert client.closed
     if failure == "timeout":
         assert client.timeout_cancelled
     assert_stopped(
         snapshots[-1],
-        tool="query_metrics",
+        tool="inspect_database_health",
         category=category,
         error_category=error_category,
-        tool_calls=2,
+        tool_calls=5,
     )
     assert [item["id"] for item in snapshots[-1]["evidence"]] == ["INC-DEMO-001"]
     assert snapshots[-1]["usage"]["total_tokens"] is None
@@ -213,24 +215,24 @@ async def test_strict_diagnostic_failure_retains_context_and_stops(failure, cate
 
 @pytest.mark.parametrize(
     "limit_overrides",
-    [{"max_diagnostic_calls": 2}, {"max_provider_turns": 2}],
+    [{"max_diagnostic_calls": 5}, {"max_provider_turns": 2}],
 )
 async def test_failure_in_final_slot_cannot_fall_through_to_assessment_or_fallback(limit_overrides):
-    provider = CountingScript([DiagnosticRequest(name="query_metrics")])
-    client = ValidatingScriptClient(fail="query_metrics")
+    provider = CountingScript([DiagnosticRequest(name="inspect_database_health")])
+    client = ValidatingScriptClient(fail="inspect_database_health")
     snapshots = []
     with pytest.raises(DiagnosticClientError):
         await collect_script(client, provider, snapshots, limits=Settings(**limit_overrides))
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert [name for name, _ in client.calls] == ["get_incident", "query_metrics"]
+    assert [name for name, _ in client.calls] == [*(name for name, _ in INITIAL_CALLS), "inspect_database_health"]
     assert client.closed
     assert_stopped(
         snapshots[-1],
-        tool="query_metrics",
+        tool="inspect_database_health",
         category="error",
         error_category="DiagnosticClientError",
-        tool_calls=2,
+        tool_calls=5,
     )
     assert "assessment_source" not in snapshots[-1]["provenance"]
 
@@ -250,7 +252,7 @@ async def test_successful_empty_result_permits_a_distinct_broader_query():
     assert provider.decision_calls == 3
     assert provider.assessment_calls == 1
     assert client.calls == [
-        ("get_incident", {}),
+        *INITIAL_CALLS,
         ("search_logs", {"q": "timeout OR dropped"}),
         ("search_logs", {"q": ""}),
     ]
@@ -268,11 +270,11 @@ async def test_successful_empty_result_permits_a_distinct_broader_query():
 
 async def test_default_recovery_still_observes_error_and_selects_another_tool():
     provider = CountingScript(
-        [DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="get_service_topology")]
+        [DiagnosticRequest(name="inspect_database_health"), DiagnosticRequest(name="search_runbooks")]
     )
     client = ValidatingScriptClient(
-        fail="query_metrics",
-        rows={("get_service_topology", None): [evidence("TOPOLOGY-001", "topology", "Bounded topology")]},
+        fail="inspect_database_health",
+        rows={("search_runbooks", None): [evidence("RUNBOOK-001", "runbook", "Bounded runbook")]},
     )
     snapshots = []
 
@@ -285,7 +287,7 @@ async def test_default_recovery_still_observes_error_and_selects_another_tool():
     )
     assert provider.decision_calls == 3
     assert provider.assessment_calls == 1
-    assert [name for name, _ in client.calls] == ["get_incident", "query_metrics", "get_service_topology"]
+    assert [name for name, _ in client.calls] == [*(name for name, _ in INITIAL_CALLS), "inspect_database_health", "search_runbooks"]
     assert provider.observed[1][-1]["status"] == "failed"
     assert provider.observed[1][-1]["evidence_ids"] == []
     assert provider.observed[1][-1]["error"]
@@ -299,15 +301,15 @@ async def test_default_recovery_still_observes_error_and_selects_another_tool():
 @pytest.mark.parametrize("strict", [True, False])
 @pytest.mark.parametrize("failure", ["connection", "cancellation"])
 async def test_existing_fatal_transport_and_cancellation_never_recover(strict, failure):
-    provider = CountingScript([DiagnosticRequest(name="query_metrics")])
-    client = ValidatingScriptClient(fail="query_metrics", failure=failure)
+    provider = CountingScript([DiagnosticRequest(name="inspect_database_health")])
+    client = ValidatingScriptClient(fail="inspect_database_health", failure=failure)
     snapshots = []
     expected = DiagnosticConnectionError if failure == "connection" else asyncio.CancelledError
     with pytest.raises(expected):
         await collect_script(client, provider, snapshots, strict=strict)
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert [name for name, _ in client.calls] == ["get_incident", "query_metrics"]
+    assert [name for name, _ in client.calls] == [*(name for name, _ in INITIAL_CALLS), "inspect_database_health"]
     assert client.closed
     assert snapshots[-1]["status"] == "failed"
     assert snapshots[-1]["assessment"] is None
@@ -315,9 +317,9 @@ async def test_existing_fatal_transport_and_cancellation_never_recover(strict, f
 
 async def test_partial_persistence_failure_cannot_resume_investigation():
     provider = CountingScript(
-        [DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="get_service_topology")]
+        [DiagnosticRequest(name="inspect_database_health"), DiagnosticRequest(name="search_runbooks")]
     )
-    client = ValidatingScriptClient(fail="query_metrics")
+    client = ValidatingScriptClient(fail="inspect_database_health")
     snapshots = []
 
     async def cannot_persist_failed_step(result):
@@ -328,14 +330,14 @@ async def test_partial_persistence_failure_cannot_resume_investigation():
         await collect_script(client, provider, snapshots, retain=cannot_persist_failed_step)
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert [name for name, _ in client.calls] == ["get_incident", "query_metrics"]
+    assert [name for name, _ in client.calls] == [*(name for name, _ in INITIAL_CALLS), "inspect_database_health"]
     assert client.closed
     assert_stopped(
         snapshots[-1],
-        tool="query_metrics",
+        tool="inspect_database_health",
         category="error",
         error_category="DiagnosticClientError",
-        tool_calls=2,
+        tool_calls=5,
     )
 
 
@@ -368,7 +370,7 @@ async def test_model_policy_override_and_scope_injection_remain_fatal(strict):
             await collect_script(client, provider, snapshots, strict=strict)
         assert provider.decision_calls == 1
         assert provider.assessment_calls == 0
-        assert client.calls == [("get_incident", {})]
+        assert client.calls == INITIAL_CALLS
         assert client.closed
         stopped = snapshots[-1]
         assert stopped["status"] == "failed"
@@ -400,7 +402,7 @@ async def test_strict_duplicate_stops_without_substitute_assessment_or_complete_
             return decision
 
     provider = ReceiptScript(
-        [DiagnosticRequest(name="get_service_topology"), DiagnosticRequest(name="get_service_topology")]
+        [DiagnosticRequest(name="get_service_topology")]
     )
     client = ValidatingScriptClient(
         rows={("get_service_topology", None): [evidence("TOPOLOGY-001", "topology", "Bounded topology")]}
@@ -409,9 +411,9 @@ async def test_strict_duplicate_stops_without_substitute_assessment_or_complete_
     with pytest.raises(DiagnosticClientError):
         await collect_script(client, provider, snapshots)
 
-    assert provider.decision_calls == 2
+    assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert client.calls == [("get_incident", {}), ("get_service_topology", {})]
+    assert client.calls == INITIAL_CALLS
     assert client.closed
     stopped = snapshots[-1]
     assert stopped["status"] == "failed"
@@ -421,13 +423,13 @@ async def test_strict_duplicate_stops_without_substitute_assessment_or_complete_
     assert stopped["validation_outcome"]["status"] == "not_validated"
     assert stopped["validation_outcome"]["assessment_source"] is None
     assert stopped["validation_outcome"]["rejected_fields"] == []
-    assert stopped["provenance"]["tool_calls"] == 2
-    assert len(stopped["provider_calls"]) == 2
+    assert stopped["provenance"]["tool_calls"] == 4
+    assert len(stopped["provider_calls"]) == 1
     assert stopped["provenance"]["action_rejections"] == [
         {
             "stage": "investigation_guard",
             "reason": "duplicate_diagnostic_request",
-            "provider_turn": 2,
+            "provider_turn": 1,
             "mcp_dispatched": False,
             "action": {"name": "get_service_topology", "arguments": {}},
         }
@@ -444,23 +446,23 @@ async def test_strict_duplicate_stops_without_substitute_assessment_or_complete_
             [DiagnosticRequest(name="search_logs", q="narrow"), DiagnosticRequest(name="search_logs", q="")],
             "no_progress_limit",
             2,
-            3,
+            6,
             None,
         ),
         (
-            {"max_diagnostic_calls": 2},
-            [DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="search_logs", q="")],
+            {"max_diagnostic_calls": 5},
+            [DiagnosticRequest(name="inspect_database_health"), DiagnosticRequest(name="search_logs", q="")],
             "diagnostic_call_limit",
             2,
-            2,
+            5,
             {"name": "search_logs", "arguments": {"q": ""}},
         ),
         (
             {"max_provider_turns": 2},
-            [DiagnosticRequest(name="query_metrics")],
+            [DiagnosticRequest(name="query_metrics", metric="latency")],
             "provider_turn_limit",
             1,
-            2,
+            5,
             None,
         ),
     ],
@@ -493,7 +495,6 @@ async def test_strict_control_limits_stop_before_assessment(
 async def test_completed_topology_is_removed_from_catalog_but_distinct_queries_remain_available():
     provider = CountingScript(
         [
-            DiagnosticRequest(name="get_service_topology"),
             DiagnosticRequest(name="search_logs", q="narrow"),
             DiagnosticRequest(name="search_logs", q=""),
             DiagnosticRequest(name="query_metrics", metric="latency"),
@@ -509,22 +510,21 @@ async def test_completed_topology_is_removed_from_catalog_but_distinct_queries_r
     client.schemas = [{"name": name} for name in ("get_service_topology", "search_logs", "query_metrics")]
     snapshots = []
     result = await collect_script(client, provider, snapshots)
-    assert "get_service_topology" in {item["name"] for item in provider.catalogs[0]}
     assert all(
         {item["name"] for item in catalog} == {"search_logs", "query_metrics"}
-        for catalog in provider.catalogs[1:]
+        for catalog in provider.catalogs
     )
     assert [name for name, _ in client.calls] == [
-        "get_incident", "get_service_topology", "search_logs", "search_logs", "query_metrics"
+        *(name for name, _ in INITIAL_CALLS), "search_logs", "search_logs", "query_metrics"
     ]
-    assert provider.decision_calls == 5
+    assert provider.decision_calls == 4
     assert provider.assessment_calls == 1
     assert "TOPOLOGY-001" in {item["id"] for item in result["evidence"]}
     assert result["status"] == "complete"
 
 
 async def test_failed_topology_remains_available_to_normal_recovery():
-    provider = CountingScript([DiagnosticRequest(name="get_service_topology")])
+    provider = CountingScript([DiagnosticRequest(name="search_runbooks")])
     client = ValidatingScriptClient(fail="get_service_topology")
     client.schemas = [{"name": "get_service_topology"}, {"name": "search_logs"}]
     snapshots = []
@@ -536,7 +536,7 @@ async def test_failed_topology_remains_available_to_normal_recovery():
 
 
 async def test_default_duplicate_recovery_keeps_transparent_deterministic_fallback():
-    provider = CountingScript([DiagnosticRequest(name="query_metrics"), DiagnosticRequest(name="query_metrics")])
+    provider = CountingScript([DiagnosticRequest(name="query_metrics", metric="latency"), DiagnosticRequest(name="query_metrics", metric="latency")])
     client = ValidatingScriptClient()
     snapshots = []
     result = await collect_script(client, provider, snapshots, strict=False)
@@ -554,7 +554,7 @@ async def test_strict_runtime_guard_retains_the_sanitized_parsed_action(monkeypa
     original = investigator.safe_arguments
 
     def reject_metric(name, arguments):
-        if name == "query_metrics":
+        if name == "query_metrics" and arguments:
             raise DiagnosticClientError("Runtime contract rejected parsed action")
         return original(name, arguments)
 
@@ -566,7 +566,7 @@ async def test_strict_runtime_guard_retains_the_sanitized_parsed_action(monkeypa
         await collect_script(client, provider, snapshots)
     assert provider.decision_calls == 1
     assert provider.assessment_calls == 0
-    assert client.calls == [("get_incident", {})]
+    assert client.calls == INITIAL_CALLS
     rejection = snapshots[-1]["provenance"]["action_rejections"][0]
     assert rejection["action"] == {
         "name": "query_metrics", "arguments": {"metric": "latency", "service": "quote-service"}

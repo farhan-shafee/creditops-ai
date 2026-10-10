@@ -248,11 +248,11 @@ async def test_reused_provider_does_not_charge_previous_case_usage_to_the_new_ca
 
     provider = SharedOfflineSDK()
     result = await investigate(provider)
-    assert len(result["provider_calls"]) == 3
-    assert len(provider.execution_receipts) == 4
-    assert result["usage"]["input_tokens"] == 30
-    assert result["usage"]["total_tokens"] == 36
-    assert result["usage"]["estimated_cost_usd"] == 0.03
+    assert len(result["provider_calls"]) == 2
+    assert len(provider.execution_receipts) == 3
+    assert result["usage"]["input_tokens"] == 20
+    assert result["usage"]["total_tokens"] == 24
+    assert result["usage"]["estimated_cost_usd"] == 0.02
 
 
 async def test_final_tool_failure_adjustments_are_distinct_from_validator_rewrites():
@@ -266,7 +266,7 @@ async def test_final_tool_failure_adjustments_are_distinct_from_validator_rewrit
 
     class CheckDatabase(ProposalProvider):
         async def next_action(self, incident, schemas, observations, evidence):
-            if observations[-1]["tool"] == "query_metrics":
+            if observations[-1]["tool"] == "search_logs":
                 return AdaptiveDecision(
                     action="tool",
                     request=DiagnosticRequest(name="inspect_database_health", service=None),
@@ -313,7 +313,7 @@ async def test_deterministic_fallback_authorship_does_not_deny_earlier_decision_
                 "usage": {"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
             })
             return AdaptiveDecision(
-                action="tool", request=DiagnosticRequest(name="query_metrics")
+                action="tool", request=DiagnosticRequest(name="query_metrics", metric="db_pool_utilization_pct")
             ), {}
 
         async def assess(self, *args):
