@@ -291,13 +291,16 @@ literal OR/no-match semantics and permits a broader log query. These are scripte
 integration tests, not live-model quality results.
 
 Final local `pnpm test`: 267 Python passed (no skips, 102.35 s), 13 frontend tests
-and two dependency checks. Lint/types/build, dependency audits and Bandit passed;
-Linux lifecycle skips locally on Windows and must pass in hosted CI. Independent
-code review found no blockers. Separate-output evaluation remains baseline 12/15
-and pipeline 11/15, zero invalid citations; developer-authored robustness remains
-13/13 with four abstentions. Labels, diagnosis thresholds and archived outputs
-are unchanged. Hosted CI for the repaired source is pending publication; its
-verified SHA/run will be recorded in a later docs-only receipt.
+and two dependency checks. Local lint/types/build, audits and Bandit passed;
+Linux lifecycle skips on Windows. Independent code review found no blockers.
+[Normal CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/38008591726)
+passed on application source `94bc0258c4eabed50eec5f783d27e7c07b534684`: all four
+jobs, 267 Python tests (no skips, 70.95 s), 13 frontend tests, two dependency checks,
+19 Chromium browser tests and one Linux lifecycle test, plus lint/types/build,
+audits, Bandit and full Git-history secret scanning. Local and CI evaluation remain
+baseline 12/15 and pipeline 11/15, zero invalid citations; developer-authored
+robustness remains 13/13 with four abstentions. Labels, diagnosis thresholds and
+archived outputs are unchanged. This later CI receipt changes documentation only.
 
 Before/after checks cover 19 files: the original protected history, both stopped
 receipts/ledgers, approval notes/addendum, latest live pointer and `.env`. Retained
