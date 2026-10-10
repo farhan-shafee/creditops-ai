@@ -708,3 +708,15 @@ Lint, types and production build passed. Pip/pnpm audits found no known dependen
 Genuine local [entry](screenshots/showcase-entry.png), [business events](screenshots/showcase-business-impact.png), [evidence drawer](screenshots/showcase-impact-evidence.png), [original proposal/validation](screenshots/showcase-proposal-validation.png), [advisory output](screenshots/showcase-final-advisory.png), [results](screenshots/showcase-results.png) and [mobile](screenshots/showcase-mobile.png) captures accompany the short [playback recording](screenshots/showcase-playback.webm). A local API image build and inspection of an unstarted, network-disabled container verified exact showcase/replay/evaluation hashes and the absence of dotenv, private receipts, runtime files and provider/admin environment keys. It was not deployed.
 
 The post-test preservation check confirms all **32 protected files**, **23 frozen-core files** and both collector AST hashes unchanged. The original 22 live-history files/latest pointer, seven ledgers, retained **USD 1.03060200**, historical replay/benchmarks and ignored/untracked `.env` are preserved. All three derivatives match their source hashes and original sanitized proposal/validation/final/evidence objects. Changes are confined to replay, presentation, public-profile packaging, documentation and tests; investigation logic, prompts, citation schemas, sampling, fixtures and diagnostic rules remain frozen. Actual source CI is recorded in the following publication receipt; no new live request or approval was created.
+
+[Normal showcase source CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/38071389486)
+passed all four jobs on tested source commit
+`724ef4b44d06a785f64f2584a6aac98bac14a26d`: 375 Python tests without skips
+(144.33 s), 27 frontend tests, three startup/dependency checks, 19 legacy
+Chromium tests (3.3 min), four showcase Chromium tests (57.5 s), Linux
+process-group lifecycle verification, lint/types/build, PostgreSQL migrations,
+unchanged evaluation/robustness, dependency audits, Bandit and Git-history
+secret scanning. This publication receipt changes documentation only. The
+package is pushed to private main; hosting accounts, dedicated resources,
+plans, cost limits and deployment approval remain pending. No provider call
+or cloud deployment was made during packaging.
