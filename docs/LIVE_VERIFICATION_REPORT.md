@@ -637,7 +637,15 @@ baseline and 11/15 initial-plan pipeline; developer-authored robustness remains
 13/13 with four abstentions, not held-out evaluation. New outputs are separate under
 `artifacts/test-results/remaining-*`. All 40 protected and 131 frozen file hashes
 match afterward; live file set/latest pointer and `.env` remain unchanged, ignored
-and untracked. Normal CI receipt for the tested runner source will be recorded
-after publication; no remaining-case paid execution has occurred.
+and untracked. No remaining-case paid execution has occurred.
+
+[Normal source CI](https://github.com/farhan-shafee/creditops-ai/actions/runs/38050419447)
+passed all four jobs on tested runner commit
+`18c50ea2c10a7aef69d0e2ea08caf0ec6bb44d8b`: 351 Python tests with no skips
+(138.99 s), 20 frontend tests, two dependency checks, 19 Chromium tests (3.3 min),
+the Linux lifecycle check, lint/types/build, PostgreSQL migrations, unchanged
+evaluation/robustness, audits, Bandit and Git-history secret scanning. This later
+CI receipt changes documentation only; future approval must bind that tested
+runner source and the unchanged investigation implementation.
 
 **REMAINING LIVE CASES NOT RUN — FRESH SOURCE-BOUND OWNER APPROVAL REQUIRED.**
