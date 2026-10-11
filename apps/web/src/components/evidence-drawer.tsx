@@ -1,4 +1,4 @@
-import type { RecordedSourceControls } from './recorded-incident-workspace';
+import { focusRecordedSource, type RecordedSourceControls } from './recorded-incident-workspace';
 import { useEffect, useRef } from 'react';
 import { X, FileSearch } from 'lucide-react';
 import type { Evidence } from '@/lib/types';
@@ -19,8 +19,10 @@ export function EvidenceDrawer({
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const revealedRef = useRef(false);
   useEffect(() => {
     const prior = document.activeElement as HTMLElement | null;
+    revealedRef.current = false;
     closeRef.current?.focus();
     const handler = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -49,10 +51,14 @@ export function EvidenceDrawer({
     return () => {
       document.removeEventListener('keydown', handler);
       document.body.style.overflow = original;
-      if (prior?.isConnected) prior.focus();
-      else document.querySelector<HTMLElement>('[data-testid="personal-clear"]')?.focus();
+      // Evidence Reveal returns to the exact source; ordinary close keeps its trigger.
+      const restoredSource = revealedRef.current && focusRecordedSource(id);
+      if (!restoredSource) {
+        if (prior?.isConnected) prior.focus();
+        else document.querySelector<HTMLElement>('[data-testid="personal-clear"]')?.focus();
+      }
     };
-  }, [onClose]);
+  }, [onClose, id]);
   return (
     <div className="drawer-backdrop" onClick={onClose}>
       <div
@@ -92,6 +98,7 @@ export function EvidenceDrawer({
                 onClick={() => {
                   // Reveal removes this control; retain focus on a stable modal action.
                   closeRef.current?.focus();
+                  revealedRef.current = true;
                   recordedControls.onReveal();
                 }}
               >

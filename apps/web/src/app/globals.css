@@ -4007,7 +4007,7 @@ td code {
     position: sticky;
     top: 12px;
     z-index: 5;
-    padding: 14px 18px;
+    padding: 8px 18px;
   }
   .recorded-workspace-header > .mono {
     display: inline-block;

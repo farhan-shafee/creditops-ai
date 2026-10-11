@@ -38,6 +38,15 @@ type Props = {
   onSourceControls: (controls: RecordedSourceControls | null) => void;
 };
 const sections = ['Overview', 'Evidence', 'Review', 'Handoff'] as const;
+export function focusRecordedSource(id: string): boolean {
+  const source = document.querySelector<HTMLButtonElement>(
+    '#recorded-panel-1:not([hidden]) tr[data-source-id="' + CSS.escape(id) + '"] button',
+  );
+  if (!source) return false;
+  source.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+  source.focus({ preventScroll: true });
+  return true;
+}
 function initialFilters(recording: RecordedRecording): WorkspaceFilters {
   return defaultWorkspaceFilters(recording);
 }
@@ -64,6 +73,18 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
   const [filters, setFilters] = useState(() => initialFilters(recording));
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusFrame = useRef<number | null>(null);
+  const inlineReveal = useRef<string | null>(null);
+  useEffect(
+    () => () => {
+      if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    if (inlineReveal.current && focusRecordedSource(inlineReveal.current))
+      inlineReveal.current = null;
+  }, [filters]);
   const current = useRef<RecordedRecording | null>(recording);
   useEffect(() => {
     current.current = recording;
@@ -143,6 +164,30 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
       data-testid="recorded-workspace"
       aria-label="Recorded incident workspace"
       data-session-ready={Boolean(sessionId)}
+      onFocusCapture={(event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement) || !target.matches('button, input, select, summary'))
+          return;
+        const workspace = event.currentTarget;
+        if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+        // Native smooth focus scrolling can start after the focus event. Finish that
+        // exact target's scroll in the next browser frame before measuring occlusion.
+        focusFrame.current = requestAnimationFrame(() => {
+          focusFrame.current = null;
+          if (!target.isConnected || document.activeElement !== target) return;
+          window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' });
+          target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+          const bounds = target.getBoundingClientRect();
+          const header = workspace.querySelector<HTMLElement>('.recorded-workspace-header');
+          const top =
+            header && getComputedStyle(header).position === 'sticky'
+              ? Math.max(8, header.getBoundingClientRect().bottom + 8)
+              : 8;
+          if (bounds.top < top) window.scrollBy({ top: bounds.top - top, behavior: 'instant' });
+          else if (bounds.bottom > innerHeight - 8)
+            window.scrollBy({ top: bounds.bottom - innerHeight + 8, behavior: 'instant' });
+        });
+      }}
     >
       <header className="recorded-workspace-header">
         <Badge tone="amber">Synthetic · Recorded · Human review required</Badge>
@@ -276,9 +321,10 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
             {hidden && (
               <button
                 className="button secondary"
-                onClick={() =>
-                  setFilters((value) => revealRecordedSource(recording, value, source.id))
-                }
+                onClick={() => {
+                  inlineReveal.current = source.id;
+                  setFilters((value) => revealRecordedSource(recording, value, source.id));
+                }}
               >
                 Reveal source
               </button>

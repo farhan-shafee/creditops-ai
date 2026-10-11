@@ -322,7 +322,13 @@ test('workspace shell: keyboard Reveal retains modal focus and trap', async ({ p
   await page.keyboard.press('Shift+Tab');
   await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
-  await expect(trigger).toBeFocused();
+  // Evidence Reveal returns to the exact source; ordinary close still returns to its trigger.
+  await expect(
+    page
+      .getByRole('table', { name: 'Recorded observations' })
+      .locator('tr[data-source-id="LOG-001-001"]')
+      .getByRole('button', { name: 'LOG-001-001', exact: true }),
+  ).toBeFocused();
 });
 test('workspace shell: Overview citation Reveal close restores a visible trigger', async ({
   page,
@@ -1651,4 +1657,296 @@ test('final fix: timestamped context keeps outside and invalid annotations inert
   await expect(page.getByRole('dialog')).toContainText('LOG-003-001');
   await page.keyboard.press('Escape');
   expect(lookups).toEqual([]);
+});
+
+async function expectUsableViewport(locator: import('@playwright/test').Locator) {
+  await test.info().attach('viewport-before-check', {
+    body: JSON.stringify(
+      await locator.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const header = document
+          .querySelector('.recorded-workspace-header')
+          ?.getBoundingClientRect();
+        return {
+          target: element.getAttribute('aria-label') ?? element.textContent,
+          bounds: { top: box.top, bottom: box.bottom, left: box.left, right: box.right },
+          viewport: { width: innerWidth, height: innerHeight },
+          header: header ? { top: header.top, bottom: header.bottom, height: header.height } : null,
+          centerHit: document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+            ?.outerHTML,
+        };
+      }),
+      null,
+      2,
+    ),
+    contentType: 'application/json',
+  });
+  await expect
+    .poll(() =>
+      locator.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const inset = Math.min(4, box.width / 4, box.height / 4);
+        const points = [
+          [box.left + inset, box.top + inset],
+          [box.left + box.width / 2, box.top + box.height / 2],
+          [box.right - inset, box.bottom - inset],
+        ];
+        return {
+          inViewport:
+            box.width > 0 &&
+            box.height > 0 &&
+            box.top >= 0 &&
+            box.bottom <= innerHeight &&
+            box.left >= 0 &&
+            box.right <= innerWidth,
+          unobscured: points.every(([x, y]) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit !== null && (hit === element || element.contains(hit));
+          }),
+          bounds: { top: box.top, bottom: box.bottom, left: box.left, right: box.right },
+          viewport: { width: innerWidth, height: innerHeight },
+        };
+      }),
+    )
+    .toMatchObject({ inViewport: true, unobscured: true });
+}
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 1024, height: 768 },
+]) {
+  test(
+    'header qualification: sections remain reachable after scroll at ' + viewport.width,
+    async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await openWorkspace(page);
+      const workspace = page.getByTestId('recorded-workspace');
+      await expect(workspace).toContainText('Synthetic');
+      await expect(workspace).toContainText('Initiating cause unconfirmed');
+      for (const name of ['Evidence', 'Review', 'Handoff'] as const) {
+        await workspace.locator('[role="tabpanel"]:not([hidden])').evaluate((panel) => {
+          const bottom = panel.getBoundingClientRect().bottom + scrollY;
+          window.scrollTo({ top: bottom - innerHeight / 2, behavior: 'instant' });
+        });
+        const tab = page.getByRole('tab', { name, exact: true });
+        // Use the same native scrolling path as a normal Playwright pointer action.
+        await tab.scrollIntoViewIfNeeded();
+        await expectUsableViewport(tab);
+        await page.screenshot({ path: test.info().outputPath('native-scroll-' + name + '.png') });
+        await tab.click();
+        await expect(tab).toHaveAttribute('aria-selected', 'true');
+        const panel = page.getByRole('tabpanel', { name, exact: true });
+        await expect(panel).toBeVisible();
+        await tab.focus();
+        await page.keyboard.press('Tab');
+        await expect(panel).toBeFocused();
+        await page.keyboard.press('Tab');
+        const control = panel.locator('button, select, input, summary, [tabindex="0"]').first();
+        await expect(control).toBeFocused();
+        await expectUsableViewport(control);
+        await page.screenshot({
+          path: test.info().outputPath('active-' + name + '-focused-control.png'),
+        });
+        if ((await control.getAttribute('aria-label')) === 'UTC end')
+          await page.screenshot({ path: test.info().outputPath('keyboard-UTC-end.png') });
+      }
+    },
+  );
+
+  test(
+    'header qualification: keyboard evidence filters remain unobscured at ' + viewport.width,
+    async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await openWorkspace(page);
+      const evidence = page.getByRole('tab', { name: 'Evidence', exact: true });
+      await evidence.click();
+      await page.getByTestId('recorded-context').evaluate((element) => {
+        window.scrollTo({
+          top: element.getBoundingClientRect().top + scrollY,
+          behavior: 'instant',
+        });
+      });
+      // The deep-scroll source owns focus before keyboard focus actually moves back to the tab.
+      await page.getByTestId('recorded-context').getByRole('button').first().focus();
+      await evidence.focus();
+      await expectUsableViewport(evidence);
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('tabpanel', { name: 'Evidence', exact: true })).toBeFocused();
+      for (const control of [
+        page.getByLabel('Service filter'),
+        page.getByLabel('Metric and unit'),
+        page.getByLabel('Request filter'),
+        page.getByLabel('Economic order filter'),
+        page.getByLabel('UTC start'),
+        page.getByLabel('UTC end'),
+        page.getByRole('button', { name: 'Reset display filters', exact: true }),
+      ]) {
+        await page.keyboard.press('Tab');
+        await expect(control).toBeFocused();
+        await expectUsableViewport(control);
+        if ((await control.getAttribute('aria-label')) === 'UTC end')
+          await page.screenshot({ path: test.info().outputPath('keyboard-UTC-end.png') });
+      }
+    },
+  );
+}
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 320, height: 740 },
+]) {
+  test(
+    'header qualification: exact Reveal and drawer return remain usable at ' + viewport.width,
+    async ({ page }) => {
+      await page.setViewportSize(viewport);
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await openWorkspace(page);
+      const evidence = page.getByRole('tab', { name: 'Evidence', exact: true });
+      await evidence.click();
+      const sourceId = 'LOG-001-001';
+      const row = page
+        .getByRole('table', { name: 'Recorded observations' })
+        .locator('tr[data-source-id="LOG-001-001"]');
+      const citation = row.getByRole('button', { name: sourceId, exact: true });
+      await citation.click();
+      const dialog = page.getByRole('dialog', { name: 'Evidence details' });
+      const close = dialog.getByRole('button', { name: 'Close evidence', exact: true });
+      await expect(dialog.getByRole('heading', { name: sourceId, exact: true })).toBeVisible();
+      await expect(close).toBeFocused();
+      await expectUsableViewport(close);
+      await page.keyboard.press('Escape');
+      await expect(citation).toBeFocused();
+      await expectUsableViewport(citation);
+
+      await page.getByLabel('Service filter').selectOption('fix-gateway');
+      await expect(row).toHaveCount(0);
+      const selection = page.getByTestId('selected-source-state');
+      await expect(selection).toContainText(sourceId);
+      await expect(selection).toContainText('Hidden by filters');
+      const trigger = selection.getByRole('button', { name: 'Open selected source', exact: true });
+      await trigger.click();
+      await expect(dialog.getByRole('heading', { name: sourceId, exact: true })).toBeVisible();
+      await expect(close).toBeFocused();
+      await page.keyboard.press('Tab');
+      const reveal = dialog.getByRole('button', { name: 'Reveal source', exact: true });
+      await expect(reveal).toBeFocused();
+      await expectUsableViewport(reveal);
+      await page.keyboard.press('Enter');
+      await expect(dialog).not.toContainText('Hidden by filters');
+      await expect(close).toBeFocused();
+      await page.keyboard.press('Escape');
+      // Reveal returns focus to its exact visible source; ordinary close above keeps its trigger.
+      await expect(citation).toBeFocused();
+      await expectUsableViewport(citation);
+      await expect(row).toHaveAttribute('data-selected', 'true');
+      await page.screenshot({ path: test.info().outputPath('revealed-exact-source.png') });
+      await expect(selection).toContainText(sourceId);
+
+      await test.info().attach('revealed-source-viewport', {
+        body: JSON.stringify(
+          await page
+            .locator(
+              '[data-testid="timeline-marker"][data-source-id="LOG-001-001"], ' +
+                'table[aria-label="Recorded observations"] tr[data-source-id="LOG-001-001"] button',
+            )
+            .evaluateAll((elements) =>
+              elements.map((element) => {
+                const box = element.getBoundingClientRect();
+                return {
+                  sourceId: element.closest('[data-source-id]')?.getAttribute('data-source-id'),
+                  bounds: { top: box.top, bottom: box.bottom, left: box.left, right: box.right },
+                  viewport: { width: innerWidth, height: innerHeight },
+                };
+              }),
+            ),
+          null,
+          2,
+        ),
+        contentType: 'application/json',
+      });
+      // Reveal must leave an actual exact source representation in a usable viewport,
+      // not only retain its ID in the selection summary.
+      const representations = page.locator(
+        '[data-testid="timeline-marker"][data-source-id="LOG-001-001"], ' +
+          'table[aria-label="Recorded observations"] tr[data-source-id="LOG-001-001"] button',
+      );
+      await expect
+        .poll(() =>
+          representations.evaluateAll((elements) =>
+            elements.some((element) => {
+              const box = element.getBoundingClientRect();
+              const hit = document.elementFromPoint(
+                box.left + box.width / 2,
+                box.top + box.height / 2,
+              );
+              return (
+                box.width > 0 &&
+                box.height > 0 &&
+                box.top >= 0 &&
+                box.bottom <= innerHeight &&
+                box.left >= 0 &&
+                box.right <= innerWidth &&
+                hit !== null &&
+                (hit === element || element.contains(hit))
+              );
+            }),
+          ),
+        )
+        .toBe(true);
+
+      // A normal scroll can reach lower evidence and return to every section on mobile.
+      if (viewport.width <= 768) {
+        const contextSource = page.getByTestId('recorded-context').getByRole('button').first();
+        await contextSource.scrollIntoViewIfNeeded();
+        await expectUsableViewport(contextSource);
+        for (const name of ['Review', 'Handoff', 'Evidence'] as const) {
+          const tab = page.getByRole('tab', { name, exact: true });
+          await tab.scrollIntoViewIfNeeded();
+          await expectUsableViewport(tab);
+          await page.screenshot({ path: test.info().outputPath('native-scroll-' + name + '.png') });
+          await tab.click();
+          await expect(tab).toHaveAttribute('aria-selected', 'true');
+        }
+      }
+      expect(errors).toEqual([]);
+    },
+  );
+}
+
+test('header qualification: personal note focus remains unobscured at 1024', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openWorkspace(page);
+  const note = page.getByLabel('Personal note', { exact: true });
+  await expect(note).not.toBeFocused();
+  await note.focus();
+  await expect(note).toBeFocused();
+  await expectUsableViewport(note);
+  await page.screenshot({ path: test.info().outputPath('focused-personal-note.png') });
+});
+
+test('header qualification: inline Reveal brings its exact source into view at 1024', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openWorkspace(page);
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  const row = page
+    .getByRole('table', { name: 'Recorded observations' })
+    .locator('tr[data-source-id="LOG-001-001"]');
+  const citation = row.getByRole('button', { name: 'LOG-001-001', exact: true });
+  await citation.click();
+  await page.keyboard.press('Escape');
+  await page.getByLabel('Service filter').selectOption('fix-gateway');
+  await expect(row).toHaveCount(0);
+  const selection = page.getByTestId('selected-source-state');
+  await expect(selection).toContainText('LOG-001-001');
+  await expect(selection).toContainText('Hidden by filters');
+  await selection.getByRole('button', { name: 'Reveal source', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Evidence details' })).toHaveCount(0);
+  await expect(row).toHaveAttribute('data-selected', 'true');
+  await expectUsableViewport(citation);
+  await expect(citation).toBeFocused();
+  await page.screenshot({ path: test.info().outputPath('inline-revealed-exact-source.png') });
 });
