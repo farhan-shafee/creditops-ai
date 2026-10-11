@@ -1,3 +1,4 @@
+import type { RecordedSourceControls } from './recorded-incident-workspace';
 import { useEffect, useRef } from 'react';
 import { X, FileSearch } from 'lucide-react';
 import type { Evidence } from '@/lib/types';
@@ -8,11 +9,13 @@ export function EvidenceDrawer({
   evidence,
   error,
   onClose,
+  recordedControls,
 }: {
   id: string;
   evidence: Evidence | null;
   error: string | null;
   onClose: () => void;
+  recordedControls?: RecordedSourceControls;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -23,12 +26,15 @@ export function EvidenceDrawer({
       if (event.key === 'Escape') onClose();
       if (event.key === 'Tab') {
         const items = drawerRef.current?.querySelectorAll<HTMLElement>(
-          'button, a, input, summary, [tabindex="0"]',
+          'button:not([disabled]), a, input:not([disabled]), summary, [tabindex="0"]',
         );
         if (!items?.length) return;
         const first = items[0],
           last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
+        if (!drawerRef.current?.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last.focus();
         } else if (!event.shiftKey && document.activeElement === last) {
@@ -72,6 +78,34 @@ export function EvidenceDrawer({
             <X size={20} />
           </button>
         </div>
+        {recordedControls && (
+          <div className="recorded-source-controls">
+            <p>
+              {recordedControls.hiddenByFilters
+                ? 'Hidden by filters'
+                : 'Visible in recorded evidence'}
+            </p>
+            {recordedControls.hiddenByFilters && (
+              <button
+                className="button secondary"
+                onClick={() => {
+                  // Reveal removes this control; retain focus on a stable modal action.
+                  closeRef.current?.focus();
+                  recordedControls.onReveal();
+                }}
+              >
+                Reveal source
+              </button>
+            )}
+            <button
+              className="button secondary"
+              disabled
+              title="Personal source pins arrive in the next slice"
+            >
+              Pins pending
+            </button>
+          </div>
+        )}
         {error ? (
           <p className="error-banner">{error}</p>
         ) : !evidence ? (

@@ -1,3 +1,9 @@
+import { useMemo } from 'react';
+import { projectRecording } from '@/lib/recorded-evidence';
+import {
+  RecordedIncidentWorkspace,
+  type RecordedSourceControls,
+} from '@/components/recorded-incident-workspace';
 import { ArrowRight, RotateCcw, Play, Clock3 } from 'lucide-react';
 import type {
   Incident,
@@ -80,6 +86,8 @@ export function IncidentView({
   onInvestigate,
   onEvidence,
   onIncident,
+  workspaceSessionId = null,
+  onSourceControls,
   onlyInvestigator = false,
   showcaseProfile = false,
 }: {
@@ -95,9 +103,19 @@ export function IncidentView({
   onInvestigate: () => void;
   onEvidence: (id: string) => void;
   onIncident: (incident: Incident) => void;
+  workspaceSessionId?: string | null;
+  onSourceControls?: (controls: RecordedSourceControls | null) => void;
   onlyInvestigator?: boolean;
   showcaseProfile?: boolean;
 }) {
+  const selectedIncidentId = incident?.id;
+  const projection = useMemo(
+    () =>
+      investigation && selectedIncidentId
+        ? projectRecording(investigation, selectedIncidentId)
+        : { kind: 'legacy' as const },
+    [investigation, selectedIncidentId],
+  );
   if (!incident)
     return (
       <Panel title="Incident queue" eyebrow="Synthetic operations">
@@ -106,6 +124,24 @@ export function IncidentView({
           for your browser session.
         </Empty>
       </Panel>
+    );
+  if (projection.kind === 'blocked')
+    return (
+      <Panel title="Recording unavailable" eyebrow="Recorded workspace">
+        <Empty title={projection.reason}>
+          The active returned recording cannot be safely inspected.
+        </Empty>
+      </Panel>
+    );
+  if (projection.kind === 'ready')
+    return (
+      <RecordedIncidentWorkspace
+        key={investigation!.id + ':' + incident.id}
+        recording={projection.recording}
+        sessionId={workspaceSessionId}
+        onEvidence={onEvidence}
+        onSourceControls={onSourceControls ?? ignoreSourceControls}
+      />
     );
   const recorded = investigation?.mode === 'REPLAY';
   const recordedContext = investigation?.evidence.find((row) => row.kind === 'incident')?.data;
@@ -250,3 +286,5 @@ export function IncidentView({
     </div>
   );
 }
+
+const ignoreSourceControls = () => {};

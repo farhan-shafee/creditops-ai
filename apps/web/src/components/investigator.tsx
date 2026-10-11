@@ -124,75 +124,7 @@ export function Investigator({
           <ShieldCheck size={14} /> Diagnostic tools only
         </span>
       </div>
-      {investigation && (
-        <div className="investigation-provenance" data-testid="investigation-provenance">
-          <span>
-            <strong>{recorded ? 'Recorded tool results' : 'Fresh diagnostic execution'}</strong> ·{' '}
-            {metadata?.snapshot_kind === 'complete_scenario'
-              ? 'Complete scenario snapshot'
-              : metadata?.snapshot_kind === 'frozen_current'
-                ? 'Frozen current snapshot'
-                : 'Snapshot kind not recorded'}
-          </span>
-          <span>
-            {metadata?.snapshot_cutoff ? (
-              <>
-                Evidence cutoff{' '}
-                <time dateTime={metadata.snapshot_cutoff}>{metadata.snapshot_cutoff}</time>
-              </>
-            ) : (
-              'Cutoff not recorded'
-            )}
-          </span>
-          <span>
-            {recorded
-              ? `Original transport: ${transportLabel(metadata?.original_transport)}`
-              : `Transport: ${transportLabel(metadata?.transport)}`}
-          </span>
-          <span>
-            {metadata?.tool_schema_verified === true
-              ? 'Tool schemas verified'
-              : metadata?.tool_schema_verified === false
-                ? 'Tool schemas not verified'
-                : 'Tool schema verification not recorded'}
-          </span>
-          <span>Workflow: {metadata?.workflow ?? 'not recorded'}</span>
-          {recorded && (
-            <span>Original workflow: {metadata?.original_workflow ?? 'not recorded'}</span>
-          )}
-          <span>{assessmentOutcome(investigation)}</span>
-          {investigation.assessment && <span>{assessmentOrigin(metadata?.assessment_source)}</span>}
-          {recorded && (
-            <p>
-              Recorded steps retain their original timestamps and durations. Playback does not
-              execute those tools again.
-            </p>
-          )}
-          {showcase && (
-            <>
-              <span>
-                Returned-sample coverage <time>{showcase.sample_start}</time> —{' '}
-                <time>{showcase.sample_end}</time> UTC
-              </span>
-              <span>
-                Original generation <time>{showcase.generated_at}</time> UTC ·{' '}
-                {showcase.original_duration_seconds.toFixed(2)} seconds
-              </span>
-              <span>
-                Exported <time>{showcase.exported_at}</time> UTC
-              </span>
-              <span>
-                Playback started <time>{investigation.created_at}</time> UTC · playback duration is
-                separate
-              </span>
-              <p>
-                Returned samples do not establish health at the later cutoff. A complete recorded
-                snapshot can include events later than the visitor’s current simulated animation.
-              </p>
-            </>
-          )}
-        </div>
-      )}
+      {investigation && <RecordedInvestigationProvenance investigation={investigation} />}
       {!investigation ? (
         <div className="investigation-ready">
           <div className="trace-preview">
@@ -226,91 +158,7 @@ export function Investigator({
               investigation={investigation}
             />
           )}
-          <div className="trace-heading">
-            <h3>Diagnostic activity</h3>
-            <span className="mono">
-              {investigation.steps.length +
-                (showcase ? (investigation.provider_calls?.length ?? 0) : 0)}{' '}
-              actions · Execution {investigation.status}
-            </span>
-          </div>
-          {showcase && (
-            <div className="recorded-action-summary" data-testid="recorded-action-summary">
-              {
-                investigation.steps.filter((step) => step.selected_by === 'application_runbook')
-                  .length
-              }{' '}
-              initial MCP checks selected by the application ·{' '}
-              {investigation.provider_calls?.filter(
-                (call) => call.schema === 'AvailableAdaptiveDecision',
-              ).length ?? 0}{' '}
-              model decision ·{' '}
-              {investigation.provider_calls?.filter((call) => call.schema === 'Assessment')
-                .length ?? 0}{' '}
-              model assessment · local validation. No model-selected follow-up diagnostics occurred
-              in this recording.
-            </div>
-          )}
-          <ol className="investigation-trace" aria-live="polite">
-            {investigation.steps
-              .filter((step) => !showcase || !isValidationStep(step))
-              .map((step, index) => (
-                <DiagnosticStep
-                  key={step.id}
-                  step={step}
-                  index={index}
-                  recorded={recorded}
-                  onEvidence={onEvidence}
-                />
-              ))}
-            {showcase &&
-              investigation.provider_calls?.map((call, index) => (
-                <li key={`model-${index}`} data-testid="recorded-model-action">
-                  <div className="trace-icon">
-                    <Check size={13} />
-                  </div>
-                  <div className="trace-content">
-                    <div>
-                      <strong>
-                        {call.schema === 'AvailableAdaptiveDecision'
-                          ? `Model decision · ${String(call.structured_output?.action ?? 'action not recorded')}`
-                          : 'Model assessment'}
-                      </strong>
-                      {call.started_at && (
-                        <time dateTime={call.started_at}>{time(call.started_at)} UTC</time>
-                      )}
-                    </div>
-                    <p>
-                      {call.schema === 'AvailableAdaptiveDecision'
-                        ? 'The model selected assessment after the application collected the initial packet.'
-                        : 'Original structured assessment proposal, retained before local validation.'}
-                    </p>
-                    <p className="trace-provenance">
-                      <span>Recorded model response</span>
-                      <span>{call.duration_ms ?? 'Duration not recorded'} ms</span>
-                      <span>{call.returned_model ?? call.requested_model ?? provider}</span>
-                    </p>
-                  </div>
-                </li>
-              ))}
-            {showcase &&
-              investigation.steps
-                .filter(isValidationStep)
-                .map((step, index) => (
-                  <DiagnosticStep
-                    key={step.id}
-                    step={step}
-                    index={
-                      investigation.steps.length -
-                      1 +
-                      (investigation.provider_calls?.length ?? 0) +
-                      index
-                    }
-                    recorded={recorded}
-                    onEvidence={onEvidence}
-                  />
-                ))}
-          </ol>
+          <RecordedInvestigationActivity investigation={investigation} onEvidence={onEvidence} />
           {investigating && (
             <div className="loading-row">
               <Spinner /> Receiving diagnostic activity…
@@ -451,7 +299,7 @@ function assessmentOrigin(
   }
 }
 
-function AssessmentComparison({ investigation }: { investigation: Investigation }) {
+export function AssessmentComparison({ investigation }: { investigation: Investigation }) {
   const outcome = investigation.validation_outcome;
   const notes = investigation.provenance?.showcase?.review_notes;
   const playbackCheck = investigation.provenance?.playback_validation;
@@ -540,7 +388,7 @@ function transportLabel(value?: string): string {
               : 'not recorded';
 }
 
-function AssessmentResult({
+export function AssessmentResult({
   assessment: a,
   onEvidence,
   investigation,
@@ -771,5 +619,180 @@ function AssessmentResult({
         )}
       </div>
     </div>
+  );
+}
+
+export function RecordedInvestigationProvenance({
+  investigation,
+}: {
+  investigation: Investigation;
+}) {
+  const recorded = investigation.mode === 'REPLAY';
+  const metadata = investigation.provenance;
+  const showcase = metadata?.showcase;
+  return (
+    <div className="investigation-provenance" data-testid="investigation-provenance">
+      <span>
+        <strong>{recorded ? 'Recorded tool results' : 'Fresh diagnostic execution'}</strong> ·{' '}
+        {metadata?.snapshot_kind === 'complete_scenario'
+          ? 'Complete scenario snapshot'
+          : metadata?.snapshot_kind === 'frozen_current'
+            ? 'Frozen current snapshot'
+            : 'Snapshot kind not recorded'}
+      </span>
+      <span>
+        {metadata?.snapshot_cutoff ? (
+          <>
+            Evidence cutoff{' '}
+            <time dateTime={metadata.snapshot_cutoff}>{metadata.snapshot_cutoff}</time>
+          </>
+        ) : (
+          'Cutoff not recorded'
+        )}
+      </span>
+      <span>
+        {recorded
+          ? `Original transport: ${transportLabel(metadata?.original_transport)}`
+          : `Transport: ${transportLabel(metadata?.transport)}`}
+      </span>
+      <span>
+        {metadata?.tool_schema_verified === true
+          ? 'Tool schemas verified'
+          : metadata?.tool_schema_verified === false
+            ? 'Tool schemas not verified'
+            : 'Tool schema verification not recorded'}
+      </span>
+      <span>Workflow: {metadata?.workflow ?? 'not recorded'}</span>
+      {recorded && <span>Original workflow: {metadata?.original_workflow ?? 'not recorded'}</span>}
+      <span>{assessmentOutcome(investigation)}</span>
+      {investigation.assessment && <span>{assessmentOrigin(metadata?.assessment_source)}</span>}
+      {recorded && (
+        <p>
+          Recorded steps retain their original timestamps and durations. Playback does not execute
+          those tools again.
+        </p>
+      )}
+      {showcase && (
+        <>
+          <span>
+            Returned-sample coverage <time>{showcase.sample_start}</time> —{' '}
+            <time>{showcase.sample_end}</time> UTC
+          </span>
+          <span>
+            Original generation <time>{showcase.generated_at}</time> UTC ·{' '}
+            {showcase.original_duration_seconds.toFixed(2)} seconds
+          </span>
+          <span>
+            Exported <time>{showcase.exported_at}</time> UTC
+          </span>
+          <span>
+            Playback started <time>{investigation.created_at}</time> UTC · playback duration is
+            separate
+          </span>
+          <p>
+            Returned samples do not establish health at the later cutoff. A complete recorded
+            snapshot can include events later than the visitor’s current simulated animation.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function RecordedInvestigationActivity({
+  investigation,
+  onEvidence,
+}: {
+  investigation: Investigation;
+  onEvidence: (id: string) => void;
+}) {
+  const recorded = investigation.mode === 'REPLAY';
+  const showcase = investigation.provenance?.showcase;
+  const provider = investigation.provider;
+  return (
+    <>
+      {' '}
+      <div className="trace-heading">
+        <h3>Diagnostic activity</h3>
+        <span className="mono">
+          {investigation.steps.length +
+            (showcase ? (investigation.provider_calls?.length ?? 0) : 0)}{' '}
+          actions · Execution {investigation.status}
+        </span>
+      </div>
+      {showcase && (
+        <div className="recorded-action-summary" data-testid="recorded-action-summary">
+          {investigation.steps.filter((step) => step.selected_by === 'application_runbook').length}{' '}
+          initial MCP checks selected by the application ·{' '}
+          {investigation.provider_calls?.filter(
+            (call) => call.schema === 'AvailableAdaptiveDecision',
+          ).length ?? 0}{' '}
+          model decision ·{' '}
+          {investigation.provider_calls?.filter((call) => call.schema === 'Assessment').length ?? 0}{' '}
+          model assessment · local validation. No model-selected follow-up diagnostics occurred in
+          this recording.
+        </div>
+      )}
+      <ol className="investigation-trace" aria-live="polite">
+        {investigation.steps
+          .filter((step) => !showcase || !isValidationStep(step))
+          .map((step, index) => (
+            <DiagnosticStep
+              key={step.id}
+              step={step}
+              index={index}
+              recorded={recorded}
+              onEvidence={onEvidence}
+            />
+          ))}
+        {showcase &&
+          investigation.provider_calls?.map((call, index) => (
+            <li key={`model-${index}`} data-testid="recorded-model-action">
+              <div className="trace-icon">
+                <Check size={13} />
+              </div>
+              <div className="trace-content">
+                <div>
+                  <strong>
+                    {call.schema === 'AvailableAdaptiveDecision'
+                      ? `Model decision · ${String(call.structured_output?.action ?? 'action not recorded')}`
+                      : 'Model assessment'}
+                  </strong>
+                  {call.started_at && (
+                    <time dateTime={call.started_at}>{time(call.started_at)} UTC</time>
+                  )}
+                </div>
+                <p>
+                  {call.schema === 'AvailableAdaptiveDecision'
+                    ? 'The model selected assessment after the application collected the initial packet.'
+                    : 'Original structured assessment proposal, retained before local validation.'}
+                </p>
+                <p className="trace-provenance">
+                  <span>Recorded model response</span>
+                  <span>{call.duration_ms ?? 'Duration not recorded'} ms</span>
+                  <span>{call.returned_model ?? call.requested_model ?? provider}</span>
+                </p>
+              </div>
+            </li>
+          ))}
+        {showcase &&
+          investigation.steps
+            .filter(isValidationStep)
+            .map((step, index) => (
+              <DiagnosticStep
+                key={step.id}
+                step={step}
+                index={
+                  investigation.steps.length -
+                  1 +
+                  (investigation.provider_calls?.length ?? 0) +
+                  index
+                }
+                recorded={recorded}
+                onEvidence={onEvidence}
+              />
+            ))}
+      </ol>
+    </>
   );
 }

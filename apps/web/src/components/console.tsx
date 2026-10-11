@@ -1,4 +1,5 @@
 'use client';
+import type { RecordedSourceControls } from './recorded-incident-workspace';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,7 +22,7 @@ import {
   Workflow,
   X,
 } from 'lucide-react';
-import { api, streamInvestigation } from '@/lib/api';
+import { api, sessionId, streamInvestigation } from '@/lib/api';
 import { readStorage, removeStorage, writeStorage } from '@/lib/storage';
 import type {
   Evaluation,
@@ -121,6 +122,8 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [workspaceSessionId, setWorkspaceSessionId] = useState<string | null>(null);
+  const [sourceControls, setSourceControls] = useState<RecordedSourceControls | null>(null);
   const [evidenceId, setEvidenceId] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<Evidence | null>(null);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
@@ -137,6 +140,11 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     null;
   const activeId = active?.id;
   const showcaseProfile = Boolean(evaluation?.selected_recordings?.length);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWorkspaceSessionId(sessionId()), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -214,6 +222,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     setInvestigation(null);
     evidenceRequestRef.current += 1;
     setEvidenceId(null);
+    setSourceControls(null);
   }, []);
 
   useEffect(() => {
@@ -495,7 +504,21 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     hasIncident: incidents.some((item) => item.scenario === selectedScenario),
     showcaseProfile,
   };
+  const receiveSourceControls = useCallback(
+    (controls: RecordedSourceControls | null) => {
+      setSourceControls(
+        controls?.investigationId === investigation?.id &&
+          controls?.incidentId === activeId &&
+          controls?.sourceId === evidenceId
+          ? controls
+          : null,
+      );
+    },
+    [investigation?.id, activeId, evidenceId],
+  );
   const incidentProps = {
+    workspaceSessionId,
+    onSourceControls: receiveSourceControls,
     incident: active,
     incidents,
     metrics,
@@ -720,6 +743,13 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
           evidence={evidence}
           error={evidenceError}
           onClose={closeEvidence}
+          recordedControls={
+            sourceControls?.investigationId === investigation?.id &&
+            sourceControls?.incidentId === activeId &&
+            sourceControls?.sourceId === evidenceId
+              ? sourceControls
+              : undefined
+          }
         />
       )}
     </div>

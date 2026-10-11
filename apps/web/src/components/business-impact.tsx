@@ -98,7 +98,7 @@ function recordedJourneyStatus(events: readonly Evidence[]): string {
     ? 'Chronology uncertain'
     : String(last.data.event_type ?? 'State not recorded');
 }
-function RecordedBusinessImpact({
+export function RecordedBusinessImpact({
   investigation,
   onEvidence,
 }: {
