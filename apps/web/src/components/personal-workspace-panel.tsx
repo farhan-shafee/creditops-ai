@@ -5,6 +5,7 @@ import {
   browserNotesStorage,
   clearNotes,
   loadNotes,
+  notesKey,
   saveNotes,
   type NotesResult,
   type PersonalState,
@@ -73,12 +74,22 @@ export function useWorkspaceNotes(recording: RecordedRecording, sessionId: strin
   );
   const clear = () => {
     if (clearNotes(browserNotesStorage(), scope)) setResult(initial);
+    else if (result.status === 'memory-only')
+      setResult({
+        state: { note: '', pinnedIds: [] },
+        status: 'memory-only',
+        message: notesKey(scope)
+          ? 'Notes and pins cleared in memory. The stored entry could not be removed and may reappear after refresh. Tab storage remains unavailable; new edits will be lost on refresh.'
+          : 'Notes and pins cleared in memory. Durable recording identity is unavailable; new edits will be lost on refresh.',
+      });
     else
       setResult({
         ...result,
         status: result.status === 'invalid' ? 'invalid' : 'memory-only',
         message:
-          'Could not clear the stored entry. Current personal state is retained; edits may be lost on refresh.',
+          result.status === 'invalid'
+            ? 'Invalid stored entry could not be removed. Editing remains locked; retry Clear when tab storage is available.'
+            : 'Could not clear the stored entry. Current personal state is retained; edits may be lost on refresh.',
       });
   };
   return { result, ready, update, togglePin, clear };

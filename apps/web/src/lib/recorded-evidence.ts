@@ -19,6 +19,12 @@ export type WorkspaceFilters = {
   request: RequestSelection | null;
   window: Coverage | null;
 };
+export type ContextAnnotation = {
+  timestamp: string | null;
+  timestampMs: number | null;
+  label: string | null;
+  evidenceIds: readonly string[];
+};
 export type RecordedRecording = {
   investigation: Readonly<Investigation>;
   incident: Evidence;
@@ -30,6 +36,7 @@ export type RecordedRecording = {
   coverage: Coverage | null;
   warnings: readonly string[];
   contextReferences: readonly string[];
+  contextAnnotations: readonly ContextAnnotation[];
 };
 export type RecordedProjection =
   | { kind: 'legacy' }
@@ -183,12 +190,22 @@ export function projectRecording(
     )
     .map((group) => ({ ...group, samples: [...group.samples].sort(timedOrder) }));
   const contextReferences = new Set<string>();
+  const contextAnnotations: ContextAnnotation[] = [];
   // Only returned context annotations. They do not become extra source objects.
   if (Array.isArray(incident.data.timeline))
     for (const annotation of incident.data.timeline) {
-      if (!object(annotation) || !Array.isArray(annotation.evidence_ids)) continue;
-      for (const id of annotation.evidence_ids)
-        if (literal(id) && !sources.has(id as string)) contextReferences.add(id as string);
+      if (!object(annotation)) continue;
+      const timestamp = typeof annotation.timestamp === 'string' ? annotation.timestamp : null;
+      const evidenceIds = Array.isArray(annotation.evidence_ids)
+        ? annotation.evidence_ids.filter((id): id is string => literal(id) !== null)
+        : [];
+      contextAnnotations.push({
+        timestamp,
+        timestampMs: timestamp === null ? null : recordedTimestampMs(timestamp),
+        label: typeof annotation.label === 'string' ? annotation.label : null,
+        evidenceIds,
+      });
+      for (const id of evidenceIds) if (!sources.has(id)) contextReferences.add(id);
     }
   return {
     kind: 'ready',
@@ -203,6 +220,7 @@ export function projectRecording(
       coverage: times.length ? { startMs: Math.min(...times), endMs: Math.max(...times) } : null,
       warnings,
       contextReferences: [...contextReferences],
+      contextAnnotations,
     },
   };
 }
@@ -405,4 +423,37 @@ export function countRecordedEventRfqs(
 export function formatRecordedDecimal(value: string): string {
   const [integer, fraction] = value.split('.');
   return `${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction === undefined ? '' : `.${fraction}`}`;
+}
+
+// Compact full-record impact; display filters never change these event counts.
+export function recordedImpactSummary(recording: RecordedRecording): string {
+  const events = recording.journeys.flatMap((journey) => journey.events);
+  if (!events.length) return 'No business events returned; observed business impact unavailable.';
+  const rfqs = countRecordedRfqs(recording.journeys);
+  const orders = new Set(
+    events.flatMap((event) => {
+      const id = recordedEconomicOrderId(event);
+      return id === null ? [] : [id];
+    }),
+  );
+  const impacts = [
+    ['QUOTE_STALE', 'stale quotes'],
+    ['QUOTE_UNAVAILABLE', 'unavailable quotes'],
+    ['RFQ_EXPIRED', 'expired RFQ deadlines'],
+    ['PROCESSING_TIMEOUT', 'processing timeouts'],
+    ['ACK_UNCERTAIN', 'uncertain acknowledgements'],
+  ].flatMap(([kind, label]) => {
+    const count = countRecordedEventRfqs(recording.journeys, kind);
+    return count ? [label + ': ' + count + (count === 1 ? ' RFQ' : ' RFQs')] : [];
+  });
+  return (
+    rfqs +
+    (rfqs === 1 ? ' returned RFQ' : ' returned RFQs') +
+    ' · ' +
+    orders.size +
+    (orders.size === 1 ? ' economic order identity.' : ' economic order identities.') +
+    (impacts.length
+      ? ' Observed ' + impacts.join('; ') + '.'
+      : ' No listed adverse RFQ events returned; uninterrupted health is not established.')
+  );
 }

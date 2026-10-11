@@ -8,6 +8,7 @@ import {
   defaultWorkspaceFilters,
   filterRecordedEvidence,
   revealRecordedSource,
+  recordedImpactSummary,
 } from '@/lib/recorded-evidence';
 import {
   AssessmentResult,
@@ -122,6 +123,20 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
   const investigation = recording.investigation;
   const metadata = investigation.provenance?.showcase;
   const coverage = recording.coverage;
+  const impact = recordedImpactSummary(recording);
+  const assessment = investigation.assessment;
+  const condition =
+    typeof assessment?.supported_failure_condition === 'string' &&
+    assessment.supported_failure_condition.trim()
+      ? assessment.supported_failure_condition
+      : 'Recorded advisory condition unavailable';
+  const cause = assessment?.confirmed_cause;
+  const causeStatus =
+    cause === null
+      ? 'Initiating cause unconfirmed'
+      : cause && typeof cause.statement === 'string' && cause.statement.trim()
+        ? 'Initiating cause confirmed in recorded advisory: ' + cause.statement
+        : 'Initiating cause unavailable';
   return (
     <section
       className="recorded-workspace"
@@ -133,7 +148,20 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         <Badge tone="amber">Synthetic · Recorded · Human review required</Badge>
         <p className="mono">{recording.incident.id}</p>
         <h2>{metadata?.title ?? recording.incident.summary}</h2>
-        <p>{recording.incident.summary}</p>
+        <dl className="recorded-shared-summary">
+          <div>
+            <dt>Observed business impact · full recording</dt>
+            <dd>{impact}</dd>
+          </div>
+          <div>
+            <dt>Recorded advisory condition · human verification required</dt>
+            <dd>{condition}</dd>
+          </div>
+          <div>
+            <dt>Recorded cause status</dt>
+            <dd>{causeStatus}</dd>
+          </div>
+        </dl>
         <dl className="recorded-facts">
           <div>
             <dt>Original outcome</dt>
@@ -160,8 +188,7 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
           </div>
         </dl>
         <p>
-          Discrete observations do not establish continuous health, ordering between tied rows, or
-          causality. The initiating cause remains unconfirmed unless supported by recorded evidence.
+          Discrete events do not establish continuous health, causality, fills, loss or recovery.
         </p>
       </header>
       <div className="recorded-tabs" role="tablist" aria-label="Recorded workspace sections">
@@ -206,18 +233,23 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         hidden={section !== 0}
         tabIndex={0}
       >
-        {investigation.assessment ? (
-          <AssessmentResult
-            assessment={investigation.assessment}
-            investigation={investigation}
-            onEvidence={select}
-          />
-        ) : (
-          <Empty title="No assessment produced">
-            No advisory assessment was returned in this recording.
-          </Empty>
-        )}
-        <RecordedBusinessImpact investigation={investigation} onEvidence={select} />
+        <p className="recorded-overview-intro">
+          <strong>Observed business impact:</strong> {impact}
+        </p>
+        <div className="recorded-overview-columns">
+          {investigation.assessment ? (
+            <AssessmentResult
+              assessment={investigation.assessment}
+              investigation={investigation}
+              onEvidence={select}
+            />
+          ) : (
+            <Empty title="No assessment produced">
+              No advisory assessment was returned in this recording.
+            </Empty>
+          )}
+          <RecordedBusinessImpact investigation={investigation} onEvidence={select} />
+        </div>
         {(investigation.provider_proposal || investigation.validation_outcome) && (
           <AssessmentComparison investigation={investigation} />
         )}

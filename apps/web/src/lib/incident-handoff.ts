@@ -312,7 +312,7 @@ export function prepareHandoff(
     ['ACK_UNCERTAIN', 'uncertain acknowledgements'],
   ].flatMap(([kind, description]) => {
     const count = countRecordedEventRfqs(full.journeys, kind);
-    return count ? [description + ' for ' + count + ' requests'] : [];
+    return count ? [description + ' for ' + count + (count === 1 ? ' request' : ' requests')] : [];
   });
   const stakeholderBrief: HandoffSection = {
     heading: 'Stakeholder brief',

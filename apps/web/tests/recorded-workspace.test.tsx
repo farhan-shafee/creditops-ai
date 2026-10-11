@@ -190,3 +190,108 @@ test('workspace_uses_lexical_metric_default', () => {
   );
   assert.match(metricSelect, /<option value="">All metric groups/);
 });
+
+// Removing the shared facts or substituting current state must fail these oracles.
+test('final_fix_header_uses_all_recorded_business_and_advisory_states', () => {
+  const cases = [
+    [
+      'INC-DEMO-001',
+      [
+        '2 returned RFQs',
+        'stale quotes: 1 RFQ',
+        'unavailable quotes: 1 RFQ',
+        'expired RFQ deadlines: 2 RFQs',
+      ],
+    ],
+    [
+      'INC-DEMO-002',
+      ['2 returned RFQs', '2 economic order identities', 'uncertain acknowledgements: 2 RFQs'],
+    ],
+    [
+      'INC-DEMO-003',
+      ['2 returned RFQs', 'processing timeouts: 2 RFQs', 'expired RFQ deadlines: 2 RFQs'],
+    ],
+  ] as const;
+  for (const [id, impacts] of cases) {
+    const value = loadRecordedFixture(id);
+    const html = renderToStaticMarkup(
+      <IncidentView
+        incident={{ ...incident, id }}
+        incidents={[]}
+        metrics={[]}
+        topology={null}
+        investigation={value}
+        investigating={false}
+        investigationMode="REPLAY"
+        onInvestigationMode={() => {}}
+        running={false}
+        onInvestigate={() => {}}
+        onEvidence={() => {}}
+        onIncident={() => {}}
+      />,
+    );
+    const header = html.match(/<header class="recorded-workspace-header"[\s\S]*?<\/header>/)![0];
+    for (const text of impacts) assert.ok(header.includes(text), text);
+    assert.ok(header.includes(value.assessment!.supported_failure_condition!));
+    assert.ok(header.includes('Initiating cause unconfirmed'));
+  }
+  const header = (value: Investigation) =>
+    render(value).match(/<header class="recorded-workspace-header"[\s\S]*?<\/header>/)![0];
+  assert.match(
+    header({ ...recording, assessment: null }),
+    /Recorded advisory condition unavailable/,
+  );
+  assert.match(header({ ...recording, assessment: null }), /Initiating cause unavailable/);
+  assert.match(
+    header({
+      ...recording,
+      assessment: {
+        ...recording.assessment!,
+        confirmed_cause: { statement: 'Exact returned cause', evidence_ids: ['LOG-001-001'] },
+      },
+    }),
+    /Initiating cause confirmed in recorded advisory: Exact returned cause/,
+  );
+});
+test('final_fix_context_retains_annotation_time_label_references_without_promoting_sources', () => {
+  const value = structuredClone(loadRecordedFixture('INC-DEMO-003'));
+  const owner = value.evidence.find((row) => row.kind === 'incident')!;
+  (owner.data.timeline as unknown[]).push(
+    {
+      timestamp: '2026-10-09T16:00:00Z',
+      label: '<script>Outside context</script>',
+      evidence_ids: ['LOG-003-001', 'OUTSIDE-NOT-RETURNED'],
+    },
+    {
+      timestamp: 'invalid-time',
+      label: 'Invalid annotation time',
+      evidence_ids: ['INVALID-NOT-RETURNED'],
+    },
+  );
+  const projection = projectRecording(value, value.incident_id);
+  assert.equal(projection.kind, 'ready');
+  if (projection.kind !== 'ready') return;
+  const html = renderToStaticMarkup(
+    <RecordedEvidenceTimeline
+      recording={projection.recording}
+      filters={defaultWorkspaceFilters(projection.recording)}
+      selectedSourceId={null}
+      onFilters={() => {}}
+      onSelect={() => {}}
+    />,
+  );
+  const annotations =
+    html.match(/<ol class="recorded-context-annotations"[\s\S]*?<\/ol>/)?.[0] ?? '';
+  assert.match(annotations, /Alert threshold crossed/);
+  assert.match(annotations, /2026-10-09T14:00:00Z/);
+  assert.match(annotations, /DEPLOY-003-001/);
+  assert.match(annotations, /Referenced in context; source not returned/);
+  assert.match(annotations, /2026-10-09T16:00:00Z/);
+  assert.match(annotations, /Outside returned-sample coverage/);
+  assert.match(annotations, /Invalid recorded annotation timestamp/);
+  assert.match(annotations, /&lt;script&gt;Outside context/);
+  assert.ok(!annotations.includes('<script>'));
+  assert.equal(projection.recording.sources.size, value.evidence.length);
+  assert.equal(projection.recording.sources.has('OUTSIDE-NOT-RETURNED'), false);
+  assert.equal(projection.recording.coverage!.endMs, Date.parse('2026-10-09T14:02:24Z'));
+});

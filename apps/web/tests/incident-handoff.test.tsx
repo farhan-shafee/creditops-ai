@@ -306,3 +306,11 @@ test('handoff_markdown_parser_preserves_hostile_recorded_text_and_generated_stru
     'generated source appendix list remains a list',
   );
 });
+
+test('final_fix_stakeholder_request_grammar_keeps_one_and_two_counts', () => {
+  const one = prepare(recording('INC-DEMO-001'), 'stakeholder').sections[0].paragraphs.join(' ');
+  assert.ok(one.includes('stale quotes for 1 request;'));
+  assert.ok(one.includes('unavailable quotes for 1 request;'));
+  assert.ok(one.includes('expired request deadlines for 2 requests'));
+  assert.ok(!one.includes('1 requests'));
+});

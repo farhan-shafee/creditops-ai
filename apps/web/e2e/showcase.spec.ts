@@ -1194,6 +1194,11 @@ test('workspace acceptance: genuine local layouts and print media retain limitat
     .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
   await shot('desktop-overview.png');
   await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page
+    .locator('.recorded-lanes')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('desktop-scrolled-evidence.png');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
   const row = page
     .getByRole('table', { name: 'Recorded observations' })
     .locator('tr[data-source-id="LOG-001-001"]');
@@ -1217,6 +1222,17 @@ test('workspace acceptance: genuine local layouts and print media retain limitat
     .locator('.recorded-readable-review')
     .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
   await shot('mobile-review.png');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.getByRole('tab', { name: 'Overview', exact: true }).click();
+  await page
+    .locator('.recorded-workspace-header')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('mobile-320-overview.png');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page
+    .locator('.recorded-evidence-columns')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('mobile-320-evidence.png');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
   for (const template of ['technical', 'stakeholder']) {
@@ -1269,20 +1285,17 @@ test('workspace acceptance: genuine local layouts and print media retain limitat
   }
   if (capture) {
     const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-    const diff = execFileSync(
-      'git',
-      [
-        'diff',
-        'HEAD',
-        '--',
-        'apps/web/e2e/showcase.spec.ts',
-        'apps/web/src/components/recorded-evidence-timeline.tsx',
-        'apps/web/src/app/globals.css',
-        'docs/DEMO_SCRIPT.md',
-        'docs/INTERVIEW_WALKTHROUGH.md',
-      ],
-      { cwd: root, encoding: 'utf8' },
-    );
+    const candidateScopeFiles = execFileSync('git', ['diff', '--name-only', 'HEAD'], {
+      cwd: root,
+      encoding: 'utf8',
+    })
+      .trim()
+      .split(/\r?\n/)
+      .filter(Boolean);
+    const diff = execFileSync('git', ['diff', 'HEAD', '--', ...candidateScopeFiles], {
+      cwd: root,
+      encoding: 'utf8',
+    });
     writeFileSync(resolve(out, 'task-5-capture-candidate.diff'), diff);
     writeFileSync(
       resolve(out, 'task-5-capture-metadata.json'),
@@ -1290,6 +1303,7 @@ test('workspace acceptance: genuine local layouts and print media retain limitat
         {
           capturedAt: new Date().toISOString(),
           candidateBaseSha: sha,
+          candidateScopeFiles,
           recordingSourceIds: loadAcceptanceRecording('INC-DEMO-001').evidence.map((e) => e.id),
           candidateDiffSha256: createHash('sha256').update(diff).digest('hex'),
           candidateDiffFile: 'task-5-capture-candidate.diff',
@@ -1304,4 +1318,337 @@ test('workspace acceptance: genuine local layouts and print media retain limitat
       ),
     );
   }
+});
+
+test('final fix: shared business coordinate pointer and keyboard choose exact owners', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  const point = page.locator('circle[data-source-id="BUSINESS-001-007"]');
+  await point.click();
+  const chooser = page.getByRole('group', { name: 'Overlapping recorded sources' });
+  await expect(chooser).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(await chooser.getByRole('button').allTextContents()).toEqual([
+    'BUSINESS-001-002',
+    'BUSINESS-001-007',
+  ]);
+  await chooser.getByRole('button', { name: 'BUSINESS-001-002', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('BUSINESS-001-002');
+  await page.keyboard.press('Escape');
+  await point.focus();
+  await page.keyboard.press('Enter');
+  await expect(chooser).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await chooser.getByRole('button', { name: 'BUSINESS-001-007', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('BUSINESS-001-007');
+});
+test('final fix: identical metric ties choose owners while distinct values stay direct', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.route('**/api/investigations/*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const response = await route.fetch(),
+      body = await response.json();
+    const source = body.evidence.find((e: { kind: string }) => e.kind === 'metric');
+    body.evidence.push(
+      { ...structuredClone(source), id: 'TIE-METRIC' },
+      {
+        ...structuredClone(source),
+        id: 'DISTINCT-METRIC',
+        data: { ...source.data, value: source.data.value + 5 },
+      },
+    );
+    await route.fulfill({ response, json: body });
+  });
+  await page.reload();
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page.getByLabel('Metric and unit').selectOption('');
+  const point = page.locator('circle[data-source-id="TIE-METRIC"]');
+  await point.click();
+  const chooser = page.getByRole('group', { name: 'Overlapping recorded sources' });
+  await expect(chooser).toBeVisible();
+  await expect(chooser.getByRole('button', { name: 'TIE-METRIC', exact: true })).toBeVisible();
+  await expect(chooser.getByRole('button', { name: 'DISTINCT-METRIC', exact: true })).toHaveCount(
+    0,
+  );
+  expect(await chooser.getByRole('button').count()).toBe(2);
+  await point.focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await chooser.getByRole('button', { name: 'TIE-METRIC', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('TIE-METRIC');
+  await page.keyboard.press('Escape');
+  await page.locator('circle[data-source-id="DISTINCT-METRIC"]').click();
+  await expect(page.getByRole('dialog')).toContainText('DISTINCT-METRIC');
+});
+test('final fix: economic order includes submission and retransmission with literal non-attribution', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Incident scenario').selectOption('fix-connectivity');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-002');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page.getByLabel('Economic order filter').selectOption('ORDER-DEMO-002-001');
+  const table = page.getByRole('table', { name: 'Recorded observations' });
+  const value = loadAcceptanceRecording('INC-DEMO-002');
+  const expected = value.evidence
+    .filter(
+      (e) =>
+        e.kind === 'business_event' &&
+        (e.data.economic_order_id ?? e.data.order_id) === 'ORDER-DEMO-002-001',
+    )
+    .map((e) => e.id)
+    .sort();
+  expect(
+    await table
+      .locator('tbody tr[data-source-id^="BUSINESS-"]')
+      .evaluateAll((es) => es.map((e) => e.getAttribute('data-source-id')).sort()),
+  ).toEqual(expected);
+  await expect(table.locator('tr[data-source-id="BUSINESS-002-005"]')).toContainText(
+    'order submitted',
+  );
+  await expect(
+    page
+      .locator('.recorded-selected-journey li')
+      .filter({ has: page.getByRole('button', { name: 'BUSINESS-002-005', exact: true }) }),
+  ).toContainText('ORDER_SUBMITTED');
+  await expect(table.locator('tr[data-source-id="BUSINESS-002-008"]')).toContainText(
+    'fix retransmission',
+  );
+  await expect(
+    page
+      .locator('.recorded-selected-journey li')
+      .filter({ has: page.getByRole('button', { name: 'BUSINESS-002-008', exact: true }) }),
+  ).toContainText('FIX_RETRANSMISSION');
+  await expect(table.locator('tr[data-related="false"]').first()).toContainText(
+    'Not attributed to this economic order',
+  );
+  await expect(table.locator('tr[data-source-id="LOG-002-001"]')).toContainText(
+    'Not attributed to this economic order',
+  );
+  await page.getByLabel('Request filter').selectOption('RFQ-DEMO-002-002');
+  await expect(page.getByLabel('Economic order filter')).toHaveValue('');
+  await expect(table.locator('tr[data-related="false"]').first()).toContainText(
+    'Not attributed to this RFQ',
+  );
+  await page.getByRole('button', { name: 'Reset display filters' }).click();
+  await expect(page.getByLabel('Request filter')).toHaveValue('');
+  await expect(page.getByLabel('Economic order filter')).toHaveValue('');
+});
+test('final fix: denied storage clear removes local notes and pins without requests', async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'sessionStorage', {
+      get() {
+        throw Error('denied');
+      },
+    }),
+  );
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('memory only');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.keyboard.press('Escape');
+  const calls: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/api/')) calls.push(r.url());
+  });
+  await page.getByTestId('personal-clear').click();
+  await expect(page.getByLabel('Personal note')).toHaveValue('');
+  await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+  await expect(page.getByTestId('personal-workspace')).toContainText(/cleared in memory/i);
+  await expect(page.getByTestId('personal-workspace')).toContainText(/stored entry.*may reappear/i);
+  expect(calls).toEqual([]);
+});
+test('final fix: missing durable identity clear is local and invalid entry remains locked on removal denial', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.route('**/api/investigations/*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const response = await route.fetch(),
+      body = await response.json();
+    delete body.provenance.showcase.source_sha256;
+    await route.fulfill({ response, json: body });
+  });
+  await page.reload();
+  await page.getByLabel('Personal note').fill('keyless note');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+  await page.getByTestId('personal-clear').click();
+  await expect(page.getByLabel('Personal note')).toHaveValue('');
+  await expect(page.getByTestId('personal-workspace')).toContainText(/cleared in memory/i);
+  await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+  await page.unroute('**/api/investigations/*');
+  await page.reload();
+  await page.getByLabel('Personal note').fill('valid entry');
+  await page.evaluate(() => {
+    const k = Object.keys(sessionStorage).find((k) => k.startsWith('creditops-workspace:v1:'))!;
+    sessionStorage.setItem(k, 'malformed');
+  });
+  await page.reload();
+  await page.evaluate(() => {
+    Storage.prototype.removeItem = () => {
+      throw Error('denied');
+    };
+  });
+  await page.getByTestId('personal-clear').click();
+  await expect(page.getByLabel('Personal note')).toBeDisabled();
+  await expect(page.getByTestId('personal-workspace')).toContainText(/invalid/i);
+});
+test('final fix: shared summary persists across all records and tabs with bounded desktop columns', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  for (const [scenario, id] of examples) {
+    if (id !== 'INC-DEMO-001') await page.getByLabel('Incident scenario').selectOption(scenario);
+    if (id !== 'INC-DEMO-001')
+      await page
+        .locator('.scenario-controls')
+        .getByRole('button', { name: 'View recorded investigation', exact: true })
+        .click();
+    await expect(page.getByTestId('recorded-workspace')).toContainText(id);
+    const value = loadAcceptanceRecording(id),
+      header = page.locator('.recorded-workspace-header');
+    for (const name of ['Overview', 'Evidence', 'Review', 'Handoff']) {
+      await page.getByRole('tab', { name, exact: true }).click();
+      await expect(header).toContainText(value.assessment!.supported_failure_condition!);
+      await expect(header).toContainText('Initiating cause unconfirmed');
+      await expect(header).toContainText('2 returned RFQs');
+      for (const impact of id === 'INC-DEMO-001'
+        ? ['stale quotes: 1 RFQ', 'unavailable quotes: 1 RFQ', 'expired RFQ deadlines: 2 RFQs']
+        : id === 'INC-DEMO-002'
+          ? ['2 economic order identities', 'uncertain acknowledgements: 2 RFQs']
+          : ['processing timeouts: 2 RFQs', 'expired RFQ deadlines: 2 RFQs'])
+        await expect(header).toContainText(impact);
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('tab', { name: 'Overview', exact: true }).click();
+  expect(
+    await page
+      .locator('.recorded-overview-columns')
+      .evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length),
+  ).toBe(2);
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  expect(
+    await page
+      .locator('.recorded-evidence-columns')
+      .evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length),
+  ).toBe(2);
+  const header = page.locator('.recorded-workspace-header');
+  expect(await header.evaluate((e) => getComputedStyle(e).position)).toBe('sticky');
+  await page.locator('.recorded-lanes').evaluate((e) => e.scrollIntoView({ block: 'start' }));
+  expect((await header.boundingBox())!.height).toBeLessThan(360);
+  expect((await header.boundingBox())!.y).toBeGreaterThanOrEqual(0);
+  for (const width of [768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await header.evaluate((e) => getComputedStyle(e).position)).toBe('static');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+});
+
+test('final fix: desktop sticky composition stacks at mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openWorkspace(page);
+  const header = page.locator('.recorded-workspace-header');
+  expect(await header.evaluate((e) => getComputedStyle(e).position)).toBe('sticky');
+  expect(
+    await page
+      .locator('.recorded-overview-columns')
+      .evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length),
+  ).toBe(2);
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  expect(
+    await page
+      .locator('.recorded-evidence-columns')
+      .evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length),
+  ).toBe(2);
+  await page
+    .locator('.recorded-lanes')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  const bounds = (await header.boundingBox())!;
+  expect(bounds.y).toBeGreaterThanOrEqual(0);
+  expect(bounds.y).toBeLessThanOrEqual(76);
+  expect(bounds.height).toBeLessThan(360);
+  for (const width of [768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await header.evaluate((e) => getComputedStyle(e).position)).toBe('static');
+    expect(
+      await page
+        .locator('.recorded-evidence-columns')
+        .evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length),
+    ).toBe(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+});
+
+test('final fix: timestamped context keeps outside and invalid annotations inert with exact returned references', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await page.route('**/api/investigations/*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const response = await route.fetch(),
+      body = await response.json();
+    const owner = body.evidence.find((e: { kind: string }) => e.kind === 'incident');
+    owner.data.timeline.push(
+      {
+        timestamp: '2026-10-09T16:00:00Z',
+        label: 'Outside coverage context',
+        evidence_ids: ['LOG-003-001', 'CONTEXT-MISSING'],
+      },
+      {
+        timestamp: 'invalid-time',
+        label: 'Invalid annotation time',
+        evidence_ids: ['CONTEXT-INVALID-MISSING'],
+      },
+    );
+    await route.fulfill({ response, json: body });
+  });
+  await page.reload();
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  const lookups: string[] = [];
+  page.on('request', (r) => {
+    if (/\/api\/evidence\//.test(r.url())) lookups.push(r.url());
+  });
+  const annotations = page.locator('.recorded-context-annotations');
+  await expect(annotations).toContainText('Alert threshold crossed');
+  await expect(annotations).toContainText('2026-10-09T14:00:00Z');
+  await expect(annotations).toContainText('DEPLOY-003-001');
+  const outside = annotations
+    .locator(':scope > li')
+    .filter({ hasText: 'Outside coverage context' });
+  await expect(outside).toContainText('2026-10-09T16:00:00Z');
+  await expect(outside).toContainText('Outside returned-sample coverage');
+  await expect(outside).toContainText('Referenced in context; source not returned');
+  await expect(outside.getByRole('button', { name: 'CONTEXT-MISSING', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(annotations).toContainText('Invalid recorded annotation timestamp');
+  await expect(page.locator('circle[data-source-id="CONTEXT-MISSING"]')).toHaveCount(0);
+  await outside.getByRole('button', { name: 'LOG-003-001', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('LOG-003-001');
+  await page.keyboard.press('Escape');
+  expect(lookups).toEqual([]);
 });
