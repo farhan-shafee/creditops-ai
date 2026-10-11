@@ -1,4 +1,9 @@
 'use client';
+import {
+  INCIDENT_NOTES_CLEARED_EVENT,
+  browserNotesStorage,
+  clearIncidentNotes,
+} from '@/lib/workspace-notes';
 import type { RecordedSourceControls } from './recorded-incident-workspace';
 
 import Link from 'next/link';
@@ -120,6 +125,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const [investigationMode, setInvestigationMode] = useState<InvestigationMode>('REPLAY');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [personalCleanupFailures, setPersonalCleanupFailures] = useState<
+    Array<{ sessionId: string; incidentId: string }>
+  >([]);
   const [connected, setConnected] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [workspaceSessionId, setWorkspaceSessionId] = useState<string | null>(null);
@@ -215,11 +223,11 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     [refresh],
   );
 
-  const stopInvestigation = useCallback(() => {
+  const stopInvestigation = useCallback((preserveResult = false) => {
     investigationGenerationRef.current += 1;
     abortRef.current?.abort();
     setInvestigating(false);
-    setInvestigation(null);
+    if (!preserveResult) setInvestigation(null);
     evidenceRequestRef.current += 1;
     setEvidenceId(null);
     setSourceControls(null);
@@ -439,17 +447,37 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       setBusy(false);
     }
   };
+  const cleanPersonalScope = (scope: { sessionId: string; incidentId: string }) => {
+    const cleared = clearIncidentNotes(browserNotesStorage(), scope.sessionId, scope.incidentId);
+    setPersonalCleanupFailures((previous) => {
+      const otherScopes = previous.filter(
+        (item) => item.sessionId !== scope.sessionId || item.incidentId !== scope.incidentId,
+      );
+      return cleared ? otherScopes : [...otherScopes, scope];
+    });
+    if (cleared)
+      window.dispatchEvent(new CustomEvent(INCIDENT_NOTES_CLEARED_EVENT, { detail: scope }));
+  };
   const reset = async () => {
     if (scenarioOperationRef.current) return;
     scenarioOperationRef.current = true;
     const generation = ++selectionGenerationRef.current;
     const scenario = selectedScenario;
+    const resetting = incidents.find((item) => item.scenario === scenario);
+    const resetSession = sessionId();
     setBusy(true);
     setError(null);
-    stopInvestigation();
+    // Keep the current recorded result and personal state while reset is pending or fails.
+    stopInvestigation(
+      Boolean(
+        investigation?.mode === 'REPLAY' &&
+        investigation.provenance?.showcase &&
+        investigation.incident_id === resetting?.id,
+      ),
+    );
     try {
       await api(`/demo/scenarios/${scenario}/reset`, { method: 'POST' });
-      const resetting = incidents.find((item) => item.scenario === scenario);
+      if (resetting) cleanPersonalScope({ sessionId: resetSession, incidentId: resetting.id });
       if (resetting) removeStorage(`creditops-investigation:v1:${resetting.id}`);
       setIncidents((previous) => previous.filter((item) => item.scenario !== scenario));
       if (generation !== selectionGenerationRef.current) return;
@@ -647,6 +675,26 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
               </span>
             </div>
           </div>
+          {personalCleanupFailures.map((scope) => (
+            <div
+              className="error-banner personal-cleanup-failure"
+              role="alert"
+              data-testid="personal-cleanup-failure"
+              key={JSON.stringify([scope.sessionId, scope.incidentId])}
+            >
+              <div>
+                <strong>Scenario reset succeeded; personal cleanup could not finish.</strong>
+                <p>
+                  This tab could not clear notes and pins for {scope.incidentId} in the captured
+                  session. Stored notes and pins may remain and reappear when the recording is
+                  reopened.
+                </p>
+              </div>
+              <button className="button secondary" onClick={() => cleanPersonalScope(scope)}>
+                Retry personal cleanup for {scope.incidentId}
+              </button>
+            </div>
+          ))}
           {error && (
             <div className="error-banner" role="alert">
               <span>{error}</span>

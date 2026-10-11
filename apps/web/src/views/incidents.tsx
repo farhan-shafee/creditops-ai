@@ -65,6 +65,12 @@ export function ScenarioControls({
         <RotateCcw size={14} />
         Reset Scenario
       </button>
+      {showcaseProfile && (
+        <p className="scenario-reset-note">
+          After scenario reset, this tab attempts to clear notes and pins for that incident&apos;s
+          recording versions. Any storage cleanup failure is reported separately.
+        </p>
+      )}
       <span className="clock-caption">
         <Clock3 size={13} />
         {showcaseProfile ? 'Recorded snapshot · UTC' : 'Simulated clock · 12×'}

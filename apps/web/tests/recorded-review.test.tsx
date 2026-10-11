@@ -123,3 +123,37 @@ test('review_unavailable_states_are_independent_and_do_not_substitute_playback',
   assert.equal(independent.advisoryAvailability, 'unavailable');
   assert.deepEqual(independent.rows[0].original, { kind: 'value', value: '' });
 });
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { RecordedAssessmentReview } from '../src/components/recorded-assessment-review';
+test('review_is_readable_verbatim_and_inert', () => {
+  const value = loadRecordedFixture('INC-DEMO-002');
+  value.provider_proposal!.incident_summary = '<script>alert("proposal")</script>';
+  value.provider_proposal!.supporting_evidence_ids = ['MISSING', value.evidence[0].id];
+  const before = structuredClone(value);
+  const html = renderToStaticMarkup(
+    <RecordedAssessmentReview
+      review={projectRecordedReview(value)}
+      sources={new Map(value.evidence.map((e) => [e.id, e]))}
+      onEvidence={() => {
+        throw Error('render is inert');
+      }}
+    />,
+  );
+  for (const text of [
+    'Field',
+    'Original model proposal',
+    'Recorded advisory',
+    'known_domain_rule_normalization',
+    'execution_provenance_limitation',
+    'Unique normalized paths',
+    'Project review notes',
+    'Playback validation',
+  ])
+    assert.ok(html.includes(text), text);
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.ok(!html.includes('<script>'));
+  assert.ok(html.includes('MISSING — unavailable'));
+  assert.ok(html.includes(value.assessment!.incident_summary.replaceAll('&', '&amp;')));
+  assert.deepEqual(value, before);
+});

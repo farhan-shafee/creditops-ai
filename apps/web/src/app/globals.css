@@ -3694,3 +3694,90 @@ td code {
   outline: 2px solid #efc56e;
   outline-offset: 3px;
 }
+
+.recorded-review-head,
+.recorded-review-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  padding: 18px 0;
+}
+.recorded-review-row > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.recorded-review-row h3 {
+  font-size: 15px;
+}
+.recorded-verbatim {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.recorded-readable-review ol,
+.recorded-readable-review ul {
+  padding-left: 22px;
+}
+.recorded-readable-review dd {
+  margin: 0 0 12px;
+}
+.review-mobile-label {
+  display: none;
+}
+.personal-workspace-body textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+.personal-workspace-body {
+  overflow-wrap: anywhere;
+}
+.personal-pins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+.personal-pins li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.scenario-reset-note {
+  flex-basis: 100%;
+  font-size: 14px;
+  line-height: 1.5;
+}
+@media (max-width: 768px) {
+  .recorded-review-head {
+    display: none;
+  }
+  .recorded-review-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .review-mobile-label {
+    display: block;
+    margin-bottom: 8px;
+  }
+}
+
+.personal-cleanup-failure {
+  flex-wrap: wrap;
+}
+.personal-cleanup-failure > div {
+  flex: 1 1 260px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.personal-cleanup-failure button {
+  white-space: normal;
+}

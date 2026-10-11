@@ -1,3 +1,6 @@
+import { RecordedAssessmentReview } from './recorded-assessment-review';
+import { projectRecordedReview } from '@/lib/recorded-review';
+import { PersonalWorkspacePanel, useWorkspaceNotes } from './personal-workspace-panel';
 import { useEffect, useRef, useState } from 'react';
 import type { RecordedRecording, WorkspaceFilters } from '@/lib/recorded-evidence';
 import {
@@ -23,6 +26,8 @@ export type RecordedSourceControls = {
   pinned: boolean;
   onReveal: () => void;
   onTogglePin: () => void;
+  pinDisabled: boolean;
+  pinMessage: string | null;
 };
 type Props = {
   recording: RecordedRecording;
@@ -39,12 +44,19 @@ export function RecordedIncidentWorkspace(props: Props) {
   const identity = recording.identity;
   return (
     <WorkspaceBody
-      key={JSON.stringify([recording.investigation.id, identity, recording.investigation.evidence])}
+      key={JSON.stringify([
+        recording.investigation.id,
+        identity,
+        recording.investigation.evidence,
+        props.sessionId,
+      ])}
       {...props}
     />
   );
 }
 function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: Props) {
+  const notes = useWorkspaceNotes(recording, sessionId);
+  const { result: personal, ready: notesReady, togglePin } = notes;
   const [section, setSection] = useState(0),
     [focus, setFocus] = useState(0);
   const [filters, setFilters] = useState(() => initialFilters(recording));
@@ -79,16 +91,29 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
       incidentId: recording.incident.id,
       sourceId: selectedSourceId,
       hiddenByFilters: hidden,
-      pinned: false,
+      pinned: personal.state.pinnedIds.includes(selectedSourceId),
+      pinDisabled:
+        !notesReady ||
+        personal.status === 'invalid' ||
+        (!personal.state.pinnedIds.includes(selectedSourceId) &&
+          personal.state.pinnedIds.length >= 20),
+      pinMessage:
+        personal.status === 'invalid'
+          ? 'Clear invalid personal state before pinning.'
+          : personal.state.pinnedIds.length >= 20
+            ? 'Maximum 20 source pins per recording.'
+            : null,
       onReveal: () => {
         if (current.current === recording) {
           setFilters((value) => revealRecordedSource(recording, value, selectedSourceId));
         }
       },
-      onTogglePin: () => {},
+      onTogglePin: () => {
+        if (current.current === recording) togglePin(selectedSourceId);
+      },
     });
     return () => onSourceControls(null);
-  }, [recording, selectedSourceId, hidden, onSourceControls]);
+  }, [recording, selectedSourceId, hidden, onSourceControls, personal, notesReady, togglePin]);
   const select = (id: string) => {
     if (recording.sources.has(id)) setSelectedSourceId(id);
     onEvidence(id);
@@ -242,12 +267,11 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         hidden={section !== 2}
         tabIndex={0}
       >
-        <Panel title="Recorded review" eyebrow="Read-only review">
-          <p className="padded">
-            Field-by-field review is pending. The original proposal and recorded review notes remain
-            available in Overview.
-          </p>
-        </Panel>
+        <RecordedAssessmentReview
+          review={projectRecordedReview(investigation)}
+          sources={recording.sources}
+          onEvidence={select}
+        />
       </div>
       <div
         id="recorded-panel-3"
@@ -257,12 +281,10 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         tabIndex={0}
       >
         <Panel title="Draft handoff" eyebrow="Human review required">
-          <p className="padded">
-            Personal notes, source pins and draft handoffs are pending. No handoff has been
-            generated.
-          </p>
+          <p className="padded">Draft handoffs are pending. No handoff has been generated.</p>
         </Panel>
       </div>
+      <PersonalWorkspacePanel notes={notes} onEvidence={select} />
     </section>
   );
 }

@@ -49,7 +49,8 @@ export function EvidenceDrawer({
     return () => {
       document.removeEventListener('keydown', handler);
       document.body.style.overflow = original;
-      prior?.focus();
+      if (prior?.isConnected) prior.focus();
+      else document.querySelector<HTMLElement>('[data-testid="personal-clear"]')?.focus();
     };
   }, [onClose]);
   return (
@@ -99,11 +100,16 @@ export function EvidenceDrawer({
             )}
             <button
               className="button secondary"
-              disabled
-              title="Personal source pins arrive in the next slice"
+              disabled={recordedControls.pinDisabled}
+              title={recordedControls.pinMessage ?? undefined}
+              onClick={() => {
+                closeRef.current?.focus();
+                recordedControls.onTogglePin();
+              }}
             >
-              Pins pending
+              {recordedControls.pinned ? 'Unpin source' : 'Pin source'}
             </button>
+            {recordedControls.pinMessage && <p role="status">{recordedControls.pinMessage}</p>}
           </div>
         )}
         {error ? (

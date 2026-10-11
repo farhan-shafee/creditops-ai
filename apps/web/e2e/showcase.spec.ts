@@ -104,7 +104,11 @@ async function openWorkspace(page: import('@playwright/test').Page) {
     .and(page.locator('[data-scenario="kafka-pricing-lag"]'))
     .click();
   await page.getByTestId('view-recorded-investigation').click();
+  await expect(page).toHaveURL(/\/incidents/);
   await expect(page.getByTestId('recorded-workspace')).toBeVisible();
+  await expect(
+    page.getByTestId('recorded-workspace').locator('.recorded-facts dd').nth(1),
+  ).toHaveText('complete');
 }
 test('workspace shell: manual keyboard tabs retain focus and activation', async ({ page }) => {
   await openWorkspace(page);
@@ -287,7 +291,11 @@ test('workspace shell: keyboard Reveal retains modal focus and trap', async ({ p
   await expect(dialog).not.toContainText('Hidden by filters');
   await expect(close).toBeFocused();
   await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Pin source', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Pin source', exact: true })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
@@ -318,4 +326,278 @@ test('workspace shell: Overview citation Reveal close restores a visible trigger
   await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
   await expect(page.getByTestId('selected-source-state')).toContainText(sourceId);
   await expect(page.getByTestId('selected-source-state')).not.toContainText('Hidden by filters');
+});
+test('workspace notes: refresh restores personal state and resets display without investigation POST', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  const posts: string[] = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && /\/api\/investigations/.test(r.url())) posts.push(r.url());
+  });
+  const note = page.getByLabel('Personal note');
+  await note.fill('<img src=x onerror=alert(1)>');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page.getByLabel('Service filter').selectOption('pricing-service');
+  await page.reload();
+  await expect(note).toHaveValue('<img src=x onerror=alert(1)>');
+  await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await expect(page.getByLabel('Service filter')).toHaveValue('');
+  await page.getByRole('button', { name: 'Reset display filters', exact: true }).click();
+  await expect(note).toHaveValue('<img src=x onerror=alert(1)>');
+  expect(posts).toEqual([]);
+});
+test('workspace notes: failed reset preserves notes and successful reset clears captured incident', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('captured note');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page.route('**/api/demo/scenarios/kafka-pricing-lag/reset', (route) =>
+    route.fulfill({ status: 500, json: { detail: 'Reset failed' } }),
+  );
+  await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+  await expect(page.getByText('Reset failed', { exact: true })).toBeVisible();
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await expect(page.getByRole('button', { name: 'Unpin source', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await expect(page.getByLabel('Personal note')).toHaveValue('captured note');
+  await page.reload();
+  await expect(page.getByLabel('Personal note')).toHaveValue('captured note');
+  await page.unroute('**/api/demo/scenarios/kafka-pricing-lag/reset');
+  await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+  await expect(page.getByTestId('recorded-workspace')).not.toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Object.keys(sessionStorage).filter((k) => k.startsWith('creditops-workspace:v1:')),
+      ),
+    )
+    .toEqual([]);
+});
+test('workspace notes: denied storage keeps edits in memory with refresh warning', async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'sessionStorage', {
+      get() {
+        throw Error('denied');
+      },
+    }),
+  );
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('memory note');
+  await expect(page.getByTestId('personal-workspace')).toContainText(/lost on refresh/);
+  await expect(page.getByLabel('Personal note')).toHaveValue('memory note');
+});
+test('workspace notes: malformed entry has current-record clear option', async ({ page }) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('create entry');
+  await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((k) => k.startsWith('creditops-workspace:v1:'))!;
+    sessionStorage.setItem(key, 'malformed');
+  });
+  await page.reload();
+  await expect(page.getByTestId('personal-workspace')).toContainText(/invalid/i);
+  await page
+    .getByRole('button', { name: 'Clear current record notes and pins', exact: true })
+    .click();
+  await expect(page.getByLabel('Personal note')).toHaveValue('');
+  await expect(page.getByTestId('personal-workspace')).not.toContainText(/invalid/i);
+});
+test('workspace notes: record switches restore own entries and separate tabs do not synchronize', async ({
+  page,
+  context,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('kafka personal');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await expect(page.getByLabel('Personal note')).toHaveValue('');
+  await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+  await page.getByLabel('Personal note').fill('database personal');
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-001');
+  await expect(page.getByLabel('Personal note')).toHaveValue('kafka personal');
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+  const other = await context.newPage();
+  try {
+    await other.goto('/incidents');
+    await expect(other.getByLabel('Personal note')).toHaveValue('');
+    await other.getByLabel('Personal note').fill('other tab');
+    await expect(page.getByLabel('Personal note')).toHaveValue('kafka personal');
+    await page.reload();
+    await expect(page.getByLabel('Personal note')).toHaveValue('kafka personal');
+  } finally {
+    await other.close();
+  }
+});
+test('workspace notes: full storage warns while successful late reset clears captured scope only', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('kafka note');
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await page.getByLabel('Personal note').fill('database note');
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByLabel('Personal note')).toHaveValue('kafka note');
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let reached!: () => void;
+  const started = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  await page.route('**/api/demo/scenarios/kafka-pricing-lag/reset', async (route) => {
+    reached();
+    await gate;
+    await route.continue();
+  });
+  await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+  await started;
+  // Inject a late event to exercise captured scope while the clock locks selection.
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion', { force: true });
+  release();
+  await expect(page.getByLabel('Personal note')).toHaveValue('database note');
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Object.keys(sessionStorage)
+          .filter((k) => k.startsWith('creditops-workspace:v1:'))
+          .map((k) => sessionStorage.getItem(k))
+          .join(''),
+      ),
+    )
+    .not.toContain('kafka note');
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) {
+      if (k.startsWith('creditops-workspace:v1:')) throw Error('quota');
+      original.call(this, k, v);
+    };
+  });
+  await page.getByLabel('Personal note').fill('memory retained');
+  await expect(page.getByTestId('personal-workspace')).toContainText('lost on refresh');
+  await expect(page.getByLabel('Personal note')).toHaveValue('memory retained');
+});
+test('workspace notes: unpin from personal citation retains a visible close focus target', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Close evidence' })).toBeFocused();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page
+    .getByTestId('personal-workspace')
+    .getByRole('button')
+    .filter({ has: page.locator('svg') })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Unpin source', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Close evidence' })).toBeFocused();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Clear current record notes and pins', exact: true }),
+  ).toBeFocused();
+});
+test('workspace notes: successful reset discloses removal denial and retries captured personal cleanup only', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('retained after backend reset');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page.evaluate(() => {
+    const current = Object.keys(sessionStorage).find((k) =>
+      k.startsWith('creditops-workspace:v1:'),
+    )!;
+    const parts = current.split(':');
+    parts[3] = 'INC-DEMO-003';
+    sessionStorage.setItem(
+      parts.join(':'),
+      JSON.stringify({ note: 'unrelated incident', pinnedIds: [] }),
+    );
+    const original = Storage.prototype.removeItem;
+    (window as unknown as { restorePersonalRemoval: () => void }).restorePersonalRemoval = () => {
+      Storage.prototype.removeItem = original;
+    };
+    Storage.prototype.removeItem = function (key) {
+      if (key.startsWith('creditops-workspace:v1:')) throw Error('raw-storage-secret-marker');
+      original.call(this, key);
+    };
+  });
+  const resets: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && /\/api\/demo\/scenarios\/.*\/reset$/.test(request.url()))
+      resets.push(request.url());
+  });
+  await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+  await expect(page.getByTestId('recorded-workspace')).not.toBeVisible();
+  const failure = page.getByTestId('personal-cleanup-failure');
+  await expect(failure).toContainText('Scenario reset succeeded');
+  await expect(failure).toContainText('INC-DEMO-001');
+  await expect(failure).toContainText('captured session');
+  await expect(failure).toContainText('Stored notes and pins may remain');
+  await expect(failure).not.toContainText('raw-storage-secret-marker');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          Object.keys(sessionStorage).filter((k) => k.startsWith('creditops-workspace:v1:')).length,
+      ),
+    )
+    .toBe(2);
+  await failure
+    .getByRole('button', { name: 'Retry personal cleanup for INC-DEMO-001', exact: true })
+    .click();
+  await expect(failure).toBeVisible();
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByLabel('Personal note')).toHaveValue('retained after backend reset');
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+  await page.evaluate(() =>
+    (window as unknown as { restorePersonalRemoval: () => void }).restorePersonalRemoval(),
+  );
+  const postsBeforeRetry = resets.length;
+  await failure
+    .getByRole('button', { name: 'Retry personal cleanup for INC-DEMO-001', exact: true })
+    .click();
+  await expect(failure).toHaveCount(0);
+  await expect(page.getByLabel('Personal note')).toHaveValue('');
+  await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+  const retained = await page.evaluate(() =>
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith('creditops-workspace:v1:'))
+      .map((k) => sessionStorage.getItem(k)),
+  );
+  expect(retained).toEqual([JSON.stringify({ note: 'unrelated incident', pinnedIds: [] })]);
+  expect(resets.length).toBe(postsBeforeRetry);
+  expect(resets).toHaveLength(1);
 });
