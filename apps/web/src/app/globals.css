@@ -3856,6 +3856,12 @@ td code {
   @page {
     margin: 16mm;
   }
+  html:has(.handoff-preview) {
+    color-scheme: light;
+    background: white;
+    color: black;
+  }
+
   body:has(.handoff-preview) {
     background: white;
     color: black;
@@ -3913,4 +3919,20 @@ td code {
     color: black;
     overflow-wrap: anywhere;
   }
+}
+
+.recorded-filter-notice {
+  border-left: 3px solid var(--teal);
+  padding: 8px 12px;
+  background: var(--panel);
+}
+.recorded-lane-boundaries,
+.recorded-lane-coverage {
+  margin: 8px 0;
+}
+.recorded-lane-gaps {
+  margin: 12px 0;
+}
+.recorded-lane-gaps ul {
+  padding-left: 20px;
 }

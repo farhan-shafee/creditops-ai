@@ -1,4 +1,27 @@
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+import type { Investigation } from '../src/lib/types';
+function loadAcceptanceRecording(id: string): Investigation {
+  return JSON.parse(
+    readFileSync(resolve(process.cwd(), '../../data/showcase', id + '.json'), 'utf8'),
+  ).payload.investigation;
+}
 import { test, expect } from '@playwright/test';
+
+async function expectHandoffPrintCanvas(page: import('@playwright/test').Page) {
+  const canvas = await page.evaluate(() => ({
+    colorScheme: getComputedStyle(document.documentElement).colorScheme,
+    rootBackground: getComputedStyle(document.documentElement).backgroundColor,
+    bodyBackground: getComputedStyle(document.body).backgroundColor,
+  }));
+  expect(canvas).toEqual({
+    colorScheme: 'light',
+    rootBackground: 'rgb(255, 255, 255)',
+    bodyBackground: 'rgb(255, 255, 255)',
+  });
+}
 
 const examples = [
   ['kafka-pricing-lag', 'INC-DEMO-001', /pricing-service.*Kafka consumer backlog/i],
@@ -385,7 +408,7 @@ test('workspace notes: failed reset preserves notes and successful reset clears 
     )
     .toEqual([]);
 });
-test('workspace notes: denied storage keeps edits in memory with refresh warning', async ({
+test('workspace acceptance: denied storage keeps edits in memory with refresh warning', async ({
   page,
 }) => {
   await page.addInitScript(() =>
@@ -400,7 +423,7 @@ test('workspace notes: denied storage keeps edits in memory with refresh warning
   await expect(page.getByTestId('personal-workspace')).toContainText(/lost on refresh/);
   await expect(page.getByLabel('Personal note')).toHaveValue('memory note');
 });
-test('workspace notes: malformed entry has current-record clear option', async ({ page }) => {
+test('workspace acceptance: malformed entry has current-record clear option', async ({ page }) => {
   await openWorkspace(page);
   await page.getByLabel('Personal note').fill('create entry');
   await page.evaluate(() => {
@@ -449,7 +472,7 @@ test('workspace notes: record switches restore own entries and separate tabs do 
     await other.close();
   }
 });
-test('workspace notes: full storage warns while successful late reset clears captured scope only', async ({
+test('workspace acceptance: full storage warns while locked reset clears captured scope only', async ({
   page,
 }) => {
   await openWorkspace(page);
@@ -478,8 +501,11 @@ test('workspace notes: full storage warns while successful late reset clears cap
   });
   await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
   await started;
-  // Inject a late event to exercise captured scope while the clock locks selection.
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  // A forced event is blocked by scenarioOperationRef; it does not advance selection generation.
   await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion', { force: true });
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-001');
+  await expect(page.getByLabel('Personal note')).toHaveValue('kafka note');
   release();
   await expect(page.getByLabel('Personal note')).toHaveValue('database note');
   await expect
@@ -524,7 +550,7 @@ test('workspace notes: unpin from personal citation retains a visible close focu
     page.getByRole('button', { name: 'Clear current record notes and pins', exact: true }),
   ).toBeFocused();
 });
-test('workspace notes: successful reset discloses removal denial and retries captured personal cleanup only', async ({
+test('workspace acceptance: successful reset discloses removal denial and retries captured personal cleanup only', async ({
   page,
 }) => {
   await openWorkspace(page);
@@ -602,7 +628,7 @@ test('workspace notes: successful reset discloses removal denial and retries cap
   expect(resets).toHaveLength(1);
 });
 
-test('workspace handoff: prepare both drafts and copy captured Markdown locally', async ({
+test('workspace acceptance: prepare both drafts and copy captured Markdown locally', async ({
   page,
 }) => {
   await page.clock.install({ time: new Date('2030-01-02T03:00:00Z') });
@@ -716,7 +742,7 @@ test('workspace handoff: prepare both drafts and copy captured Markdown locally'
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(2);
 });
-test('workspace handoff: rejected clipboard exposes identical selectable Markdown and clean print', async ({
+test('workspace acceptance: rejected clipboard exposes identical selectable Markdown and clean print', async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -751,6 +777,7 @@ test('workspace handoff: rejected clipboard exposes identical selectable Markdow
   await page.getByRole('button', { name: 'Print draft', exact: true }).click();
   expect(await page.evaluate(() => (window as unknown as { printed: boolean }).printed)).toBe(true);
   await page.emulateMedia({ media: 'print' });
+  await expectHandoffPrintCanvas(page);
   await expect(preview).toBeVisible();
   await expect(preview.locator('time[data-prepared-at]')).toHaveText(printPreparedAt);
   await expect(preview).toContainText('Material limitations and uncertainty');
@@ -778,6 +805,503 @@ test('workspace handoff: rejected clipboard exposes identical selectable Markdow
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
       false,
+    );
+  }
+});
+
+// Oracles are read-only clones of preserved packaged bytes; UI interactions remain real.
+for (const [scenario, incident] of examples) {
+  test(
+    'workspace acceptance: ' + incident + ' full recording flow stays source-faithful and local',
+    async ({ page }) => {
+      const oracle = loadAcceptanceRecording(incident);
+      const calls: string[] = [];
+      page.on('request', (r) => {
+        if (
+          /\/api\/diagnostics\//.test(r.url()) ||
+          (r.method() === 'POST' && /\/api\/investigations$/.test(r.url()))
+        )
+          calls.push(r.url());
+      });
+      await page.goto('/');
+      await page
+        .getByTestId('recorded-example')
+        .and(page.locator('[data-scenario="' + scenario + '"]'))
+        .click();
+      await page.getByTestId('view-recorded-investigation').click();
+      const workspace = page.getByTestId('recorded-workspace');
+      await expect(workspace).toBeVisible();
+      await expect(workspace.locator('.recorded-facts dd').nth(0)).toHaveText(
+        oracle.provenance!.showcase!.recorded_execution_outcome ?? 'Not recorded',
+      );
+      await expect(workspace.locator('.recorded-facts dd').nth(1)).toHaveText('complete');
+      await expect(page.getByTestId('failure-domain')).toHaveText(
+        oracle.assessment!.probable_failure_domain,
+      );
+      await page.getByText('Technical provenance and diagnostic activity', { exact: true }).click();
+      await expect(page.getByTestId('recorded-action-summary')).toContainText(
+        '4 initial MCP checks selected by the application',
+      );
+      await expect(page.getByTestId('recorded-action-summary')).toContainText('1 model decision');
+      await expect(page.getByTestId('recorded-action-summary')).toContainText('1 model assessment');
+      await expect(page.getByTestId('recorded-action-summary')).toContainText(
+        'No model-selected follow-up diagnostics',
+      );
+      await expect(page.getByTestId('recorded-model-action')).toHaveCount(2);
+      await expect(
+        page.getByText('Application-runbook initial diagnostic', { exact: true }),
+      ).toHaveCount(4);
+      await expect(
+        page.getByText('Validator-authored assessment check', { exact: true }),
+      ).toHaveCount(1);
+      const business = oracle.evidence.find((e) => e.kind === 'business_event')!;
+      await expect(page.getByTestId('recorded-business-impact')).toContainText(
+        String(business.data.rfq_id),
+      );
+      if (incident === 'INC-DEMO-002') {
+        await expect(page.getByTestId('recorded-business-impact')).toContainText(
+          'retransmission of the same order',
+        );
+        const order = oracle.evidence.find((e) => e.data.retransmission === true)!;
+        await expect(page.getByTestId('recorded-business-impact')).toContainText(
+          String(order.data.economic_order_id ?? order.data.order_id),
+        );
+      }
+      await page.getByLabel('Personal note').fill('personal-only-' + incident);
+      await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+      const request = String(business.data.rfq_id);
+      await page.getByLabel('Request filter').selectOption(request);
+      const table = page.getByRole('table', { name: 'Recorded observations' });
+      const businessRows = table.locator('tbody tr').filter({ hasText: '/ business_event' });
+      expect(await businessRows.count()).toBe(
+        oracle.evidence.filter((e) => e.kind === 'business_event' && e.data.rfq_id === request)
+          .length,
+      );
+      const source = oracle.evidence.find((e) => e.kind === 'log')!;
+      const row = table.locator('tr[data-source-id="' + source.id + '"]');
+      await expect(row.locator('time')).toHaveText(source.timestamp + ' UTC');
+      const trigger = row.getByRole('button');
+      await trigger.click();
+      const dialog = page.getByRole('dialog', { name: 'Evidence details' });
+      await expect(dialog.locator('.json-source')).toHaveText(JSON.stringify(source.data, null, 2));
+      await expect(dialog).toContainText(source.timestamp);
+      await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+      await page.keyboard.press('Escape');
+      await expect(trigger).toBeFocused();
+      await page.getByLabel('Service filter').selectOption('fix-gateway');
+      await expect(page.getByTestId('selected-source-state')).toContainText(source.id);
+      await page.getByRole('button', { name: 'Reset display filters', exact: true }).click();
+      await expect(page.getByLabel('Personal note')).toHaveValue('personal-only-' + incident);
+      await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+      await page.getByRole('tab', { name: 'Review', exact: true }).click();
+      const confidence = page
+        .locator('.recorded-review-row')
+        .filter({ has: page.getByRole('heading', { name: 'confidence', exact: true }) });
+      await expect(confidence.getByRole('cell').nth(0)).toContainText(
+        String(oracle.provider_proposal!.confidence),
+      );
+      await expect(confidence.getByRole('cell').nth(1)).toContainText(
+        String(oracle.assessment!.confidence),
+      );
+      await expect(confidence).toContainText('known_domain_rule_normalization');
+      await expect(confidence).toContainText('diagnostic_validation');
+      await expect(
+        page.getByRole('region', { name: 'Playback validation', exact: true }),
+      ).toContainText('separate from recorded validation and project review notes');
+      await expect(
+        page.getByRole('heading', { name: 'Playback validation — separate current check' }),
+      ).toBeVisible();
+      await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
+      for (const template of ['technical', 'stakeholder']) {
+        await page.getByLabel('Handoff template').selectOption(template);
+        await page.getByRole('button', { name: /^(Prepare|Reprepare) draft$/ }).click();
+        const markdown = await page.getByLabel('Prepared Markdown').inputValue();
+        expect(markdown).toContain('Synthetic · Recorded · Draft · Human review required');
+        expect(markdown).not.toContain('personal-only-' + incident);
+        for (const e of oracle.evidence) {
+          // Public source IDs contain literal Markdown punctuation, escaped for safe rendering.
+          const literalId = e.id
+            .replaceAll('-', String.fromCharCode(92) + '-')
+            .replaceAll('_', String.fromCharCode(92) + '_');
+          expect(markdown).toContain(literalId);
+        }
+        expect(
+          await page
+            .getByTestId('handoff-preview')
+            .locator('.handoff-sources li')
+            .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-source-id')).sort()),
+        ).toEqual(oracle.evidence.map((e) => e.id).sort());
+        await expect(page.getByTestId('handoff-preview')).toContainText(
+          'Material limitations and uncertainty',
+        );
+      }
+      const countBeforeRefresh = calls.length;
+      await page.reload();
+      await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      await expect(page.getByLabel('Personal note')).toHaveValue('personal-only-' + incident);
+      await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+      expect(calls.length).toBe(countBeforeRefresh);
+      expect(calls).toHaveLength(1);
+      await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+      await expect(workspace).toHaveCount(0);
+      expect(
+        await page.evaluate(() =>
+          Object.keys(sessionStorage).filter((k) => k.startsWith('creditops-workspace:v1:')),
+        ),
+      ).toEqual([]);
+    },
+  );
+}
+
+test('workspace acceptance: filters show full UTC boundaries, returned lane span and observation gaps', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await expect(
+    page.getByText('Recorded assessment unchanged; filters do not rerun investigation.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const lane = page.locator('.recorded-lane').first();
+  await expect(lane.locator('.recorded-lane-boundaries')).toContainText('2026-10-09T13:59:00.000Z');
+  await expect(lane.locator('.recorded-lane-boundaries')).toContainText('2026-10-09T14:02:24.000Z');
+  await expect(lane.locator('.recorded-lane-coverage')).toHaveText(
+    'Returned lane coverage in this display: 2026-10-09T14:01:48.000Z UTC — 2026-10-09T14:02:24.000Z UTC · 2 discrete observations.',
+  );
+  await expect(lane.locator('.recorded-lane-gaps')).toContainText(
+    'No returned observations between',
+  );
+  await expect(lane).not.toContainText('15:00:00');
+  await page.getByLabel('Service filter').selectOption('fix-gateway');
+  await expect(
+    page.getByText('Recorded assessment unchanged; filters do not rerun investigation.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test('workspace acceptance: delayed restore cannot revive prior topology drawer controls or personal state', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('kafka isolated note');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page
+    .getByTestId('recorded-context')
+    .getByRole('button', { name: 'TOPOLOGY-001', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await page.getByLabel('Personal note').fill('database isolated note');
+  const savedKafka = await page.evaluate(() =>
+    localStorage.getItem('creditops-investigation:v1:INC-DEMO-001'),
+  );
+  expect(savedKafka).toBeTruthy();
+  let release!: () => void, reached!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  let completed!: () => void;
+  const delivered = new Promise<void>((resolve) => {
+    completed = resolve;
+  });
+  await page.route('**/api/investigations/' + savedKafka, async (route) => {
+    const response = await route.fetch();
+    reached();
+    await gate;
+    try {
+      await route.fulfill({ response });
+    } finally {
+      completed();
+    }
+  });
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await started;
+  // Restore GET leaves scenario selection enabled: this is a reachable generation change.
+  await expect(page.getByLabel('Incident scenario')).toBeEnabled();
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await expect(page.getByLabel('Personal note')).toHaveValue('database isolated note');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await expect(page.getByTestId('selected-source-state')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page
+    .getByTestId('recorded-context')
+    .getByRole('button', { name: 'TOPOLOGY-001', exact: true })
+    .click();
+  await expect(page.getByRole('button', { name: 'Pin source', exact: true })).toBeVisible();
+  release();
+  await delivered;
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-003');
+  await expect(page.getByRole('button', { name: 'Pin source', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByLabel('Personal note')).toHaveValue('database isolated note');
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+  await page.unroute('**/api/investigations/' + savedKafka);
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByLabel('Personal note')).toHaveValue('kafka isolated note');
+  await expect(page.getByTestId('personal-workspace')).toContainText('1 / 20');
+});
+
+test('workspace acceptance: malformed recording blocks workspace and leaves genuine selection available', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.route('**/api/investigations/*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const response = await route.fetch();
+    const body = await response.json();
+    body.evidence.push(structuredClone(body.evidence[0]));
+    await route.fulfill({ response, json: body });
+  });
+  await page.reload();
+  await expect(page.getByText('Recording unavailable', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByLabel('Incident scenario')).toBeEnabled();
+  await page.unroute('**/api/investigations/*');
+  await page.getByLabel('Incident scenario').selectOption('fix-connectivity');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-002');
+});
+
+test('workspace acceptance: every section fits 1440 768 390 320, preserves keyboard focus and reduced motion', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openWorkspace(page);
+  const tabs = ['Overview', 'Evidence', 'Review', 'Handoff'];
+  const overview = page.getByRole('tab', { name: 'Overview', exact: true });
+  await overview.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Evidence', exact: true })).toBeFocused();
+  await expect(overview).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('tab', { name: 'Evidence', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Handoff', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Prepare draft', exact: true }).click();
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const tab of tabs) {
+      const control = page.getByRole('tab', { name: tab, exact: true });
+      await control.click();
+      await expect(control).toBeFocused();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        tab + ' at ' + width,
+      ).toBe(true);
+      const panel = page.getByRole('tabpanel', { name: tab, exact: true });
+      expect(
+        await panel.evaluate((e) => e.scrollWidth <= e.clientWidth),
+        tab + ' panel at ' + width,
+      ).toBe(true);
+      const horizontalScrollers = await panel.evaluate((e) =>
+        [...e.querySelectorAll<HTMLElement>('*')]
+          .filter((el) => {
+            const style = getComputedStyle(el);
+            return (
+              el.getClientRects().length > 0 &&
+              /auto|scroll/.test(style.overflowX) &&
+              el.scrollWidth > el.clientWidth + 1 &&
+              !el.closest('.recorded-table-scroll')
+            );
+          })
+          .map((el) => el.tagName + '.' + el.className),
+      );
+      expect(horizontalScrollers, tab + ' horizontal scrollers at ' + width).toEqual([]);
+      if (tab === 'Evidence') {
+        await page
+          .getByRole('table', { name: 'Recorded observations' })
+          .getByRole('button')
+          .first()
+          .click();
+        const dialog = page.getByRole('dialog');
+        expect(await dialog.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+        await page.keyboard.press('Shift+Tab');
+        await expect(page.getByRole('button', { name: 'Pin source', exact: true })).toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(page.getByRole('button', { name: 'Close evidence' })).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(panel.getByRole('table').getByRole('button').first()).toBeFocused();
+      }
+    }
+  }
+  const moving = await page.getByTestId('recorded-workspace').evaluate(
+    (e) =>
+      [...e.querySelectorAll('*')].filter((el) => {
+        const style = getComputedStyle(el);
+        return (
+          (style.animationName !== 'none' && parseFloat(style.animationDuration) > 0.001) ||
+          style.transitionDuration.split(',').some((duration) => parseFloat(duration) > 0.001)
+        );
+      }).length,
+  );
+  expect(moving).toBe(0);
+});
+
+// Optional captures use the same unmodified local backend recording, never test-route clones.
+test('workspace acceptance: genuine local layouts and print media retain limitations and resolvable sources', async ({
+  page,
+}) => {
+  const capture = process.env.CREDITOPS_WORKSPACE_CAPTURE === '1';
+  const root = resolve(process.cwd(), '../..');
+  const out = resolve(root, 'artifacts/local-validation/workspace-v2');
+  const captures: {
+    file: string;
+    viewport: { width: number; height: number } | null;
+    incident: string;
+    sourceIds: string[];
+    media: string;
+  }[] = [];
+  if (capture) mkdirSync(out, { recursive: true });
+  async function shot(file: string, sourceIds: string[] = [], media = 'screen', fullPage = false) {
+    if (!capture) return;
+    await page.screenshot({ path: resolve(out, file), fullPage });
+    captures.push({
+      file,
+      viewport: page.viewportSize(),
+      incident: 'INC-DEMO-001',
+      sourceIds,
+      media,
+    });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openWorkspace(page);
+  await page
+    .locator('.recorded-workspace-header')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('desktop-overview.png');
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  const row = page
+    .getByRole('table', { name: 'Recorded observations' })
+    .locator('tr[data-source-id="LOG-001-001"]');
+  await row.getByRole('button').click();
+  await expect(page.getByRole('dialog')).toContainText('2026-10-09T14:00:00Z');
+  await shot('evidence-source-drawer.png', ['LOG-001-001']);
+  await page.keyboard.press('Escape');
+  await page.getByRole('tab', { name: 'Review', exact: true }).click();
+  await page
+    .locator('.recorded-readable-review')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('review-recorded-reason.png');
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page
+    .locator('.recorded-timeline')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('mobile-evidence.png');
+  await page.getByRole('tab', { name: 'Review', exact: true }).click();
+  await page
+    .locator('.recorded-readable-review')
+    .evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await shot('mobile-review.png');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
+  for (const template of ['technical', 'stakeholder']) {
+    await page.getByLabel('Handoff template').selectOption(template);
+    await page.getByRole('button', { name: /^(Prepare|Reprepare) draft$/ }).click();
+    const preview = page.getByTestId('handoff-preview');
+    await expect(preview).toContainText('Synthetic · Recorded · Draft · Human review required');
+    await expect(preview).toContainText('Material limitations and uncertainty');
+    await expect(preview.locator('.handoff-sources li')).toHaveCount(67);
+    await preview.evaluate((e) => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await shot(
+      template + '-handoff.png',
+      loadAcceptanceRecording('INC-DEMO-001').evidence.map((e) => e.id),
+    );
+    const markdown = await page.getByLabel('Prepared Markdown').inputValue();
+    if (capture) writeFileSync(resolve(out, template + '-handoff.md'), markdown);
+    await page.emulateMedia({ media: 'print' });
+    await expectHandoffPrintCanvas(page);
+    for (const selector of [
+      '.sidebar',
+      '.topbar',
+      '.recorded-tabs',
+      '.handoff-controls',
+      '.handoff-markdown',
+      '[data-testid="personal-workspace"]',
+    ])
+      await expect(page.locator(selector)).toBeHidden();
+    await expect(preview.locator('.handoff-print-id').first()).toBeVisible();
+    if (capture)
+      await page.pdf({
+        path: resolve(out, template + '-handoff.pdf'),
+        format: 'A4',
+        printBackground: true,
+        preferCSSPageSize: true,
+      });
+    if (template === 'stakeholder')
+      await shot(
+        'print-sources-limitations.png',
+        loadAcceptanceRecording('INC-DEMO-001').evidence.map((e) => e.id),
+        'print',
+        true,
+      );
+    await page.emulateMedia({ media: 'screen' });
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
+      'dark',
+    );
+    expect(
+      await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor),
+    ).toBe('rgb(11, 17, 27)');
+  }
+  if (capture) {
+    const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+    const diff = execFileSync(
+      'git',
+      [
+        'diff',
+        'HEAD',
+        '--',
+        'apps/web/e2e/showcase.spec.ts',
+        'apps/web/src/components/recorded-evidence-timeline.tsx',
+        'apps/web/src/app/globals.css',
+        'docs/DEMO_SCRIPT.md',
+        'docs/INTERVIEW_WALKTHROUGH.md',
+      ],
+      { cwd: root, encoding: 'utf8' },
+    );
+    writeFileSync(resolve(out, 'task-5-capture-candidate.diff'), diff);
+    writeFileSync(
+      resolve(out, 'task-5-capture-metadata.json'),
+      JSON.stringify(
+        {
+          capturedAt: new Date().toISOString(),
+          candidateBaseSha: sha,
+          recordingSourceIds: loadAcceptanceRecording('INC-DEMO-001').evidence.map((e) => e.id),
+          candidateDiffSha256: createHash('sha256').update(diff).digest('hex'),
+          candidateDiffFile: 'task-5-capture-candidate.diff',
+          origin:
+            'Actual local keyless showcase UI; packaged recordings unmodified; no routes intercepted in this test.',
+          printCheck:
+            'Chromium print media and paginated browser-generated A4 PDFs. Native OS preview/dialog and actual clipboard permission not inspected; mocked clipboard tests establish UI paths only.',
+          captures,
+        },
+        null,
+        2,
+      ),
     );
   }
 });

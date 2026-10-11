@@ -120,6 +120,12 @@ export function RecordedEvidenceTimeline({
     metric?: { unit: string; samples: readonly import('@/lib/recorded-evidence').MetricSample[] },
   ) => {
     const domain = metric ? metricDomain(metric.samples) : null;
+    const instants = [...new Set(samples.map((row) => row.timestampMs))].sort((a, b) => a - b);
+    const boundaries = coverage
+      ? [...new Set([coverage.startMs, ...instants, coverage.endMs])].sort((a, b) => a - b)
+      : [];
+    const gaps = boundaries.slice(1).map((end, index) => ({ start: boundaries[index], end }));
+    const utc = (timestamp: number) => new Date(timestamp).toISOString() + ' UTC';
     return (
       <div className="recorded-lane" key={title}>
         <h3>{title}</h3>
@@ -127,6 +133,32 @@ export function RecordedEvidenceTimeline({
           <p>
             Plot scale: {domain[0]} — {domain[1]} {metric.unit}. Each metric uses its own scale.
           </p>
+        )}
+        {coverage && (
+          <p className="recorded-lane-boundaries">
+            Display boundaries: {utc(coverage.startMs)} — {utc(coverage.endMs)}
+          </p>
+        )}
+        {instants.length > 0 && (
+          <p className="recorded-lane-coverage">
+            Returned lane coverage in this display: {utc(instants[0])} —{' '}
+            {utc(instants[instants.length - 1])} · {samples.length} discrete observations.
+          </p>
+        )}
+        {gaps.length > 0 && (
+          <details className="recorded-lane-gaps">
+            <summary>{gaps.length} intervals without returned observations</summary>
+            <p>
+              Intervals are gaps in returned evidence; they do not establish health or continuity.
+            </p>
+            <ul>
+              {gaps.map(({ start, end }) => (
+                <li key={start}>
+                  No returned observations between {utc(start)} and {utc(end)} (endpoints excluded).
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
         {!samples.length ? (
           <p>No observations match this lane and display window.</p>
@@ -164,6 +196,9 @@ export function RecordedEvidenceTimeline({
           Actual UTC time distance · no interpolation. Matching instants are highlighted across
           lanes; concurrence does not establish cause. Request-related sources use explicit returned
           identity fields.
+        </p>
+        <p className="recorded-filter-notice">
+          Recorded assessment unchanged; filters do not rerun investigation.
         </p>
         <div className="recorded-filter-grid">
           <label>
