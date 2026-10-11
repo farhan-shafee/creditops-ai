@@ -3781,3 +3781,136 @@ td code {
 .personal-cleanup-failure button {
   white-space: normal;
 }
+
+.handoff-controls label,
+.handoff-markdown label {
+  display: grid;
+  gap: 8px;
+  margin-block: 16px;
+}
+.handoff-controls select,
+.handoff-markdown textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.handoff-markdown textarea {
+  resize: vertical;
+}
+.handoff-controls .handoff-pin-choice {
+  display: flex;
+  align-items: center;
+}
+.handoff-pin-choice input {
+  width: auto;
+}
+.handoff-actions,
+.handoff-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.handoff-references p {
+  flex-basis: 100%;
+}
+.handoff-preview {
+  padding: 24px;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.handoff-preview h2 {
+  margin-block: 0 12px;
+}
+.handoff-preview h3 {
+  margin-block: 24px 10px;
+}
+.handoff-preview p {
+  margin-block: 10px;
+  white-space: pre-wrap;
+}
+.handoff-sources {
+  padding-left: 24px;
+}
+.handoff-sources li {
+  margin-block: 16px;
+}
+.handoff-print-id {
+  display: none;
+}
+@media (max-width: 768px) {
+  .handoff-actions {
+    flex-direction: column;
+  }
+  .handoff-preview {
+    padding: 16px;
+  }
+}
+@media print {
+  @page {
+    margin: 16mm;
+  }
+  body:has(.handoff-preview) {
+    background: white;
+    color: black;
+  }
+  body:has(.handoff-preview) .console-shell,
+  body:has(.handoff-preview) .main-shell,
+  body:has(.handoff-preview) main,
+  body:has(.handoff-preview) .recorded-workspace,
+  body:has(.handoff-preview) .incident-handoff {
+    display: block;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    min-height: 0;
+    background: white;
+    border: 0;
+    box-shadow: none;
+  }
+  body:has(.handoff-preview) .console-shell > :not(.main-shell),
+  body:has(.handoff-preview) .main-shell > :not(main),
+  body:has(.handoff-preview) main > :not(:has(.handoff-preview)),
+  body:has(.handoff-preview) .recorded-workspace > :not(#recorded-panel-3),
+  body:has(.handoff-preview) .incident-handoff > :not(.handoff-preview),
+  body:has(.handoff-preview) .drawer-backdrop,
+  body:has(.handoff-preview) .evidence-drawer {
+    display: none !important;
+  }
+  body:has(.handoff-preview) #recorded-panel-3 {
+    display: block !important;
+    padding: 0;
+  }
+  body:has(.handoff-preview) .handoff-preview {
+    display: block;
+    background: white;
+    color: black;
+    padding: 0;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+  .handoff-preview .handoff-screen-citation {
+    display: none;
+  }
+  .handoff-preview .handoff-print-id {
+    display: inline;
+  }
+  .handoff-preview h2,
+  .handoff-preview h3 {
+    break-after: avoid;
+    color: black;
+  }
+  .handoff-preview .handoff-sources li {
+    break-inside: avoid;
+  }
+  .handoff-preview * {
+    color: black;
+    overflow-wrap: anywhere;
+  }
+}

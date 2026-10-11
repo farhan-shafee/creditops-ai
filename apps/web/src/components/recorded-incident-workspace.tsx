@@ -1,3 +1,4 @@
+import { IncidentHandoff } from './incident-handoff';
 import { RecordedAssessmentReview } from './recorded-assessment-review';
 import { projectRecordedReview } from '@/lib/recorded-review';
 import { PersonalWorkspacePanel, useWorkspaceNotes } from './personal-workspace-panel';
@@ -16,7 +17,7 @@ import {
 } from './investigator';
 import { RecordedBusinessImpact } from './business-impact';
 import { RecordedEvidenceTimeline, timelineSourceIds } from './recorded-evidence-timeline';
-import { Badge, Empty, Panel } from './primitives';
+import { Badge, Empty } from './primitives';
 
 export type RecordedSourceControls = {
   investigationId: string;
@@ -280,9 +281,12 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         hidden={section !== 3}
         tabIndex={0}
       >
-        <Panel title="Draft handoff" eyebrow="Human review required">
-          <p className="padded">Draft handoffs are pending. No handoff has been generated.</p>
-        </Panel>
+        <IncidentHandoff
+          recording={recording}
+          review={projectRecordedReview(investigation)}
+          pinnedIds={personal.state.pinnedIds}
+          onEvidence={select}
+        />
       </div>
       <PersonalWorkspacePanel notes={notes} onEvidence={select} />
     </section>

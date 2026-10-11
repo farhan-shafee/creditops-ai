@@ -601,3 +601,183 @@ test('workspace notes: successful reset discloses removal denial and retries cap
   expect(resets.length).toBe(postsBeforeRetry);
   expect(resets).toHaveLength(1);
 });
+
+test('workspace handoff: prepare both drafts and copy captured Markdown locally', async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date('2030-01-02T03:00:00Z') });
+  const pending = new Set<import('@playwright/test').Request>();
+  page.on('request', (request) => {
+    if (/\/api\//.test(request.url())) pending.add(request);
+  });
+  page.on('requestfinished', (request) => pending.delete(request));
+  page.on('requestfailed', (request) => pending.delete(request));
+  await page.addInitScript(() => {
+    (window as unknown as { printed: number }).printed = 0;
+    window.print = () => {
+      (window as unknown as { printed: number }).printed += 1;
+    };
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as unknown as { copied: string }).copied = text;
+        },
+      },
+    });
+  });
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('PERSONAL-NOTE-EXPORT-CANARY');
+  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  await page.getByLabel('Service filter').selectOption('fix-gateway');
+  await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
+  // Freeze unrelated Console refresh timers; drain its already-started requests.
+  // Every subsequent API request is still counted, including investigation POSTs.
+  const refreshFinished = page.waitForResponse((response) =>
+    /\/api\/metrics\/query/.test(response.url()),
+  );
+  await page.clock.pauseAt('2030-01-02T03:04:05Z');
+  await refreshFinished;
+  await expect
+    .poll(async () => {
+      // A browser round trip lets chained fetch continuations run before counting.
+      await page.evaluate(() => undefined);
+      return pending.size;
+    })
+    .toBe(0);
+  const requests: string[] = [];
+  page.on('request', (r) => {
+    if (/\/api\//.test(r.url())) requests.push(r.url());
+  });
+  let previousMarkdown: string | null = null;
+  for (const template of ['technical', 'stakeholder']) {
+    await page.getByLabel('Handoff template').selectOption(template);
+    await page.getByLabel('Include pinned source highlights').check();
+    if (previousMarkdown !== null)
+      await expect(page.getByLabel('Prepared Markdown')).toHaveValue(previousMarkdown);
+    await page.getByRole('button', { name: /^(Prepare|Reprepare) draft$/ }).click();
+    const preview = page.getByTestId('handoff-preview');
+    await expect(preview).toContainText('Synthetic · Recorded · Draft · Human review required');
+    await expect(preview).toContainText('LOG-001-001');
+    await expect(preview).toContainText('Source appendix');
+    await expect(preview).toContainText('Material limitations and uncertainty');
+    await expect(preview).toContainText('Pinned source highlights');
+    if (template === 'stakeholder') {
+      const brief = preview.locator(':scope > section').first();
+      await expect(brief.getByRole('heading')).toHaveText('Stakeholder brief');
+      await expect(brief).toContainText('Returned events cover');
+      await expect(brief).toContainText('requiring human verification');
+      await expect(brief).toContainText('final business outcome');
+      await expect(brief).toContainText('Please have the owning team verify');
+      await expect(brief).not.toContainText('QUOTE_STALE');
+      await expect(brief).not.toContainText('ACK_UNCERTAIN');
+      await expect(
+        preview.getByRole('heading', {
+          name: 'Appendix — Material limitations and uncertainty',
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        preview.getByRole('heading', {
+          name: 'Appendix — Proposed checks — human review required',
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        preview.getByRole('heading', {
+          name: 'Appendix — Project narrative cautions',
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
+    await expect(preview).not.toContainText('PERSONAL-NOTE-EXPORT-CANARY');
+    const markdown = await page.getByLabel('Prepared Markdown').inputValue();
+    previousMarkdown = markdown;
+    const preparedAt = await preview.locator('time[data-prepared-at]').innerText();
+    expect(preparedAt).toBe('2030-01-02T03:04:05.000Z');
+    expect(markdown).toContain('Prepared at: ' + preparedAt);
+    await page.getByRole('button', { name: 'Copy Markdown', exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Markdown copied' })).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toBe(
+      markdown,
+    );
+    await page.getByRole('button', { name: 'Print draft', exact: true }).click();
+    const citation = preview.getByRole('button', { name: 'LOG-001-001', exact: true }).last();
+    await citation.click();
+    await expect(page.getByRole('dialog', { name: 'Evidence details' })).toContainText(
+      'LOG-001-001',
+    );
+    await page.keyboard.press('Escape');
+    await expect(citation).toBeFocused();
+  }
+  expect(requests).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(2);
+});
+test('workspace handoff: rejected clipboard exposes identical selectable Markdown and clean print', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw Error('denied');
+        },
+      },
+    });
+    window.print = () => {
+      (window as unknown as { printed: boolean }).printed = true;
+    };
+  });
+  await openWorkspace(page);
+  await page.getByLabel('Personal note').fill('NOTE-PRINT-CANARY');
+  await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
+  await page.getByRole('button', { name: 'Prepare draft', exact: true }).click();
+  const preview = page.getByTestId('handoff-preview');
+  const markdown = await page.getByLabel('Prepared Markdown').inputValue();
+  await page.getByRole('button', { name: 'Copy Markdown', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Clipboard unavailable' })).toBeVisible();
+  await expect(page.getByLabel('Prepared Markdown')).toBeFocused();
+  expect(
+    await page
+      .getByLabel('Prepared Markdown')
+      .evaluate((e: HTMLTextAreaElement) => e.value.slice(e.selectionStart, e.selectionEnd)),
+  ).toBe(markdown);
+  const printPreparedAt = await preview.locator('time[data-prepared-at]').innerText();
+  expect(markdown).toContain('Prepared at: ' + printPreparedAt);
+  await page.getByRole('button', { name: 'Print draft', exact: true }).click();
+  expect(await page.evaluate(() => (window as unknown as { printed: boolean }).printed)).toBe(true);
+  await page.emulateMedia({ media: 'print' });
+  await expect(preview).toBeVisible();
+  await expect(preview.locator('time[data-prepared-at]')).toHaveText(printPreparedAt);
+  await expect(preview).toContainText('Material limitations and uncertainty');
+  await expect(preview).toContainText('Source appendix');
+  await expect(
+    preview.locator('.handoff-sources li[data-source-id="LOG-001-001"] .handoff-print-id'),
+  ).toBeVisible();
+  for (const selector of [
+    '.sidebar',
+    '.topbar',
+    '.scenario-controls',
+    '.recorded-tabs',
+    '[data-testid="personal-workspace"]',
+    '.handoff-controls',
+    '.handoff-markdown',
+    '.recorded-technical',
+  ])
+    await expect(page.locator(selector)).toBeHidden();
+  await expect(preview.locator('button').first()).toBeHidden();
+  expect(await preview.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(
+    'rgb(255, 255, 255)',
+  );
+  for (const width of [768, 390, 320]) {
+    await page.emulateMedia({ media: 'screen' });
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
+      false,
+    );
+  }
+});
