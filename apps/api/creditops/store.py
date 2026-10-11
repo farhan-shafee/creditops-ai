@@ -12,8 +12,9 @@ from decimal import Decimal
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from anyio import CancelScope, move_on_after
 from sqlalchemy import DateTime, String, and_, case, cast, delete, event, func, or_, select, text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from .business import observation_time, reduce_request
 from .business_seed import make_business_seed
@@ -75,6 +76,15 @@ def normalize_database_url(url: str) -> str:
     return url
 
 
+class _OwnedAsyncSession(AsyncSession):
+    async def __aexit__(self, type_, value, traceback):
+        # AnyIO cancellation repeats at each await. Protect only the joined close.
+        with move_on_after(2, shield=True) as deadline:
+            await self.close()
+        if deadline.cancelled_caught and value is None:
+            raise TimeoutError("Database session cleanup exceeded its deadline")
+
+
 class Store:
     def __init__(self, database_url: str | None = None, clock: Callable[[], float] | None = None):
         self.database_url = normalize_database_url(database_url or get_settings().database_url)
@@ -99,7 +109,25 @@ class Store:
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
 
-        self.sessions = async_sessionmaker(self.engine, expire_on_commit=False)
+        @event.listens_for(self.engine.sync_engine, "handle_error")
+        def close_cancelled_connection(context):
+            if not isinstance(context.original_exception, asyncio.CancelledError) or context.connection is None:
+                return
+
+            async def close_driver(driver):
+                # Await the raw close directly: dialect termination uses asyncio.shield,
+                # which can leave a close task behind under AnyIO level cancellation.
+                with move_on_after(2, shield=True) as deadline:
+                    await driver.close()
+                # aiosqlite.close() queues its worker stop in finally on cancellation.
+                if deadline.cancelled_caught and self.database_url.startswith("postgresql"):
+                    driver.terminate()
+
+            with CancelScope(shield=True):
+                context.connection.connection.dbapi_connection.run_async(close_driver)
+                context.connection.invalidate(context.original_exception)
+
+        self.sessions = async_sessionmaker(self.engine, class_=_OwnedAsyncSession, expire_on_commit=False)
         self.clock = clock or time.monotonic
         self._starts: dict[tuple[str, str], float] = {}
         self._lock = asyncio.Lock()
@@ -409,10 +437,12 @@ class Store:
                 if event["reveal_seconds"] <= elapsed and observation_time(event["timestamp"]) <= cutoff
             ]
             payload["simulated_elapsed_seconds"] = int(elapsed * 12)
-            impact = await self.business_impact(session_id, id, as_of=cutoff.isoformat())
-            if impact is not None:
-                payload["client_impact"] = impact.summary
-            return Incident.model_validate(payload)
+        # The incident snapshot is materialized; release its checkout before
+        # composing reads that own independent sessions at the same frozen cutoff.
+        impact = await self.business_impact(session_id, id, as_of=cutoff.isoformat())
+        if impact is not None:
+            payload["client_impact"] = impact.summary
+        return Incident.model_validate(payload)
 
     async def instruments(self) -> list[Instrument]:
         async with self.sessions() as session:

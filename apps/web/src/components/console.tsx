@@ -136,6 +136,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const [evidence, setEvidence] = useState<Evidence | null>(null);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const refreshRef = useRef<{ controller: AbortController; promise: Promise<void> } | null>(null);
   const investigationGenerationRef = useRef(0);
   const selectionGenerationRef = useRef(0);
   const scenarioOperationRef = useRef(false);
@@ -154,26 +155,47 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     return () => clearTimeout(timer);
   }, []);
 
-  const refresh = useCallback(async () => {
-    try {
-      const [nextOverview, nextIncidents, nextTopology] = await Promise.all([
-        api<Overview>('/overview'),
-        api<Incident[]>('/incidents'),
-        api<Topology>('/services/topology'),
-      ]);
-      setOverview(nextOverview);
-      setIncidents(nextIncidents);
-      setTopology(nextTopology);
-      setConnected(true);
-      const id = activeId ?? nextIncidents.find((item) => item.scenario === selectedScenario)?.id;
-      const nextMetrics = await api<MetricSeries[]>(
-        `/metrics/query${id ? `?incident_id=${encodeURIComponent(id)}` : ''}`,
-      );
-      setMetrics(nextMetrics);
-    } catch (cause) {
-      setConnected(false);
-      setError(cause instanceof Error ? cause.message : 'Diagnostic API connection failed');
-    }
+  const cancelRefresh = useCallback(() => {
+    refreshRef.current?.controller.abort();
+    refreshRef.current = null;
+  }, []);
+
+  const refresh = useCallback(() => {
+    if (refreshRef.current) return refreshRef.current.promise;
+    const controller = new AbortController();
+    const current = () =>
+      refreshRef.current?.controller === controller && !controller.signal.aborted;
+    const promise = (async () => {
+      try {
+        const [nextOverview, nextIncidents, nextTopology] = await Promise.all([
+          api<Overview>('/overview', { signal: controller.signal }),
+          api<Incident[]>('/incidents', { signal: controller.signal }),
+          api<Topology>('/services/topology', { signal: controller.signal }),
+        ]);
+        if (!current()) return;
+        setOverview(nextOverview);
+        setIncidents(nextIncidents);
+        setTopology(nextTopology);
+        setConnected(true);
+        const id = activeId ?? nextIncidents.find((item) => item.scenario === selectedScenario)?.id;
+        const nextMetrics = await api<MetricSeries[]>(
+          `/metrics/query${id ? `?incident_id=${encodeURIComponent(id)}` : ''}`,
+          { signal: controller.signal },
+        );
+        if (current()) setMetrics(nextMetrics);
+      } catch (cause) {
+        if (current()) {
+          setConnected(false);
+          setError(cause instanceof Error ? cause.message : 'Diagnostic API connection failed');
+          // Promise.all can fail before sibling reads settle; cancel the owned batch.
+          controller.abort();
+        }
+      } finally {
+        if (refreshRef.current?.controller === controller) refreshRef.current = null;
+      }
+    })();
+    refreshRef.current = { controller, promise };
+    return promise;
   }, [activeId, selectedScenario]);
 
   const monitorInvestigation = useCallback(
@@ -254,8 +276,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     return () => {
       clearTimeout(initial);
       clearInterval(interval);
+      cancelRefresh();
     };
-  }, [refresh]);
+  }, [refresh, cancelRefresh]);
   useEffect(() => {
     let stopped = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
@@ -416,6 +439,8 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       const created = await api<Incident>(`/demo/scenarios/${scenario}/run`, {
         method: 'POST',
       });
+      // The completed mutation invalidates any reads begun before it committed.
+      cancelRefresh();
       setIncidents((previous) => [...previous.filter((item) => item.id !== created.id), created]);
       if (generation !== selectionGenerationRef.current) return;
       stopInvestigation();
@@ -477,6 +502,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     );
     try {
       await api(`/demo/scenarios/${scenario}/reset`, { method: 'POST' });
+      cancelRefresh();
       if (resetting) cleanPersonalScope({ sessionId: resetSession, incidentId: resetting.id });
       if (resetting) removeStorage(`creditops-investigation:v1:${resetting.id}`);
       setIncidents((previous) => previous.filter((item) => item.scenario !== scenario));
