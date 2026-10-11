@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, ChevronDown, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { BusinessImpact, BusinessImpactRequest, Investigation } from '@/lib/types';
+import {
+  formatRecordedDecimal as par,
+  groupRecordedJourneys,
+  recordedTimestampMs,
+  countRecordedRfqs,
+  countRecordedEventRfqs,
+} from '@/lib/recorded-evidence';
+import type { BusinessImpact, BusinessImpactRequest, Evidence, Investigation } from '@/lib/types';
 import { Badge, Citation, Panel, Spinner, Status, time } from './primitives';
 
 export function BusinessImpactPanel({
@@ -76,6 +83,21 @@ export function BusinessImpactPanel({
   );
 }
 
+function recordedJourneyStatus(events: readonly Evidence[]): string {
+  const last = events.at(-1);
+  if (!last) return 'State not recorded';
+  if (events.some((event) => recordedTimestampMs(event.timestamp) === null))
+    return 'Chronology uncertain';
+  const latestTimestamp = recordedTimestampMs(last.timestamp);
+  const latestStates = new Set(
+    events
+      .filter((event) => recordedTimestampMs(event.timestamp) === latestTimestamp)
+      .map((event) => event.data.event_type),
+  );
+  return latestStates.size > 1
+    ? 'Chronology uncertain'
+    : String(last.data.event_type ?? 'State not recorded');
+}
 function RecordedBusinessImpact({
   investigation,
   onEvidence,
@@ -83,15 +105,9 @@ function RecordedBusinessImpact({
   investigation: Investigation;
   onEvidence: (id: string) => void;
 }) {
-  const events = investigation.evidence
-    .filter((row) => row.kind === 'business_event')
-    .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-  const groups = new Map<string, typeof events>();
-  for (const event of events) {
-    const id =
-      typeof event.data.rfq_id === 'string' ? event.data.rfq_id : 'Request identity not recorded';
-    groups.set(id, [...(groups.get(id) ?? []), event]);
-  }
+  const journeys = groupRecordedJourneys(investigation.evidence);
+  const events = journeys.flatMap((journey) => journey.events);
+  const groups = new Map(journeys.map((journey) => [journey.rfqId, journey.events]));
   const metadata = investigation.provenance?.showcase;
   return (
     <Panel
@@ -114,7 +130,11 @@ function RecordedBusinessImpact({
           </span>
         </div>
         <div className="business-counters">
-          <Counter label="RFQs in returned events" value={String(groups.size)} id="rfqs-recorded" />
+          <Counter
+            label="RFQs in returned events"
+            value={String(countRecordedRfqs(journeys))}
+            id="rfqs-recorded"
+          />
           {(
             [
               'QUOTE_STALE',
@@ -135,11 +155,7 @@ function RecordedBusinessImpact({
                   ACK_UNCERTAIN: 'Observed uncertain acknowledgements',
                 }[kind]
               }
-              value={String(
-                [...groups.values()].filter((rows) =>
-                  rows.some((event) => event.data.event_type === kind),
-                ).length,
-              )}
+              value={String(countRecordedEventRfqs(journeys, kind))}
               id={`recorded-${kind.toLowerCase()}`}
             />
           ))}
@@ -147,14 +163,14 @@ function RecordedBusinessImpact({
         <div className="request-journeys">
           {[...groups].map(([id, rows], index) => (
             <details
-              key={id}
+              key={id === null ? 'unknown' : 'rfq:' + id}
               className="request-journey"
               open={index === 0}
               data-testid="request-journey"
             >
               <summary>
                 <div>
-                  <strong className="mono">{id}</strong>
+                  <strong className="mono">{id ?? 'Request identity not recorded'}</strong>
                   <span>{String(rows[0].data.instrument_id ?? 'Instrument not recorded')}</span>
                 </div>
                 <div>
@@ -164,7 +180,7 @@ function RecordedBusinessImpact({
                       ? par(String(rows[0].data.par_amount)) + ' requested par'
                       : ''}
                   </span>
-                  <Status value={String(rows.at(-1)?.data.event_type ?? 'State not recorded')} />
+                  <Status value={recordedJourneyStatus(rows)} />
                 </div>
                 <ChevronDown size={15} />
               </summary>
@@ -172,10 +188,19 @@ function RecordedBusinessImpact({
                 <ol className="business-timeline">
                   {rows.map((event) => (
                     <li key={event.id}>
-                      <time dateTime={event.timestamp}>
-                        {time(event.timestamp)}
-                        <span>UTC</span>
-                      </time>
+                      {recordedTimestampMs(event.timestamp) === null ? (
+                        <div className="muted">
+                          <p>Cannot plot this recorded row</p>
+                          <p>
+                            Invalid recorded timestamp: <code>{event.timestamp}</code>
+                          </p>
+                        </div>
+                      ) : (
+                        <time dateTime={event.timestamp}>
+                          {time(event.timestamp)}
+                          <span>UTC</span>
+                        </time>
+                      )}
                       <div>
                         <strong>{event.summary}</strong>
                         <p>
@@ -218,13 +243,6 @@ function RecordedBusinessImpact({
       </div>
     </Panel>
   );
-}
-
-// Keep decimal strings exact. Converting requested par to a JS number would lose
-// monetary precision and would invite financial calculations outside this demo.
-function par(value: string): string {
-  const [integer, fraction] = value.split('.');
-  return `${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction === undefined ? '' : `.${fraction}`}`;
 }
 
 export function BusinessImpactContent({
