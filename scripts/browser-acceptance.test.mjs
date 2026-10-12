@@ -100,3 +100,41 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
     }
   });
 }
+
+for (const event of ['', 'sse_shutdown_incomplete']) {
+  test(`actual CI entrypoint: ${event || 'successful shutdown'}`, async () => {
+    const { spawn } = await import('node:child_process');
+    const { once } = await import('node:events');
+    const { createRequire } = await import('node:module');
+    const { fileURLToPath } = await import('node:url');
+    const root = fileURLToPath(new URL('../', import.meta.url));
+    const requireWeb = createRequire(join(root, 'apps/web/package.json'));
+    const sdk = requireWeb.resolve('@playwright/test');
+    const requireTest = createRequire(sdk);
+    const cli = join(requireTest.resolve('playwright/package.json'), '..', 'cli.js');
+    const directory = mkdtempSync(join(tmpdir(), 'creditops-ci-entrypoint-'));
+    const server = join(directory, 'server.mjs'), port = join(directory, 'port');
+    const config = join(directory, 'playwright.config.cjs');
+    writeFileSync(server, `import {createServer} from 'node:http';import {writeFileSync} from 'node:fs';const server=createServer((_,res)=>res.end('<h1>Controlled UI</h1>'));process.on('SIGTERM',()=>server.close(()=>{${event ? `console.error(JSON.stringify({logger:'creditops.sse',event:${JSON.stringify(event)}}));` : ''}console.log('CONTROLLED_SERVER_CLOSED');}));server.listen(0,'127.0.0.1',()=>{writeFileSync(${JSON.stringify(port)},String(server.address().port));console.log('CONTROLLED_SERVER_READY');});`);
+    writeFileSync(join(directory, 'ui.spec.cjs'), `const {test,expect}=require(${JSON.stringify(sdk)});const {readFileSync}=require('node:fs');test('controlled UI assertion succeeds',async({page})=>{await page.goto('http://127.0.0.1:'+readFileSync(${JSON.stringify(port)},'utf8'));await expect(page.getByRole('heading',{name:'Controlled UI'})).toBeVisible();});`);
+    writeFileSync(config, `module.exports={testDir:${JSON.stringify(directory)},testMatch:'ui.spec.cjs',retries:0,use:{headless:true},webServer:{command:${JSON.stringify(JSON.stringify(process.execPath)+' '+JSON.stringify(server))},wait:{stdout:/CONTROLLED_SERVER_READY/},stdout:'pipe',stderr:'pipe',gracefulShutdown:{signal:'SIGTERM',timeout:5000}}};`);
+    async function command(args) {
+      const child=spawn(process.execPath,args,{cwd:join(root,'apps/web'),env:{...process.env,CREDITOPS_ENV_FILE:'',OPENAI_API_KEY:'',ANTHROPIC_API_KEY:'',ADMIN_API_KEY:''},stdio:['ignore','pipe','pipe']});
+      let output='';child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);
+      const [code,signal]=await once(child,'close');return {code,signal,output};
+    }
+    // The old direct runner accepted exit zero despite this shutdown log.
+    const old=await command([cli,'test','--config='+config,'--reporter=line']);
+    assert.equal(old.code,0);assert.match(old.output,/1 passed/);
+    const resultDirectory=join(directory,'result');
+    const current=await command([join(root,'scripts/browser-acceptance.mjs'),'legacy','--config='+config,'--result-dir',resultDirectory]);
+    assert.equal(current.code,event?1:0);assert.equal(current.signal,null);
+    const result=JSON.parse(readFileSync(join(resultDirectory,'result.json'),'utf8'));
+    const report=JSON.parse(readFileSync(join(resultDirectory,'playwright.json'),'utf8'));
+    assert.equal(report.stats.expected,1,'The UI assertion passed before server teardown');
+    assert.equal(result.finalLogDrainCompleted,true);
+    assert.match(current.output,/CONTROLLED_SERVER_CLOSED/);
+    if(event){assert.equal(result.detector.failure.event,event);assert.equal(result.exitCode,1);}
+    else{assert.equal(result.detector.failure,null);assert.equal(result.exitCode,0);}
+  });
+}
