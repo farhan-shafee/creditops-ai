@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './acceptance';
 
 test('overview describes synthetic operations and the safety boundary', async ({ page }) => {
   await page.goto('/');

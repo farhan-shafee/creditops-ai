@@ -10,6 +10,8 @@ export default defineConfig({
     ? undefined
     : {
         command: 'pnpm --dir ../.. showcase',
+        stdout: 'pipe',
+        stderr: 'pipe',
         url: 'http://127.0.0.1:3000',
         reuseExistingServer: false,
         timeout: 120_000,

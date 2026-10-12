@@ -8,6 +8,7 @@ import re
 import time
 from collections import Counter
 from collections.abc import Callable
+from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -84,6 +85,20 @@ class PollingCleanup:
     def __init__(self):
         self._resources: set[object] = set()
         self._attempted_drivers: set[object] = set()
+        self._release_depth = 0
+
+    @property
+    def releasing(self):
+        return self._release_depth > 0
+
+    @contextmanager
+    def release_phase(self):
+        # Synchronous entry before the first await makes cancellation phase-safe.
+        self._release_depth += 1
+        try:
+            yield
+        finally:
+            self._release_depth -= 1
 
     @property
     def pending(self):
@@ -101,7 +116,8 @@ class PollingCleanup:
         self._attempted_drivers.add(driver)
         self.add(driver)
         try:
-            await driver.close()
+            with self.release_phase():
+                await driver.close()
         except Exception as error:
             # Preserve the failed receipt, but let SQLAlchemy retire the connection.
             logging.getLogger("creditops.sse").error("sse_cleanup_failed", extra={"error_type": type(error).__name__})
@@ -124,7 +140,7 @@ class _OwnedAsyncSession(AsyncSession):
         cleanup = _POLLING_CLEANUP.get()
         if cleanup is not None:
             # The service owns this exact child/resources beyond the request deadline.
-            with CancelScope(shield=True):
+            with cleanup.release_phase(), CancelScope(shield=True):
                 await self.close()
             cleanup.remove(self)
             return

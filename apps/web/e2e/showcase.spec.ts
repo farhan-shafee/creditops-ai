@@ -8,7 +8,7 @@ function loadAcceptanceRecording(id: string): Investigation {
     readFileSync(resolve(process.cwd(), '../../data/showcase', id + '.json'), 'utf8'),
   ).payload.investigation;
 }
-import { test, expect } from '@playwright/test';
+import { test, expect } from './acceptance';
 
 async function expectHandoffPrintCanvas(page: import('@playwright/test').Page) {
   const canvas = await page.evaluate(() => ({

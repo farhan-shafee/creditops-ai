@@ -84,15 +84,17 @@ jobs:
       - run: node scripts/python.mjs scripts/seed.py && node scripts/python.mjs scripts/evaluate.py
       - run: pnpm test:lifecycle
       - run: pnpm --filter @creditops/web exec playwright install --with-deps chromium
-      - run: pnpm e2e
-      - run: pnpm e2e:showcase
+      - run: mkdir -p artifacts/test-tmp/acceptance-unit && TMPDIR="$PWD/artifacts/test-tmp/acceptance-unit" pnpm test:acceptance
+      - run: pnpm e2e --result-dir artifacts/test-tmp/browser-acceptance/legacy
+      - run: pnpm e2e:showcase --result-dir artifacts/test-tmp/browser-acceptance/showcase
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-verification
           path: |
-            apps/web/playwright-report
-            apps/web/test-results
+            artifacts/test-tmp/browser-acceptance
+            artifacts/test-tmp/acceptance-unit
+            artifacts/test-tmp/acceptance-stop-*
   secrets:
     runs-on: ubuntu-latest
     steps:

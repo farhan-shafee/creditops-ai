@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './acceptance';
 
 async function runScenario(page: Page, scenario: string, incident: string) {
   await page.goto('/incidents');

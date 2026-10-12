@@ -10,10 +10,11 @@
     "lint": "node scripts/check.mjs lint",
     "typecheck": "pnpm --filter @creditops/web typecheck",
     "test": "node scripts/check.mjs test",
-    "e2e": "pnpm --filter @creditops/web e2e",
-    "e2e:showcase": "pnpm --filter @creditops/web exec playwright test --config=playwright.showcase.config.ts",
+    "e2e": "node scripts/browser-acceptance.mjs legacy",
+    "e2e:showcase": "node scripts/browser-acceptance.mjs showcase",
     "test:showcase-startup": "node --test scripts/check-showcase-startup.mjs",
     "test:dependencies": "node --test scripts/check-lint-dependencies.mjs",
-    "test:lifecycle": "node --test scripts/check-webserver-lifecycle.mjs"
+    "test:lifecycle": "node --test scripts/check-webserver-lifecycle.mjs",
+    "test:acceptance": "node --test scripts/acceptance-detector.test.mjs scripts/browser-acceptance.test.mjs scripts/acceptance-mock-boundary.test.mjs"
   }
 }

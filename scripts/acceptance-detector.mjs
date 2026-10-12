@@ -26,6 +26,17 @@ export function isExpectedMockReset(response) {
   }
 }
 
+// Separate, exact legacy negative-path fixture; the reset500 predicate is unchanged.
+export function isExpectedScenarioOutage(response) {
+  try {
+    return response.status === 503 && response.method === "GET" &&
+      response.testId === "the console recovers when its initial scenario request is temporarily unavailable" &&
+      new URL(response.url).pathname === "/api/scenarios" &&
+      response.mockedScenarioProof?.fulfilled === true &&
+      response.mockedScenarioProof.detail === "Temporary synthetic test outage";
+  } catch { return false; }
+}
+
 export function createAcceptanceDetector({
   onFailure = () => {},
   now = () => new Date().toISOString(),
@@ -33,7 +44,7 @@ export function createAcceptanceDetector({
   let failure = null,
     stopStartedAt = null,
     stoppedAt = null,
-    expectedMockResponses = 0;
+    expectedMockResponses = 0, expectedScenarioResponses = 0;
   const pending = new Map();
   function fail(kind, details = {}) {
     if (failure) return;
@@ -44,7 +55,7 @@ export function createAcceptanceDetector({
     if (source.startsWith("backend")) {
       if (/QueuePool limit\b/.test(line)) return fail("backend-pool-timeout");
       if (
-        /Exception in ASGI application|Exception terminating connection|Error closing cursor|Traceback \(most recent call last\)|\bCancelledError\b/.test(
+        /Exception in ASGI application|Exception terminating connection|Error closing cursor|Exception during reset or similar|Application shutdown failed|(?:Task|Future) exception was never retrieved|Task was destroyed but it is pending|Traceback \(most recent call last\)|\bCancelledError\b/.test(
           line,
         )
       )
@@ -71,7 +82,7 @@ export function createAcceptanceDetector({
         }
       }
     }
-    if (source === "frontend") {
+    if (source.startsWith("frontend")) {
       if (/\b(?:GET|POST|HEAD)\s+\S+\s+5\d\d\b/.test(line))
         return fail("frontend-http-5xx");
       if (
@@ -89,6 +100,7 @@ export function createAcceptanceDetector({
         expectedMockResponses += 1;
         return;
       }
+      if (isExpectedScenarioOutage(response)) { expectedScenarioResponses += 1; return; }
       fail("browser-http-5xx", {
         status: response.status,
         method: response.method,
@@ -106,6 +118,7 @@ export function createAcceptanceDetector({
         )
       )
         return;
+      if (mockedResponse && isExpectedScenarioOutage(mockedResponse) && url === mockedResponse.url && /^Failed to load resource: the server responded with a status of 503(?: \(Service Unavailable\))?$/.test(text)) return;
       fail("browser-console-error", { testId });
     },
     observePageError({ testId }) {
@@ -142,6 +155,7 @@ export function createAcceptanceDetector({
         stopStartedAt,
         stoppedAt,
         expectedMockResponses,
+        expectedScenarioResponses,
       };
     },
   };

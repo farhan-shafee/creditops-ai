@@ -1,4 +1,4 @@
-import { isExpectedMockReset } from "./acceptance-detector.mjs";
+import { isExpectedMockReset, isExpectedScenarioOutage } from "./acceptance-detector.mjs";
 
 // Acceptance-only instrumentation. Context response events include every page and popup.
 // Route interception records positive proof only when the exact synthetic reset is fulfilled.
@@ -29,9 +29,13 @@ export function instrumentAcceptanceBrowser(
           url: request.url(),
           testId,
           mockedResetProof: { fulfilled: true, detail: options.json?.detail },
+          mockedScenarioProof: { fulfilled: true, detail: options.json?.detail },
         };
-        if (isExpectedMockReset(metadata)) {
-          proof.set(request, metadata.mockedResetProof);
+        if (typeof options.body === "string") {
+          try { metadata.mockedScenarioProof.detail = JSON.parse(options.body).detail; } catch { /* No positive proof. */ }
+        }
+        if (isExpectedMockReset(metadata) || isExpectedScenarioOutage(metadata)) {
+          proof.set(request, { reset: metadata.mockedResetProof, scenario: metadata.mockedScenarioProof });
           expectedConsole.set(request.url(), metadata);
         }
         try {
@@ -81,9 +85,10 @@ export function instrumentAcceptanceBrowser(
         url: value.url(),
         method: value.request().method(),
         testId,
-        mockedResetProof: proof.get(value.request()),
+        mockedResetProof: proof.get(value.request())?.reset,
+        mockedScenarioProof: proof.get(value.request())?.scenario,
       };
-      if (!isExpectedMockReset(metadata)) expectedConsole.delete(value.url());
+      if (!isExpectedMockReset(metadata) && !isExpectedScenarioOutage(metadata)) expectedConsole.delete(value.url());
       onResponse(metadata);
     };
     context.on("response", response);

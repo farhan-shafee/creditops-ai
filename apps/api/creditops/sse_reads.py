@@ -102,7 +102,9 @@ class PollingReadOwner:
         try:
             return await asyncio.shield(record.child)
         except asyncio.CancelledError:
-            if not record.child.done() and not record.cancel_sent:
+            # Task.cancel() bypasses AnyIO shields. Once release owns the child,
+            # join that same operation instead of interrupting rollback/driver close.
+            if not record.child.done() and not record.cancel_sent and not record.cleanup.releasing:
                 record.cancel_sent = True
                 record.child.cancel()
             # asyncio.wait never cancels its wait-set children at expiry.
