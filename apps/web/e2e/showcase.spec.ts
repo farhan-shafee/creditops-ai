@@ -308,6 +308,8 @@ test('workspace shell: keyboard Reveal retains modal focus and trap', async ({ p
   const close = page.getByRole('button', { name: 'Close evidence' });
   const dialog = page.getByRole('dialog', { name: 'Evidence details' });
   await expect(close).toBeFocused();
+  await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeEnabled();
   await page.keyboard.press('Tab');
   await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeFocused();
   await page.keyboard.press('Enter');
@@ -344,6 +346,8 @@ test('workspace shell: Overview citation Reveal close restores a visible trigger
   const dialog = page.getByRole('dialog', { name: 'Evidence details' });
   await expect(dialog.getByText(sourceId, { exact: true })).toBeVisible();
   await expect(dialog).toContainText('Hidden by filters');
+  await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeEnabled();
   await page.keyboard.press('Tab');
   await expect(dialog.getByRole('button', { name: 'Reveal source' })).toBeFocused();
   await page.keyboard.press('Enter');
@@ -1829,6 +1833,8 @@ for (const viewport of [
       await trigger.click();
       await expect(dialog.getByRole('heading', { name: sourceId, exact: true })).toBeVisible();
       await expect(close).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'Reveal source', exact: true })).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'Reveal source', exact: true })).toBeEnabled();
       await page.keyboard.press('Tab');
       const reveal = dialog.getByRole('button', { name: 'Reveal source', exact: true });
       await expect(reveal).toBeFocused();
@@ -1949,4 +1955,127 @@ test('header qualification: inline Reveal brings its exact source into view at 1
   await expectUsableViewport(citation);
   await expect(citation).toBeFocused();
   await page.screenshot({ path: test.info().outputPath('inline-revealed-exact-source.png') });
+});
+
+// Focus readiness and native traversal use the same public showcase profile as this suite.
+async function expectRevealKeyboardFocus(control: import('@playwright/test').Locator) {
+  await expect(control).toBeFocused();
+  await expect(control).toBeVisible();
+  const state = await control.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      focusVisible: element.matches(':focus-visible'),
+      left: bounds.left,
+      right: bounds.right,
+      top: bounds.top,
+      bottom: bounds.bottom,
+      width: innerWidth,
+      height: innerHeight,
+    };
+  });
+  expect(state.focusVisible).toBe(true);
+  expect(state.left).toBeGreaterThanOrEqual(0);
+  expect(state.top).toBeGreaterThanOrEqual(0);
+  expect(state.right).toBeLessThanOrEqual(state.width);
+  expect(state.bottom).toBeLessThanOrEqual(state.height);
+}
+
+async function openRevealFocusHiddenSource(page: import('@playwright/test').Page) {
+  await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
+  const source = page
+    .getByRole('table', { name: 'Recorded observations' })
+    .locator('tr[data-source-id="LOG-001-001"]')
+    .getByRole('button', { name: 'LOG-001-001', exact: true });
+  await source.click();
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  await page.getByLabel('Service filter').selectOption('fix-gateway');
+  const trigger = page
+    .getByTestId('selected-source-state')
+    .getByRole('button', { name: 'Open selected source', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Evidence details' });
+  const close = dialog.getByRole('button', { name: 'Close evidence', exact: true });
+  const reveal = dialog.getByRole('button', { name: 'Reveal source', exact: true });
+  const pin = dialog.getByRole('button', { name: 'Pin source', exact: true });
+  await expect(close).toBeFocused();
+  await expect(reveal).toBeVisible();
+  await expect(reveal).toBeEnabled();
+  return { source, trigger, dialog, close, reveal, pin };
+}
+
+for (const width of [1440, 390]) {
+  test(`ready drawer keyboard survives refresh and restores exact source at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install();
+    await openWorkspace(page);
+    await expect(page.getByLabel('Personal note')).toBeEnabled();
+    const { source, dialog, close, reveal, pin } = await openRevealFocusHiddenSource(page);
+    await page.keyboard.press('Tab');
+    await expectRevealKeyboardFocus(reveal);
+    // A completed ordinary Console refresh must not reinitialize an open drawer's focus.
+    const refreshed = page.waitForResponse((response) =>
+      new URL(response.url()).pathname === '/api/metrics/query' && response.status() === 200,
+    );
+    await page.clock.runFor(2100);
+    await refreshed;
+    await expectRevealKeyboardFocus(reveal);
+    await expect(dialog.getByRole('heading', { name: 'LOG-001-001', exact: true })).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(reveal).toHaveCount(0);
+    await expect(close).toBeFocused();
+    await expect(pin).toBeEnabled();
+    await page.keyboard.press('Tab');
+    await expect(pin).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(pin).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expectRevealKeyboardFocus(source);
+    // Reopening an already available source preserves ordinary trigger restoration.
+    await source.click();
+    await expect(close).toBeFocused();
+    await expect(pin).toBeEnabled();
+    await page.keyboard.press('Tab');
+    await expect(pin).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expectRevealKeyboardFocus(source);
+  });
+}
+
+test('disabled pin is excluded from native drawer traversal before and after Reveal', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await expect(page.getByLabel('Personal note')).toBeEnabled();
+  await page.getByLabel('Personal note').fill('create a scoped personal entry');
+  await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((value) =>
+      value.startsWith('creditops-workspace:v1:'),
+    )!;
+    sessionStorage.setItem(key, 'malformed');
+  });
+  await page.reload();
+  await expect(page.getByTestId('personal-workspace')).toContainText(/invalid/i);
+  const { source, close, reveal, pin } = await openRevealFocusHiddenSource(page);
+  await expect(pin).toBeDisabled();
+  await page.keyboard.press('Tab');
+  await expectRevealKeyboardFocus(reveal);
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expectRevealKeyboardFocus(reveal);
+  await page.keyboard.press('Enter');
+  await expect(reveal).toHaveCount(0);
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expectRevealKeyboardFocus(source);
 });
