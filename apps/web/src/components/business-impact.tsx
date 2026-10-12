@@ -15,10 +15,12 @@ export function BusinessImpactPanel({
   incidentId,
   onEvidence,
   investigation,
+  readsEnabled = true,
 }: {
   incidentId: string;
   onEvidence: (id: string) => void;
   investigation?: Investigation | null;
+  readsEnabled?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState<{
     incidentId: string;
@@ -26,7 +28,8 @@ export function BusinessImpactPanel({
     error: string | null;
   } | null>(null);
   useEffect(() => {
-    if (investigation?.mode === 'REPLAY') return;
+    // A mutation revokes this read cycle without discarding displayed evidence.
+    if (!readsEnabled || investigation?.mode === 'REPLAY') return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
@@ -57,7 +60,7 @@ export function BusinessImpactPanel({
       controller.abort();
       if (timer) clearTimeout(timer);
     };
-  }, [incidentId, investigation?.mode]);
+  }, [incidentId, investigation?.mode, readsEnabled]);
   const current = snapshot?.incidentId === incidentId ? snapshot : null;
   if (investigation?.mode === 'REPLAY')
     return <RecordedBusinessImpact investigation={investigation} onEvidence={onEvidence} />;

@@ -217,6 +217,7 @@ export function IncidentView({
             incidentId={incident.id}
             onEvidence={onEvidence}
             investigation={investigation}
+            readsEnabled={!running}
           />
           {!recorded && (
             <>

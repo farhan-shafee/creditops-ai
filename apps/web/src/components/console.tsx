@@ -492,13 +492,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     const resetSession = sessionId();
     setBusy(true);
     setError(null);
-    // Keep the current recorded result and personal state while reset is pending or fails.
+    // Keep the matching displayed result and personal state until reset succeeds.
     stopInvestigation(
-      Boolean(
-        investigation?.mode === 'REPLAY' &&
-        investigation.provenance?.showcase &&
-        investigation.incident_id === resetting?.id,
-      ),
+      Boolean(investigation && resetting && investigation.incident_id === resetting.id),
     );
     try {
       await api(`/demo/scenarios/${scenario}/reset`, { method: 'POST' });
