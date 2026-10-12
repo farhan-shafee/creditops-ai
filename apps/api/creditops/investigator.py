@@ -1009,10 +1009,16 @@ async def run_investigation(
 
 
 async def stream_events(store: Any, session_id: str, inv_id: str) -> AsyncIterator[str]:
+    from .sse_reads import PollingUnavailable
+
     sent: dict[str, str] = {}
     deadline = time.monotonic() + Settings().investigation_timeout_seconds + 10
     while time.monotonic() < deadline:
-        row = await store.get_investigation(session_id, inv_id)
+        try:
+            row = await store.get_investigation(session_id, inv_id)
+        except PollingUnavailable as error:
+            yield f"event: error\ndata: {json.dumps({'message': str(error)})}\n\n"
+            return
         if row is None:
             yield 'event: error\ndata: {"message":"Investigation not found in this session"}\n\n'
             return

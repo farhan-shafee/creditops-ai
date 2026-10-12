@@ -2,11 +2,13 @@
 
 import asyncio
 import json
+import logging
 import math
 import re
 import time
 from collections import Counter
 from collections.abc import Callable
+from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -76,8 +78,56 @@ def normalize_database_url(url: str) -> str:
     return url
 
 
+class PollingCleanup:
+    """Explicit acknowledgements; failed resources remain strongly owned."""
+
+    def __init__(self):
+        self._resources: set[object] = set()
+        self._attempted_drivers: set[object] = set()
+
+    @property
+    def pending(self):
+        return bool(self._resources)
+
+    def add(self, resource):
+        self._resources.add(resource)
+
+    def remove(self, resource):
+        self._resources.discard(resource)
+
+    async def close_driver(self, driver):
+        if driver in self._attempted_drivers:
+            return
+        self._attempted_drivers.add(driver)
+        self.add(driver)
+        try:
+            await driver.close()
+        except Exception as error:
+            # Preserve the failed receipt, but let SQLAlchemy retire the connection.
+            logging.getLogger("creditops.sse").error("sse_cleanup_failed", extra={"error_type": type(error).__name__})
+        else:
+            self.remove(driver)
+
+
+_POLLING_CLEANUP = ContextVar("creditops_polling_cleanup", default=None)
+
+
 class _OwnedAsyncSession(AsyncSession):
+    async def __aenter__(self):
+        value = await super().__aenter__()
+        cleanup = _POLLING_CLEANUP.get()
+        if cleanup is not None:
+            cleanup.add(self)
+        return value
+
     async def __aexit__(self, type_, value, traceback):
+        cleanup = _POLLING_CLEANUP.get()
+        if cleanup is not None:
+            # The service owns this exact child/resources beyond the request deadline.
+            with CancelScope(shield=True):
+                await self.close()
+            cleanup.remove(self)
+            return
         # AnyIO cancellation repeats at each await. Protect only the joined close.
         with move_on_after(2, shield=True) as deadline:
             await self.close()
@@ -109,9 +159,22 @@ class Store:
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
 
+        @event.listens_for(self.engine.sync_engine, "invalidate")
+        def close_owned_polling_driver(connection, _record, _error):
+            cleanup = _POLLING_CLEANUP.get()
+            if cleanup is not None and connection is not None:
+                with CancelScope(shield=True):
+                    connection.run_async(cleanup.close_driver)
+
         @event.listens_for(self.engine.sync_engine, "handle_error")
         def close_cancelled_connection(context):
             if not isinstance(context.original_exception, asyncio.CancelledError) or context.connection is None:
+                return
+
+            if _POLLING_CLEANUP.get() is not None:
+                # Acquired-query and pre-ping invalidation share one public handoff.
+                with CancelScope(shield=True):
+                    context.connection.invalidate(context.original_exception)
                 return
 
             async def close_driver(driver):
@@ -304,6 +367,13 @@ class Store:
                             resolution=data["resolution"],
                         )
                     )
+
+    async def poll_investigation(self, session_id, identifier, cleanup):
+        token = _POLLING_CLEANUP.set(cleanup)
+        try:
+            return await self.get_investigation(session_id, identifier)
+        finally:
+            _POLLING_CLEANUP.reset(token)
 
     async def close(self) -> None:
         await self.engine.dispose()

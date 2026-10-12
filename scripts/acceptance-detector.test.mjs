@@ -445,3 +445,17 @@ test("a console error on a live200 page latches while exact proven mock-resource
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+
+test("SSE cleanup events are fatal backend failures with split JSON and first failure latch", () => {
+  for (const event of ["sse_cleanup_deadline", "sse_cleanup_failed", "sse_read_failed", "sse_shutdown_incomplete"]) {
+    const detector = createAcceptanceDetector();
+    const line = JSON.stringify({level: "ERROR", logger: "creditops.sse", event}) + "\n";
+    detector.feedLog("backend", line.slice(0, 17));
+    detector.feedLog("backend", line.slice(17));
+    assert.equal(detector.snapshot().failure?.kind, "backend-sse-cleanup");
+    assert.equal(detector.snapshot().failure?.event, event);
+    detector.feedLog("backend", '"GET /health HTTP/1.1" 503\n');
+    assert.equal(detector.snapshot().failure?.event, event);
+  }
+});

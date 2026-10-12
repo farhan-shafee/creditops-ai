@@ -62,6 +62,8 @@ export function createAcceptanceDetector({
       if (start >= 0) {
         try {
           const event = JSON.parse(line.slice(start));
+          if (event.logger === "creditops.sse" && ["sse_cleanup_deadline", "sse_cleanup_failed", "sse_read_failed", "sse_shutdown_incomplete"].includes(event.event))
+            fail("backend-sse-cleanup", { event: event.event });
           if (event.event === "http_request" && event.status >= 500)
             fail("backend-http-5xx", { status: event.status });
         } catch {

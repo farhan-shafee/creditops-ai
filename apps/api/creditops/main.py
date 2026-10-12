@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Gauge, generate_latest
 from pydantic import Field
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -27,6 +27,7 @@ from .models import (
 )
 from .security import RateLimiter, authorize_admin, sanitize
 from .settings import Settings, get_settings
+from .sse_reads import PollingReadOwner, PollingResponse, PollingStore, PollingUnavailable
 from .store import Store
 from .telemetry import SyntheticTelemetryAdapter
 from .tools import DiagnosticTools, canonical_time
@@ -140,6 +141,7 @@ def create_app(
     configuration = settings or get_settings()
     database = store or Store(configuration.database_url)
     tasks: dict[tuple[str, str], tuple[str, asyncio.Task]] = {}
+    polling_reads = PollingReadOwner(database)
     registry = CollectorRegistry()
     http_requests = Counter(
         "creditops_http_requests_total", "HTTP requests", ["method", "path", "status"], registry=registry
@@ -178,17 +180,22 @@ def create_app(
         fix_connected.labels("FIX-DEMO-SESSION-A").set(1)
         db_pool.labels("quote-service").set(0.35)
         yield
+        polling_reads.stop_admission()
         running = [task for _, task in tasks.values()]
         for task in running:
             task.cancel()
         if running:
             await asyncio.gather(*running, return_exceptions=True)
         await adapter.close()
+        polling_complete = await polling_reads.shutdown()
+        if not polling_complete:
+            raise RuntimeError("SSE polling cleanup incomplete; retained ownership requires operator intervention")
         if manage_store:
             await database.close()
 
     app = FastAPI(title="CreditOps AI — Synthetic Read-only Diagnostics", version="1.0.0", lifespan=lifespan)
     app.state.store = database
+    app.state.sse_reads = polling_reads
     app.add_middleware(RequestSizeLimit, limit=configuration.max_request_bytes)
     app.add_middleware(
         CORSMiddleware,
@@ -464,8 +471,13 @@ def create_app(
 
         if await database.get_investigation(session_id, id) is None:
             raise HTTPException(404, "Investigation not found in this session")
-        return StreamingResponse(
-            stream_events(database, session_id, id),
+        try:
+            polling_store = PollingStore(polling_reads, polling_reads.reserve())
+        except PollingUnavailable as error:
+            raise HTTPException(503, str(error)) from error
+        return PollingResponse(
+            stream_events(polling_store, session_id, id),
+            polling_store,
             media_type="text/event-stream",
             headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
         )

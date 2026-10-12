@@ -378,7 +378,7 @@ async def test_driver_inflight_cancellation_returns_checkout_before_later_ping(t
                 await control.dispose()
 
 async def test_sse_disconnect_during_driver_read_joins_cleanup_without_errors(tmp_path, monkeypatch, caplog):
-    """Actual streaming disconnect must clean its in-flight DB read under AnyIO cancellation."""
+    """The approved SSE contract retains held cleanup after the request wait expires."""
     import logging
     import threading
 
@@ -456,21 +456,31 @@ async def test_sse_disconnect_during_driver_read_joins_cleanup_without_errors(tm
                 disconnect_started = asyncio.get_running_loop().time()
                 writer.close()
                 await writer.wait_closed()
-                await asyncio.wait_for(cancelled.wait(), 3)
                 pending = list(server.server_state.tasks)
                 if pending:
-                    await asyncio.wait_for(asyncio.gather(*pending, return_exceptions=True), 3)
-                await asyncio.wait_for(counts.idle.wait(), 2)
-                assert read_tasks == set()
-                assert session_close_tasks == set()
+                    _, outstanding = await asyncio.wait(pending, timeout=3)
+                    assert not outstanding
+                record = app.state.sse_reads.records[0]
+                assert app.state.sse_reads.used == 1 and not record.child.done()
+                assert record.cleanup.pending and record.child.cancelling() == 1
+                assert read_tasks == {record.child}
+                assert counts.active == 1 and database.engine.pool.checkedout() == 1
                 assert 2 <= asyncio.get_running_loop().time() - disconnect_started < 3
                 assert not release.is_set() and not driver_finished.is_set()
                 assert drivers[0]._thread.is_alive()
                 cleanup_tasks = [task for task in asyncio.all_tasks() if "Connection.close" in getattr(task.get_coro(), "__qualname__", "") or "_terminate_graceful_close" in getattr(task.get_coro(), "__qualname__", "") or "_run_to_completion" in getattr(task.get_coro(), "__qualname__", "")]
                 assert cleanup_tasks == []
-                assert any("cancel scope" in message for message in cancellation_messages)
-                print(json.dumps({"phase": "sse-request-cleanup-before-driver-release", "live_read_tasks": len(read_tasks), "live_session_close_tasks": len(session_close_tasks), "live_nested_close_tasks": len(cleanup_tasks), "active_driver_threads": 1, **counts.receipt()}))
+                print(json.dumps({"phase": "sse-request-retains-cleanup-before-driver-release", "live_read_tasks": len(read_tasks), "live_session_close_tasks": len(session_close_tasks), "retained_slots": app.state.sse_reads.used, "active_driver_threads": 1, **counts.receipt()}))
                 release.set()
+                _, outstanding = await asyncio.wait({record.child}, timeout=2)
+                assert not outstanding
+                with pytest.raises(asyncio.CancelledError):
+                    record.child.result()
+                assert cancelled.is_set() and len(cancellation_messages) == 1
+                assert all("cancel scope" not in message for message in cancellation_messages)
+                await asyncio.wait_for(counts.idle.wait(), 2)
+                assert read_tasks == session_close_tasks == set()
+                assert app.state.sse_reads.used == 0 and not record.cleanup.pending
                 assert await asyncio.wait_for(asyncio.to_thread(driver_finished.wait, 1), 2)
                 await asyncio.wait_for(asyncio.to_thread(drivers[0]._thread.join, 1), 2)
                 assert not drivers[0]._thread.is_alive()
@@ -479,7 +489,7 @@ async def test_sse_disconnect_during_driver_read_joins_cleanup_without_errors(tm
                 assert later.status_code == 200
                 assert later.json()["id"] == "INV-LIFECYCLE"
                 errors = [record.getMessage() for record in caplog.records if record.levelno >= logging.ERROR and record.name.startswith("sqlalchemy.pool")]
-                print(json.dumps({"phase": "sse-driver-disconnect", "live_read_tasks": len(read_tasks), "level_cancelled_reads": len(cancellation_messages), "cleanup_errors": len(errors), **counts.receipt()}))
+                print(json.dumps({"phase": "sse-driver-disconnect", "live_read_tasks": len(read_tasks), "edge_cancelled_reads": len(cancellation_messages), "cleanup_errors": len(errors), **counts.receipt()}))
                 assert counts.active == 0
                 assert counts.checkout == counts.checkin
                 assert errors == []
@@ -603,6 +613,7 @@ async def test_postgres_sse_disconnect_cancels_real_locked_query_and_closes(tmp_
         key = uuid4().int % 1000000 + 1
         cancelled = asyncio.Event()
         observed, drivers = [], []
+        child_cancel_counts = []
         read_calls = 0
 
         @event.listens_for(database.engine.sync_engine, "connect")
@@ -622,6 +633,7 @@ async def test_postgres_sse_disconnect_cancels_real_locked_query_and_closes(tmp_
                     return await super().get(entity, ident, **kwargs)
                 except asyncio.CancelledError as error:
                     observed.append(error)
+                    child_cancel_counts.append(asyncio.current_task().cancelling())
                     cancelled.set()
                     raise
 
@@ -647,7 +659,8 @@ async def test_postgres_sse_disconnect_cancels_real_locked_query_and_closes(tmp_
                             pending = list(server.server_state.tasks)
                             if pending:
                                 await asyncio.wait_for(asyncio.gather(*pending, return_exceptions=True), 3)
-                            assert len(observed) == 1 and "cancel scope" in str(observed[0])
+                            assert len(observed) == 1 and "cancel scope" not in str(observed[0])
+                            assert child_cancel_counts == [1] and app.state.sse_reads.used == 0
                             assert drivers[0].is_closed()
                             assert counts.active == 0 and counts.checkout == counts.checkin
                             assert counts.invalidation == 1
@@ -657,7 +670,7 @@ async def test_postgres_sse_disconnect_cancels_real_locked_query_and_closes(tmp_
                             assert later.status_code == 200 and later.json()["id"] == "INV-PG-LIFECYCLE"
                             errors = [record for record in caplog.records if record.levelno >= logging.ERROR]
                             assert errors == []
-                            print(json.dumps({"phase": "postgres-sse-driver-disconnect", "original_level_cancellation": True, "cancelled_driver_closed": drivers[0].is_closed(), "cleanup_errors": len(errors), **counts.receipt()}))
+                            print(json.dumps({"phase": "postgres-sse-driver-disconnect", "owned_child_edge_cancellation": True, "child_cancel_calls": child_cancel_counts, "cancelled_driver_closed": drivers[0].is_closed(), "cleanup_errors": len(errors), **counts.receipt()}))
                         finally:
                             writer.close()
                             await writer.wait_closed()
