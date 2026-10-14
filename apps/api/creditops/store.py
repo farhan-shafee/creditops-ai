@@ -187,9 +187,17 @@ class Store:
             if not isinstance(context.original_exception, asyncio.CancelledError) or context.connection is None:
                 return
 
-            if _POLLING_CLEANUP.get() is not None:
-                # Acquired-query and pre-ping invalidation share one public handoff.
-                with CancelScope(shield=True):
+            cleanup = _POLLING_CLEANUP.get()
+            if cleanup is not None:
+                # An unbuffered SQLite read cursor can retain a SHARED lock even
+                # after its driver closes. Finalize it before retiring the driver.
+                with cleanup.release_phase(), CancelScope(shield=True):
+                    execution = context.execution_context
+                    cursor = getattr(execution, "cursor", None) if execution is not None else None
+                    if cursor is not None:
+                        cleanup.add(cursor)
+                        cursor.close()
+                        cleanup.remove(cursor)
                     context.connection.invalidate(context.original_exception)
                 return
 
