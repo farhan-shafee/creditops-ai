@@ -1,4 +1,5 @@
 import { test, expect, type Page } from './acceptance';
+import { withResetRouteOwner } from './reset-route-owner';
 
 type ReadRow = {
   label: string;
@@ -180,73 +181,83 @@ test('ordinary replay reset retains its recorded result and never starts a live 
   let committed = false,
     missingStatus: number | undefined;
   let resetSession = '';
-  await page.route('**/api/demo/scenarios/kafka-pricing-lag/reset', async (route) => {
-    resetSession = route.request().headers()['x-demo-session'];
-    const response = await route.fetch();
-    expect(response.status()).toBe(200);
-    missingStatus = (
-      await page.request.get('/api/incidents/INC-DEMO-001/business-impact', {
-        headers: { 'X-Demo-Session': resetSession },
-      })
-    ).status();
-    committed = true;
-    await hold.promise;
-    await route.fulfill({ response });
-  });
-  // Keep the displayed input incident stable while the reset response is held.
-  // Delay actual overview/incidents responses, rather than inventing their data.
-  for (const path of ['overview', 'incidents']) {
-    await page.route('**/api/' + path, async (route) => {
-      const response = await route.fetch();
-      if (committed) await hold.promise;
-      await route.fulfill({ response });
-    });
-  }
-  const other = await browser.newContext();
-  try {
-    const otherPage = await other.newPage();
-    await otherPage.goto('/incidents');
-    await runIncident(otherPage);
-    await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
-    await expect.poll(() => committed).toBe(true);
-    expect(missingStatus).toBe(404);
-    await expect(page.getByRole('button', { name: 'Reset Scenario', exact: true })).toBeDisabled();
-    await page.clock.runFor(2000);
-    const observed = await rows(page);
-    await testInfo.attach('reset-read-ordering', {
-      body: JSON.stringify({
-        serverAcknowledgedRemoval: committed,
-        sameScopeMissingStatus: missingStatus,
-        reads: observed,
-      }),
-      contentType: 'application/json',
-    });
-    expect(
-      observed.length - before,
-      'Pending reset may not re-enable live reads after clearing REPLAY',
-    ).toBe(0);
-    await expect(page.getByTestId('assessment')).toHaveText(original);
-    await expect(page.getByTestId('recorded-business-impact')).toBeVisible();
-    hold.release();
-    await expect(page.getByTestId('incident-detail')).not.toBeVisible();
-    const otherSession = await otherPage.evaluate(() =>
-      localStorage.getItem('creditops-demo-session'),
-    );
-    expect(otherSession === resetSession).toBe(false);
-    expect(
-      (
-        await otherPage.request.get('/api/incidents/INC-DEMO-001/business-impact', {
-          headers: { 'X-Demo-Session': otherSession! },
-        })
-      ).status(),
-    ).toBe(200);
-    await expect(otherPage.getByTestId('incident-detail')).toBeVisible();
-  } finally {
-    hold.release();
-    await expect(page.getByTestId('incident-detail')).not.toBeVisible();
-    await page.evaluate(() => window.resetReadProbe.releaseAll());
-    await other.close();
-  }
+  let other: Awaited<ReturnType<typeof browser.newContext>> | undefined;
+  await withResetRouteOwner(
+    page,
+    {
+      releaseBarrier: () => hold.release(),
+      releaseProbe: () => page.evaluate(() => window.resetReadProbe.releaseAll()),
+      closeOther: async () => {
+        await other?.close();
+      },
+    },
+    async (owner) => {
+      await owner.route('/api/demo/scenarios/kafka-pricing-lag/reset', async (route) => {
+        resetSession = route.request().headers()['x-demo-session'];
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        missingStatus = (
+          await page.request.get('/api/incidents/INC-DEMO-001/business-impact', {
+            headers: { 'X-Demo-Session': resetSession },
+          })
+        ).status();
+        committed = true;
+        await hold.promise;
+        await route.fulfill({ response });
+      });
+      // Keep the displayed input incident stable while the reset response is held.
+      // Delay actual overview/incidents responses, rather than inventing their data.
+      for (const path of ['overview', 'incidents']) {
+        await owner.route('/api/' + path, async (route) => {
+          const response = await route.fetch();
+          if (committed) await hold.promise;
+          await route.fulfill({ response });
+        });
+      }
+      other = await browser.newContext();
+      const otherPage = await other.newPage();
+      await otherPage.goto('/incidents');
+      await runIncident(otherPage);
+      await page.getByRole('button', { name: 'Reset Scenario', exact: true }).click();
+      await expect.poll(() => committed).toBe(true);
+      expect(missingStatus).toBe(404);
+      await expect(
+        page.getByRole('button', { name: 'Reset Scenario', exact: true }),
+      ).toBeDisabled();
+      await page.clock.runFor(2000);
+      const observed = await rows(page);
+      await testInfo.attach('reset-read-ordering', {
+        body: JSON.stringify({
+          serverAcknowledgedRemoval: committed,
+          sameScopeMissingStatus: missingStatus,
+          reads: observed,
+        }),
+        contentType: 'application/json',
+      });
+      expect(
+        observed.length - before,
+        'Pending reset may not re-enable live reads after clearing REPLAY',
+      ).toBe(0);
+      await expect(page.getByTestId('assessment')).toHaveText(original);
+      await expect(page.getByTestId('recorded-business-impact')).toBeVisible();
+      hold.release();
+      await expect(page.getByTestId('incident-detail')).not.toBeVisible();
+      const otherSession = await otherPage.evaluate(() =>
+        localStorage.getItem('creditops-demo-session'),
+      );
+      expect(otherSession === resetSession).toBe(false);
+      expect(
+        (
+          await otherPage.request.get('/api/incidents/INC-DEMO-001/business-impact', {
+            headers: { 'X-Demo-Session': otherSession! },
+          })
+        ).status(),
+      ).toBe(200);
+      await expect(otherPage.getByTestId('incident-detail')).toBeVisible();
+      // Retain the terminal outcome check, outside resource cleanup.
+      await expect(page.getByTestId('incident-detail')).not.toBeVisible();
+    },
+  );
 });
 
 test('failed ordinary replay reset preserves result and personal scope before a successful reset', async ({
