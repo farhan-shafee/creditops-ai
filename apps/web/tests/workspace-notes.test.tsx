@@ -176,3 +176,27 @@ test('notes_removal_denial_retains_scope_for_safe_retry', () => {
   assert.equal(loadNotes(db, { ...scope, exportedAt: 'version-two' }, sources).status, 'empty');
   assert.deepEqual(loadNotes(db, other, sources).state, state);
 });
+
+test('record_clear_removal_denial_can_reappear_without_changing_other_scopes', () => {
+  const db = storage();
+  const personal = { note: 'retained locally', pinnedIds: [...sources.keys()].slice(0, 1) };
+  const otherScopes = [
+    { ...scope, incidentId: 'other' },
+    { ...scope, sessionId: 'other' },
+    { ...scope, exportedAt: 'other-version' },
+  ];
+  for (const value of [scope, ...otherScopes]) saveNotes(db, value, personal, sources);
+  const denied = {
+    ...db,
+    removeItem() {
+      throw Error('denied');
+    },
+  };
+  assert.equal(clearNotes(denied, scope), false);
+  // A later read from restored storage retrieves the original stored entry.
+  assert.deepEqual(loadNotes(db, scope, sources).state, personal);
+  for (const value of otherScopes) assert.deepEqual(loadNotes(db, value, sources).state, personal);
+  assert.equal(clearNotes(db, scope), true);
+  assert.equal(loadNotes(db, scope, sources).status, 'empty');
+  for (const value of otherScopes) assert.deepEqual(loadNotes(db, value, sources).state, personal);
+});

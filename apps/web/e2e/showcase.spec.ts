@@ -1,3 +1,5 @@
+import { withRefreshProbe, recordedPresentation } from './console-refresh-probe';
+import { withResetRouteOwner } from './reset-route-owner';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -1455,28 +1457,138 @@ test('final fix: economic order includes submission and retransmission with lite
 test('final fix: denied storage clear removes local notes and pins without requests', async ({
   page,
 }) => {
-  await page.addInitScript(() =>
-    Object.defineProperty(window, 'sessionStorage', {
-      get() {
-        throw Error('denied');
-      },
-    }),
-  );
-  await openWorkspace(page);
-  await page.getByLabel('Personal note').fill('memory only');
-  await page.getByTestId('supporting-evidence').getByRole('button').first().click();
-  await page.getByRole('button', { name: 'Pin source', exact: true }).click();
-  await page.keyboard.press('Escape');
-  const calls: string[] = [];
-  page.on('request', (r) => {
-    if (r.url().includes('/api/')) calls.push(r.url());
+  await withRefreshProbe(page, 'memory only', async (probe) => {
+    await page.addInitScript(() =>
+      Object.defineProperty(window, 'sessionStorage', {
+        get() {
+          throw Error('denied');
+        },
+      }),
+    );
+    await openWorkspace(page);
+    await page.getByLabel('Personal note').fill('memory only');
+    await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+    await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+    await page.keyboard.press('Escape');
+
+    // Freeze future shell ticks AND join its response-body/metrics continuation.
+    // Workspace visibility and a paused clock alone do not establish that boundary.
+    await probe.pause();
+    const original = await recordedPresentation(page);
+    probe.begin();
+    await page.getByTestId('personal-clear').click();
+    await expect(page.getByLabel('Personal note')).toHaveValue('');
+    await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+    await expect(page.getByTestId('personal-workspace')).toContainText(/cleared in memory/i);
+    await expect(page.getByTestId('personal-workspace')).toContainText(
+      /stored entry.*may reappear/i,
+    );
+
+    // Flush the next two animation frames/zero-delay effects while the 2s shell
+    // interval remains controlled, then join any action-created API work.
+    await page.clock.runFor(32);
+    await probe.drain();
+    expect(probe.calls).toEqual([]); // Every API path/method, including metrics.
+    expect(probe.leaks()).toBe(0);
+    expect(await recordedPresentation(page)).toEqual(original);
+    probe.end();
+    const cursor = (await probe.state()).events.length;
+    await page.clock.runFor(2100);
+    await probe.drain();
+    expect(
+      (await probe.state()).events
+        .slice(cursor)
+        .some((e) => e.phase === 'body_done' && e.path === '/api/metrics/query'),
+    ).toBe(true);
+    expect(await recordedPresentation(page)).toEqual(original);
+    expect(probe.leaks()).toBe(0);
   });
-  await page.getByTestId('personal-clear').click();
-  await expect(page.getByLabel('Personal note')).toHaveValue('');
-  await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
-  await expect(page.getByTestId('personal-workspace')).toContainText(/cleared in memory/i);
-  await expect(page.getByTestId('personal-workspace')).toContainText(/stored entry.*may reappear/i);
-  expect(calls).toEqual([]);
+});
+
+test('denied storage clear adds no work to an already-owned refresh tail', async ({ page }) => {
+  let holding = false,
+    held = false,
+    release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await withRefreshProbe(page, 'memory only', async (probe) => {
+    await withResetRouteOwner(
+      page,
+      {
+        releaseBarrier: () => release(),
+        releaseProbe: () => probe.drain(),
+        closeOther: async () => {},
+      },
+      async (owner) => {
+        await owner.route('/api/overview', async (route) => {
+          const response = await route.fetch();
+          if (holding) {
+            holding = false;
+            held = true;
+            await gate;
+          }
+          await route.fulfill({ response });
+        });
+        await page.addInitScript(() =>
+          Object.defineProperty(window, 'sessionStorage', {
+            get() {
+              throw Error('denied');
+            },
+          }),
+        );
+        await openWorkspace(page);
+        await page.getByLabel('Personal note').fill('memory only');
+        await page.getByTestId('supporting-evidence').getByRole('button').first().click();
+        await page.getByRole('button', { name: 'Pin source', exact: true }).click();
+        await page.keyboard.press('Escape');
+
+        await probe.pause();
+        const original = await recordedPresentation(page);
+        holding = true;
+        await page.clock.runFor(2100);
+        await expect.poll(() => held).toBe(true);
+        const before = await probe.state();
+        const batch = before.events.filter((e) => e.phase === 'refresh_start').at(-1)!.batch;
+        expect(
+          before.events
+            .filter((e) => e.batch === batch && e.phase === 'fetch_start')
+            .map((e) => e.path),
+        ).toEqual(['/api/overview', '/api/incidents', '/api/services/topology']);
+        probe.begin();
+        const cursor = before.events.length;
+        await page.getByTestId('personal-clear').click();
+        await expect(page.getByLabel('Personal note')).toHaveValue('');
+        await expect(page.getByTestId('personal-workspace')).toContainText('0 / 20');
+        await expect(page.getByTestId('personal-workspace')).toContainText(/cleared in memory/i);
+        await expect(page.getByTestId('personal-workspace')).toContainText(
+          /stored entry.*may reappear/i,
+        );
+
+        // The held real predecessor cannot finish/dispatch metrics until released.
+        expect(probe.calls).toEqual([]);
+        release();
+        await page.clock.runFor(32);
+        await probe.drain();
+        const after = await probe.state();
+        // Positive attribution uses the exact pre-Clear AbortSignal cohort, not a
+        // metrics/GET allow-list. Independent Clear requests cannot satisfy this.
+        expect(
+          after.events
+            .slice(cursor)
+            .filter((e) => e.phase === 'fetch_start')
+            .map(({ phase, path, batch }) => ({ phase, path, batch })),
+        ).toEqual([{ phase: 'fetch_start', path: '/api/metrics/query', batch }]);
+        expect(probe.calls).toEqual(['/api/metrics/query']);
+        expect(probe.leaks()).toBe(0);
+        expect(await recordedPresentation(page)).toEqual(original);
+        await test.info().attach('safe-pending-clear-refresh-timeline', {
+          body: JSON.stringify({ batch, events: after.events }),
+          contentType: 'application/json',
+        });
+      },
+    );
+  });
 });
 test('final fix: missing durable identity clear is local and invalid entry remains locked on removal denial', async ({
   page,
@@ -1833,8 +1945,12 @@ for (const viewport of [
       await trigger.click();
       await expect(dialog.getByRole('heading', { name: sourceId, exact: true })).toBeVisible();
       await expect(close).toBeFocused();
-      await expect(dialog.getByRole('button', { name: 'Reveal source', exact: true })).toBeVisible();
-      await expect(dialog.getByRole('button', { name: 'Reveal source', exact: true })).toBeEnabled();
+      await expect(
+        dialog.getByRole('button', { name: 'Reveal source', exact: true }),
+      ).toBeVisible();
+      await expect(
+        dialog.getByRole('button', { name: 'Reveal source', exact: true }),
+      ).toBeEnabled();
       await page.keyboard.press('Tab');
       const reveal = dialog.getByRole('button', { name: 'Reveal source', exact: true });
       await expect(reveal).toBeFocused();
@@ -2015,8 +2131,9 @@ for (const width of [1440, 390]) {
     await page.keyboard.press('Tab');
     await expectRevealKeyboardFocus(reveal);
     // A completed ordinary Console refresh must not reinitialize an open drawer's focus.
-    const refreshed = page.waitForResponse((response) =>
-      new URL(response.url()).pathname === '/api/metrics/query' && response.status() === 200,
+    const refreshed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === '/api/metrics/query' && response.status() === 200,
     );
     await page.clock.runFor(2100);
     await refreshed;
