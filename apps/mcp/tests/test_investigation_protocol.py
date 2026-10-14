@@ -18,6 +18,7 @@ from creditops.providers import AdaptiveDecision, DeterministicProvider
 from creditops.store import Store
 from mcp import Client
 from mcp.client.stdio import StdioServerParameters
+from stdio_test_owner import StdioProbe, finish_task, wait_for_tool
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -350,14 +351,20 @@ def process_is_running(pid):
         kernel.CloseHandle(handle)
 
 
-async def test_cancelled_real_stdio_investigation_closes_owned_process(real_api, tmp_path):
+async def test_cancelled_real_stdio_investigation_closes_owned_process(real_api, tmp_path, monkeypatch):
     _, store, session_id, url = real_api
     marker = tmp_path / "child.pid"
+    child_phases = tmp_path / "child-phases.jsonl"
     script = tmp_path / "waiting.py"
     script.write_text(
-        "import os,asyncio\nfrom pathlib import Path\nfrom creditops_mcp.server import HttpDiagnosticClient,create_server\n"
+        "import os,asyncio,time,json\nfrom pathlib import Path\n"
+        f"phase_file=Path({str(child_phases)!r})\n"
+        "def phase(name):\n"
+        " with phase_file.open('a') as out: out.write(json.dumps({'phase':name,'monotonic':time.monotonic(),'pid':os.getpid()})+'\\n')\n"
+        "phase('bootstrap')\nfrom creditops_mcp.server import HttpDiagnosticClient,create_server\nphase('import_complete')\n"
         "class Waiting(HttpDiagnosticClient):\n"
         " async def call(self, tool, arguments):\n"
+        "  phase(tool)\n"
         "  if tool == 'query_metrics':\n"
         f"   Path({str(marker)!r}).write_text(str(os.getpid()))\n"
         "   await asyncio.sleep(60)\n"
@@ -365,6 +372,8 @@ async def test_cancelled_real_stdio_investigation_closes_owned_process(real_api,
         f"create_server(Waiting({url!r}, {session_id!r})).run()\n",
         encoding="utf-8",
     )
+    probe = StdioProbe(tmp_path, script)
+    probe.install(monkeypatch)
     cutoff = await store.freeze_snapshot(session_id, "INC-DEMO-001")
     parameters = StdioServerParameters(
         command=sys.executable,
@@ -373,28 +382,94 @@ async def test_cancelled_real_stdio_investigation_closes_owned_process(real_api,
         env={"PYTHONPATH": os.pathsep.join([str(ROOT / "apps/api"), str(ROOT / "apps/mcp")])},
     )
     adapter = MCPDiagnosticClient(
-        session_id, "INC-DEMO-001", cutoff, client=Client(parameters, read_timeout_seconds=10)
+        session_id, "INC-DEMO-001", cutoff, client=probe.client(parameters)
     )
+    original_tasks = asyncio.all_tasks()
     task = asyncio.create_task(
         collect_adaptive_investigation(
             store, session_id, "INC-DEMO-001", DeterministicProvider(), diagnostic_client=adapter
         )
     )
+    primary = None
+    cleanup_deadline = None
     try:
-        for _ in range(100):
-            if marker.exists():
-                break
-            await asyncio.sleep(0.05)
-        assert marker.exists(), "Owned diagnostic child did not reach waiting tool"
+        await wait_for_tool(task, marker, probe)
         pid = int(marker.read_text())
+        assert probe.process is not None and probe.process.pid == pid
         assert process_is_running(pid)
+        probe.phase("cancel_requested")
+        cleanup_deadline = asyncio.get_running_loop().time() + 10
         task.cancel()
+        done, _ = await asyncio.wait({task}, timeout=10)
+        assert done, "Cancellation did not complete within existing cleanup bound"
         with pytest.raises(asyncio.CancelledError):
-            await asyncio.wait_for(task, timeout=10)
+            await task
         assert not process_is_running(pid)
         assert adapter._entered is False
+        with pytest.raises(RuntimeError, match="async context manager"):
+            _ = adapter.client.session
+        await probe.join_exited_child()
+        assert not (asyncio.all_tasks() - original_tasks - {task}), "Owned protocol task still pending"
+    except BaseException as error:
+        primary = error
+        probe.phase("body_failed", error_type=type(error).__name__)
+        raise
     finally:
-        if not task.done():
-            task.cancel()
-            with pytest.raises(asyncio.CancelledError):
-                await task
+        cleanup_errors = []
+        try:
+            remaining = 10 if cleanup_deadline is None else max(0, cleanup_deadline - asyncio.get_running_loop().time())
+            await finish_task(task, primary, timeout=remaining)
+            if probe.process is not None:
+                await probe.join_exited_child()
+            probe.phase("cleanup_complete", task_done=task.done(), cancelled=task.cancelled(), client_entered=adapter._entered, cancellation_requests=task.cancelling())
+        except BaseException as cleanup:
+            cleanup_errors.append(cleanup)
+        finally:
+            try:
+                await probe.contain_after_failure(task)
+            except BaseException as containment:
+                cleanup_errors.append(containment)
+        cleanup_errors.extend(probe.observation_errors)
+        if cleanup_errors:
+            errors = ([primary] if primary is not None else []) + cleanup_errors
+            raise BaseExceptionGroup("Investigation body and owned cleanup failed", errors) from primary
+
+
+async def test_body_assertion_still_joins_real_stdio_cleanup(real_api, tmp_path, monkeypatch):
+    primary = AssertionError("Controlled assertion after query_metrics entry")
+    original_phase = StdioProbe.phase
+    def phase(self, name, **details):
+        original_phase(self, name, **details)
+        if name == "cancel_requested":
+            raise primary
+    monkeypatch.setattr(StdioProbe, "phase", phase)
+    with pytest.raises(AssertionError) as result:
+        await test_cancelled_real_stdio_investigation_closes_owned_process(real_api, tmp_path, monkeypatch)
+    assert result.value is primary
+    rows = [json.loads(line) for line in (tmp_path / "parent-phases.jsonl").read_text().splitlines()]
+    assert rows[-1]["phase"] == "cleanup_complete"
+    assert rows[-1]["task_done"] and rows[-1]["cancelled"]
+    assert not rows[-1]["client_entered"] and rows[-1]["cancellation_requests"] == 1
+    assert any(row["phase"] == "child_reaped" and row["returncode"] == 0 for row in rows)
+    assert not any(row["phase"] == "emergency_child_containment" for row in rows)
+
+
+async def test_phase_receipt_failure_cannot_bypass_real_stdio_cleanup(real_api, tmp_path, monkeypatch):
+    original = OSError("controlled diagnostic writer failure")
+    real_write = StdioProbe._write_phase
+    fired = False
+    def write(self, name, details):
+        nonlocal fired
+        if name == "protocol_enter_complete" and not fired:
+            fired = True
+            raise original
+        return real_write(self, name, details)
+    monkeypatch.setattr(StdioProbe, "_write_phase", write)
+    with pytest.raises(BaseExceptionGroup) as result:
+        await test_cancelled_real_stdio_investigation_closes_owned_process(real_api, tmp_path, monkeypatch)
+    assert result.value.exceptions == (original,)
+    rows = [json.loads(line) for line in (tmp_path / "parent-phases.jsonl").read_text().splitlines()]
+    assert rows[-1]["phase"] == "cleanup_complete" and rows[-1]["cancelled"]
+    assert not rows[-1]["client_entered"]
+    assert any(row["phase"] == "child_reaped" and row["returncode"] == 0 for row in rows)
+    assert not any(row["phase"] == "emergency_child_containment" for row in rows)
