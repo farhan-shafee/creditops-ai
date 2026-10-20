@@ -29,6 +29,7 @@ export function ScenarioControls({
   running,
   hasIncident,
   showcaseProfile = false,
+  loadingProfile = false,
 }: {
   scenarios: Scenario[];
   selectedScenario: string;
@@ -39,13 +40,15 @@ export function ScenarioControls({
   running: boolean;
   hasIncident: boolean;
   showcaseProfile?: boolean;
+  loadingProfile?: boolean;
 }) {
   return (
     <div className="scenario-controls">
-      <div>
+      <div className="scenario-selection">
         <label htmlFor="scenario-select">Incident scenario</label>
         <select
           id="scenario-select"
+          aria-describedby="selected-scenario-title"
           value={selectedScenario}
           disabled={running}
           onChange={(event) => onScenario(event.target.value)}
@@ -56,15 +59,29 @@ export function ScenarioControls({
             </option>
           ))}
         </select>
+        <p
+          id="selected-scenario-title"
+          data-testid="selected-scenario-title"
+          className="selected-scenario-title"
+        >
+          {scenarios.find((scenario) => scenario.id === selectedScenario)?.title ??
+            'Loading scenarios…'}
+        </p>
       </div>
-      <button className="button primary" onClick={onRun} disabled={busy || !scenarios.length}>
-        <Play size={14} />
-        {showcaseProfile ? 'View recorded investigation' : 'Run Incident'}
-      </button>
-      <button className="button secondary" onClick={onReset} disabled={busy || !hasIncident}>
-        <RotateCcw size={14} />
-        Reset Scenario
-      </button>
+      <div className="scenario-actions">
+        <button className="button primary" onClick={onRun} disabled={busy || !scenarios.length}>
+          <Play size={14} />
+          {loadingProfile
+            ? 'Loading investigation options…'
+            : showcaseProfile
+              ? 'View recorded investigation'
+              : 'Run Incident'}
+        </button>
+        <button className="button secondary" onClick={onReset} disabled={busy || !hasIncident}>
+          <RotateCcw size={14} />
+          Reset Scenario
+        </button>
+      </div>
       {showcaseProfile && (
         <p className="scenario-reset-note">
           After scenario reset, this tab attempts to clear notes and pins for that incident&apos;s
@@ -96,6 +113,9 @@ export function IncidentView({
   onSourceControls,
   onlyInvestigator = false,
   showcaseProfile = false,
+  selectedScenarioTitle = 'Selected scenario',
+  restoringRecording = false,
+  loadingProfile = false,
 }: {
   incident: Incident | null;
   incidents: Incident[];
@@ -113,6 +133,9 @@ export function IncidentView({
   onSourceControls?: (controls: RecordedSourceControls | null) => void;
   onlyInvestigator?: boolean;
   showcaseProfile?: boolean;
+  selectedScenarioTitle?: string;
+  restoringRecording?: boolean;
+  loadingProfile?: boolean;
 }) {
   const selectedIncidentId = incident?.id;
   const projection = useMemo(
@@ -122,6 +145,34 @@ export function IncidentView({
         : { kind: 'legacy' as const },
     [investigation, selectedIncidentId],
   );
+  if (loadingProfile)
+    return (
+      <Panel title="Loading investigation options…" eyebrow="Incident workspace">
+        <div data-testid="scenario-selection-state" role="status">
+          Waiting for the application profile before displaying incident evidence.
+        </div>
+      </Panel>
+    );
+  if (showcaseProfile && projection.kind === 'legacy')
+    return (
+      <Panel title={selectedScenarioTitle} eyebrow="Selected recorded scenario">
+        <div data-testid="scenario-selection-state" role="status" aria-live="polite">
+          <Empty
+            title={
+              running || investigating
+                ? 'Loading selected recording…'
+                : restoringRecording
+                  ? 'Restoring selected recording…'
+                  : 'Selected recording is not loaded'
+            }
+          >
+            {running || investigating || restoringRecording
+              ? 'Waiting for the matching recorded investigation. Current simulation evidence is not substituted.'
+              : 'Choose View recorded investigation to load this scenario. Changing the selection does not start an investigation.'}
+          </Empty>
+        </div>
+      </Panel>
+    );
   if (!incident)
     return (
       <Panel title="Incident queue" eyebrow="Synthetic operations">

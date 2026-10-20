@@ -519,6 +519,9 @@ test('workspace acceptance: full storage warns while locked reset clears capture
   await expect(page.getByTestId('recorded-workspace')).toContainText('INC-DEMO-001');
   await expect(page.getByLabel('Personal note')).toHaveValue('kafka note');
   release();
+  await expect(page.getByTestId('scenario-selection-state')).toContainText('not loaded');
+  await expect(page.getByLabel('Incident scenario')).toHaveValue('kafka-pricing-lag');
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
   await expect(page.getByLabel('Personal note')).toHaveValue('database note');
   await expect
     .poll(() =>
@@ -2195,4 +2198,285 @@ test('disabled pin is excluded from native drawer traversal before and after Rev
   await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
   await expectRevealKeyboardFocus(source);
+});
+
+// Selection is application control; fixtures are the recording/evidence oracle.
+test('scenario selection: unloaded selection never falls back and only View creates a recording', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page
+    .getByTestId('recorded-example')
+    .and(page.locator('[data-scenario="db-pool-exhaustion"]'))
+    .click();
+  await page.getByTestId('view-recorded-investigation').click();
+  await expect(page.getByTestId('failure-domain')).toHaveText(/database/);
+  const mutations: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && new URL(request.url()).pathname.startsWith('/api/'))
+      mutations.push(new URL(request.url()).pathname);
+  });
+  const selector = page.getByLabel('Incident scenario');
+  await selector.focus();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Enter');
+  await expect(selector).toHaveValue('kafka-pricing-lag');
+  await expect(page.getByTestId('scenario-selection-state')).toContainText('not loaded');
+  await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Reset Scenario', exact: true })).toBeDisabled();
+  expect(mutations).toEqual([]);
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('failure-domain')).toHaveText(/pricing-service.*Kafka/i);
+  expect(mutations).toEqual(['/api/demo/scenarios/kafka-pricing-lag/run', '/api/investigations']);
+});
+
+test('scenario selection: all six loaded transitions retain exact recording, sources, review, notes and handoff', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  for (const [scenario, id, domain] of examples) {
+    await page.getByLabel('Incident scenario').selectOption(scenario);
+    if (id !== 'INC-DEMO-001')
+      await page
+        .locator('.scenario-controls')
+        .getByRole('button', { name: 'View recorded investigation', exact: true })
+        .click();
+    await expect(page.getByTestId('failure-domain')).toHaveText(domain);
+    await page.getByLabel('Personal note').fill('local note for ' + id);
+  }
+  const mutations: string[] = [],
+    diagnostics: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (request.method() === 'POST' && path.startsWith('/api/')) mutations.push(path);
+    if (path.startsWith('/api/diagnostics/')) diagnostics.push(path);
+  });
+  // Starting at 003: 3→1, 1→2, 2→1, 1→3, 3→2, 2→3.
+  for (const index of [0, 1, 0, 2, 1, 2]) {
+    const [scenario, id, domain] = examples[index];
+    const fixture = loadAcceptanceRecording(id);
+    await page.getByLabel('Incident scenario').selectOption(scenario);
+    await expect(page.getByTestId('failure-domain')).toHaveText(domain);
+    const workspace = page.getByTestId('recorded-workspace');
+    await expect(workspace.locator('.recorded-workspace-header')).toContainText(id);
+    await expect(page.getByLabel('Personal note')).toHaveValue('local note for ' + id);
+    const citation = page.getByTestId('supporting-evidence').getByRole('button').first();
+    const sourceId = await citation.innerText();
+    const source = fixture.evidence.find((row) => row.id === sourceId);
+    expect(source).toBeTruthy();
+    await citation.click();
+    const dialog = page.getByRole('dialog', { name: 'Evidence details' });
+    await expect(dialog).toContainText(source!.id);
+    await expect(dialog).toContainText(source!.timestamp.slice(0, 10));
+    await page.keyboard.press('Escape');
+    await page.getByRole('tab', { name: 'Review', exact: true }).click();
+    await expect(page.getByRole('table', { name: 'Recorded field comparison' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Handoff', exact: true }).click();
+    await page.getByRole('button', { name: 'Prepare draft', exact: true }).click();
+    await expect(page.getByTestId('handoff-preview')).toContainText('Incident: ' + id);
+    const ids = await page
+      .getByTestId('handoff-preview')
+      .locator('[data-source-id]')
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-source-id')));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.every((sourceId) => fixture.evidence.some((row) => row.id === sourceId))).toBe(true);
+  }
+  expect(mutations).toEqual([]);
+  expect(diagnostics).toEqual([]);
+  await page.reload();
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[2][2]);
+  await page.goto('/investigator');
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[2][2]);
+});
+
+test('scenario selection: pending and mismatched restoration never display current or unrelated evidence', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('failure-domain')).toHaveText(/database/);
+  const saved = await page.evaluate(() =>
+    localStorage.getItem('creditops-investigation:v1:INC-DEMO-001'),
+  );
+  let release!: () => void, reached!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  await withResetRouteOwner(
+    page,
+    { releaseBarrier: () => release(), releaseProbe: async () => {}, closeOther: async () => {} },
+    async (owner) => {
+      await owner.route('/api/investigations/' + saved, async (route) => {
+        const response = await route.fetch();
+        reached();
+        await gate;
+        const value = await response.json();
+        // A real response with a deliberately incorrect incident reference must be rejected.
+        await route.fulfill({ response, json: { ...value, incident_id: 'INC-DEMO-003' } });
+      });
+      await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+      await started;
+      await expect(page.getByTestId('scenario-selection-state')).toContainText('Restoring');
+      await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+      await expect(page.getByTestId('incident-detail')).toHaveCount(0);
+      release();
+      await expect(page.locator('.error-banner[role=alert]')).toContainText('unexpected incident');
+      await expect(page.getByTestId('scenario-selection-state')).toContainText('not loaded');
+      await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+    },
+  );
+  await page.getByLabel('Incident scenario').selectOption('fix-connectivity');
+  await page.evaluate(() => {
+    const native = window.fetch;
+    window.fetch = (input, init) => {
+      const path = new URL(String(input), location.href).pathname;
+      if (path === '/api/demo/scenarios/fix-connectivity/run')
+        return Promise.reject(new TypeError('Controlled loading failure'));
+      return native(input, init);
+    };
+  });
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.locator('.error-banner[role=alert]')).toBeVisible();
+  await expect(page.getByTestId('scenario-selection-state')).toContainText('not loaded');
+  await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+});
+
+for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+  test(`scenario controls: readable native selection and keyboard actions at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openWorkspace(page);
+    const selector = page.getByLabel('Incident scenario');
+    const fullLabel = page.getByTestId('selected-scenario-title');
+    const options = await selector.locator('option').allTextContents();
+    await expect(fullLabel).toHaveText(options[0]);
+    await selector.focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(fullLabel).toHaveText(options[2]);
+    await expect(selector).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(
+      page
+        .locator('.scenario-actions')
+        .getByRole('button', { name: 'View recorded investigation', exact: true }),
+    ).toBeFocused();
+    for (const control of await page
+      .locator('.scenario-controls select, .scenario-controls button')
+      .all()) {
+      const bounds = await control.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.width).toBeGreaterThanOrEqual(Math.min(width - 60, 280));
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await test
+      .info()
+      .attach(`controls-${width}`, { body: await page.screenshot(), contentType: 'image/png' });
+  });
+}
+
+test('scenario selection: missing deep link cannot restore a different loaded incident', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.goto('/incidents/INC-DEMO-003');
+  await expect(page.getByTestId('scenario-selection-state')).toContainText('not loaded');
+  await expect(page.getByRole('main')).toContainText('Requested incident INC-DEMO-003');
+  await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+  // An explicit selection resolves the unavailable URL target without creating anything.
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[0][2]);
+});
+
+test('scenario selection: initial profile and saved restore cannot expose current simulation details', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  let release!: () => void, reached!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  const liveImpact: string[] = [];
+  page.on('request', (request) => {
+    if (/\/api\/incidents\/.*\/business-impact/.test(request.url()))
+      liveImpact.push(new URL(request.url()).pathname);
+  });
+  await withResetRouteOwner(
+    page,
+    { releaseBarrier: () => release(), releaseProbe: async () => {}, closeOther: async () => {} },
+    async (owner) => {
+      await owner.route('/api/evaluations/latest', async (route) => {
+        const response = await route.fetch();
+        reached();
+        await gate;
+        await route.fulfill({ response });
+      });
+      const incidents = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === '/api/incidents',
+      );
+      await page.reload();
+      await started;
+      await incidents;
+      await expect(page.getByTestId('scenario-selection-state')).toContainText(
+        'application profile',
+      );
+      await expect(page.getByTestId('incident-detail')).toHaveCount(0);
+      expect(liveImpact).toEqual([]);
+      release();
+      await expect(page.getByTestId('failure-domain')).toHaveText(examples[0][2]);
+    },
+  );
+  expect(liveImpact).toEqual([]);
+});
+
+test.describe('scenario controls: 200 percent reflow', () => {
+  // 1440×900 physical pixels at 200%: 720×450 CSS px, DPR 2.
+  // This checks layout reflow, not native browser-menu zoom UI.
+  test.use({ viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 });
+  test('selector, actions and four workspace tabs remain usable', async ({ page }) => {
+    await openWorkspace(page);
+    const selector = page.getByLabel('Incident scenario');
+    const option = await selector.locator('option:checked').textContent();
+    await expect(page.getByTestId('selected-scenario-title')).toHaveText(option!);
+    await selector.focus();
+    await page.keyboard.press('Tab');
+    await expect(
+      page
+        .locator('.scenario-actions')
+        .getByRole('button', { name: 'View recorded investigation', exact: true }),
+    ).toBeFocused();
+    for (const tab of ['Overview', 'Evidence', 'Review', 'Handoff']) {
+      await page.getByRole('tab', { name: tab, exact: true }).click();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(720);
+    }
+    await page.getByLabel('Incident scenario').scrollIntoViewIfNeeded();
+    await test
+      .info()
+      .attach('controls-200-percent-reflow', {
+        body: await page.screenshot(),
+        contentType: 'image/png',
+      });
+    expect(await page.evaluate(() => devicePixelRatio)).toBe(2);
+  });
 });

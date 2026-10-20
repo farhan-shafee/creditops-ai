@@ -122,6 +122,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const [library, setLibrary] = useState<Evidence[]>([]);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [investigating, setInvestigating] = useState(false);
+  const [restoringIncidentId, setRestoringIncidentId] = useState<string | null>(null);
   const [investigationMode, setInvestigationMode] = useState<InvestigationMode>('REPLAY');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,11 +143,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const scenarioOperationRef = useRef(false);
   const navRef = useRef<HTMLElement | null>(null);
   const evidenceRequestRef = useRef(0);
-  const active =
-    incidents.find((item) => item.id === selectedId) ??
-    incidents.find((item) => item.scenario === selectedScenario) ??
-    incidents[0] ??
-    null;
+  const active = selectedId
+    ? (incidents.find((item) => item.id === selectedId) ?? null)
+    : (incidents.find((item) => item.scenario === selectedScenario) ?? null);
   const activeId = active?.id;
   const showcaseProfile = Boolean(evaluation?.selected_recordings?.length);
 
@@ -199,10 +198,17 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   }, [activeId, selectedScenario]);
 
   const monitorInvestigation = useCallback(
-    async (value: Investigation, controller: AbortController, generation: number) => {
+    async (
+      value: Investigation,
+      controller: AbortController,
+      generation: number,
+      expectedIncidentId: string,
+    ) => {
       const current = () =>
         generation === investigationGenerationRef.current && !controller.signal.aborted;
       if (!current()) return;
+      if (value.incident_id !== expectedIncidentId)
+        throw new Error('Investigation returned an unexpected incident reference');
       setInvestigation(value);
       setInvestigationMode(value.mode === 'MCP_DEMO' ? 'MCP_DEMO' : 'REPLAY');
       if (!['running', 'pending', 'queued'].includes(value.status)) {
@@ -249,6 +255,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     investigationGenerationRef.current += 1;
     abortRef.current?.abort();
     setInvestigating(false);
+    setRestoringIncidentId(null);
     if (!preserveResult) setInvestigation(null);
     evidenceRequestRef.current += 1;
     setEvidenceId(null);
@@ -256,6 +263,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   }, []);
 
   useEffect(() => {
+    if (incidentId) return;
     const restore = setTimeout(() => {
       const savedScenario = readStorage('creditops-selected-scenario:v1');
       if (
@@ -265,7 +273,16 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
         setSelectedScenario(savedScenario);
     }, 0);
     return () => clearTimeout(restore);
-  }, []);
+  }, [incidentId]);
+  useEffect(() => {
+    if (!incidentId || selectionGenerationRef.current !== 0) return;
+    const linked = incidents.find((item) => item.id === incidentId);
+    if (!linked) return;
+    const update = setTimeout(() => {
+      if (selectionGenerationRef.current === 0) setSelectedScenario(linked.scenario);
+    }, 0);
+    return () => clearTimeout(update);
+  }, [incidentId, incidents]);
   useEffect(() => {
     const initial = setTimeout(() => {
       void refresh();
@@ -331,12 +348,17 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     const generation = ++investigationGenerationRef.current;
     abortRef.current?.abort();
     abortRef.current = controller;
+    // The existing request generation owns this pending state as well as its result.
+    void Promise.resolve().then(() => {
+      if (!controller.signal.aborted && generation === investigationGenerationRef.current)
+        setRestoringIncidentId(activeId);
+    });
     void api<Investigation>(`/investigations/${encodeURIComponent(saved)}`, {
       signal: controller.signal,
     })
-      .then((value) => monitorInvestigation(value, controller, generation))
+      .then((value) => monitorInvestigation(value, controller, generation, activeId))
       .catch((cause) => {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && generation === investigationGenerationRef.current) {
           removeStorage(`creditops-investigation:v1:${activeId}`);
           setError(
             cause instanceof Error
@@ -344,6 +366,10 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
               : 'The saved investigation could not be restored. Open the recording again.',
           );
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted && generation === investigationGenerationRef.current)
+          setRestoringIncidentId(null);
       });
     return () => {
       controller.abort();
@@ -384,14 +410,15 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       setEvidenceId(id);
       setEvidenceError(null);
       const persisted =
-        investigation?.incident_id === activeId
+        investigation && investigation.incident_id === activeId
           ? investigation.evidence.find((item) => item.id === id)
           : undefined;
       setEvidence(persisted ?? null);
       if (persisted) return;
       if (
         ['incidents', 'investigator', 'live-operations'].includes(view) &&
-        investigation?.incident_id === activeId &&
+        investigation &&
+        investigation.incident_id === activeId &&
         investigation.mode === 'REPLAY'
       ) {
         setEvidenceError(
@@ -412,8 +439,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   );
   const closeEvidence = useCallback(() => setEvidenceId(null), []);
   const chooseIncident = (item: Incident) => {
-    if (scenarioOperationRef.current) return;
+    if (scenarioOperationRef.current || active?.id === item.id) return;
     selectionGenerationRef.current += 1;
+    setError(null);
     stopInvestigation();
     setSelectedId(item.id);
     setSelectedScenario(item.scenario);
@@ -421,11 +449,15 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   };
   const chooseScenario = (value: string) => {
     if (scenarioOperationRef.current) return;
+    const matchingId = incidents.find((item) => item.scenario === value)?.id ?? '';
+    if (value === selectedScenario && (active?.id === matchingId || (!selectedId && !matchingId)))
+      return;
     selectionGenerationRef.current += 1;
+    setError(null);
     stopInvestigation();
     setSelectedScenario(value);
     writeStorage('creditops-selected-scenario:v1', value);
-    setSelectedId(incidents.find((item) => item.scenario === value)?.id ?? '');
+    setSelectedId(matchingId);
   };
   const run = async () => {
     if (scenarioOperationRef.current) return;
@@ -455,14 +487,13 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
         if (generation !== selectionGenerationRef.current) return;
         writeStorage(`creditops-investigation:v1:${created.id}`, recorded.id);
         writeStorage('creditops-selected-scenario:v1', created.scenario);
-        setInvestigation(recorded);
         setInvestigationMode('REPLAY');
         const controller = new AbortController();
         abortRef.current?.abort();
         abortRef.current = controller;
         const playbackGeneration = ++investigationGenerationRef.current;
         if (view === 'overview') router.push('/incidents');
-        await monitorInvestigation(recorded, controller, playbackGeneration);
+        await monitorInvestigation(recorded, controller, playbackGeneration, created.id);
       } else if (generation === selectionGenerationRef.current && view === 'overview')
         router.push('/incidents');
     } catch (cause) {
@@ -533,7 +564,7 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
       });
       if (!current()) return;
       writeStorage(`creditops-investigation:v1:${active.id}`, created.id);
-      await monitorInvestigation(created, controller, generation);
+      await monitorInvestigation(created, controller, generation, active.id);
     } catch (cause) {
       if (current())
         setError(cause instanceof Error ? cause.message : 'Investigation failed. Try again.');
@@ -549,10 +580,11 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
     onScenario: chooseScenario,
     onRun: () => void run(),
     onReset: () => void reset(),
-    busy: busy || investigating,
+    busy: busy || investigating || !evaluation,
     running: busy,
     hasIncident: incidents.some((item) => item.scenario === selectedScenario),
     showcaseProfile,
+    loadingProfile: !evaluation,
   };
   const receiveSourceControls = useCallback(
     (controls: RecordedSourceControls | null) => {
@@ -569,6 +601,12 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const incidentProps = {
     workspaceSessionId,
     onSourceControls: receiveSourceControls,
+    selectedScenarioTitle:
+      selectedId && !active
+        ? `Requested incident ${selectedId}`
+        : (scenarios.find((item) => item.id === selectedScenario)?.title ?? 'Selected scenario'),
+    restoringRecording: restoringIncidentId === activeId,
+    loadingProfile: !evaluation,
     incident: active,
     incidents,
     metrics,

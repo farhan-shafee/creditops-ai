@@ -295,3 +295,43 @@ test('final_fix_context_retains_annotation_time_label_references_without_promoti
   assert.equal(projection.recording.sources.has('OUTSIDE-NOT-RETURNED'), false);
   assert.equal(projection.recording.coverage!.endMs, Date.parse('2026-10-09T14:02:24Z'));
 });
+
+test('showcase_selection_without_matching_recording_never_renders_live_details', () => {
+  for (const [selected, restoring, running] of [
+    [null, false, false],
+    [incident, true, false],
+    [incident, false, true],
+  ] as const) {
+    const html = renderToStaticMarkup(
+      <IncidentView
+        incident={selected}
+        incidents={[incident]}
+        metrics={[]}
+        topology={null}
+        investigation={null}
+        investigating={false}
+        investigationMode="REPLAY"
+        onInvestigationMode={() => {}}
+        running={running}
+        onInvestigate={() => {}}
+        onEvidence={() => {}}
+        onIncident={() => {}}
+        showcaseProfile
+        selectedScenarioTitle="Selected synthetic example"
+        restoringRecording={restoring}
+      />,
+    );
+    assert.match(html, /scenario-selection-state/);
+    assert.match(html, /Selected synthetic example/);
+    assert.doesNotMatch(html, /data-testid="incident-detail"/);
+    assert.doesNotMatch(html, /Current animation title/);
+    assert.match(
+      html,
+      restoring
+        ? /Restoring selected recording/
+        : running
+          ? /Loading selected recording/
+          : /not loaded/,
+    );
+  }
+});

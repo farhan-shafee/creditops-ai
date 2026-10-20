@@ -1230,26 +1230,50 @@ main {
   color: var(--muted);
 }
 .scenario-controls {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 20px;
+  align-items: start;
   padding: 16px 18px;
   margin-bottom: 21px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--panel);
 }
-.scenario-controls > div {
-  flex: 1;
-  max-width: 360px;
+.scenario-selection,
+.scenario-actions {
+  min-width: 0;
+}
+.scenario-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-self: center;
+}
+.scenario-actions .button {
+  flex: 1 1 280px;
+  min-height: 44px;
+  font-size: 14px;
+  white-space: normal;
+}
+.selected-scenario-title {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .scenario-controls label {
   display: block;
   margin-bottom: 5px;
 }
 .scenario-controls select {
-  min-height: 38px;
-  font-size: 11px;
+  min-height: 44px;
+  font-size: 14px;
+}
+.scenario-controls .clock-caption {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-left: 0;
 }
 .clock-caption {
   display: flex;
@@ -2562,18 +2586,14 @@ td code {
     font-size: 10px;
   }
   .scenario-controls {
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr);
     padding: 14px;
     gap: 10px;
   }
-  .scenario-controls > div {
-    flex: 1 0 100%;
-    max-width: none;
-  }
   .scenario-controls .button {
-    flex: 1;
-    padding: 9px 7px;
-    font-size: 10px;
+    flex-basis: 280px;
+    padding: 10px 12px;
+    font-size: 14px;
   }
   .incident-banner {
     padding: 17px;
@@ -3753,7 +3773,9 @@ td code {
   max-width: 100%;
 }
 .scenario-reset-note {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
 }
