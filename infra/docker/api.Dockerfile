@@ -10,7 +10,11 @@ COPY data ./data
 COPY artifacts/eval ./artifacts/eval
 COPY artifacts/robustness ./artifacts/robustness
 COPY scripts ./scripts
-RUN pip install --no-cache-dir -c requirements.lock . && useradd --create-home --uid 10001 creditops && chown -R creditops:creditops /app
+RUN python -m pip install --no-cache-dir -c requirements.lock pip \
+    && python -m pip install --no-cache-dir -c requirements.lock . \
+    && python -c "import importlib.metadata as m; assert m.version('pip') == '26.2.2'" \
+    && useradd --create-home --uid 10001 creditops \
+    && chown -R creditops:creditops /app
 USER creditops
 EXPOSE 8000
 CMD ["sh", "-c", "python -m alembic upgrade head && exec python -m uvicorn creditops.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
