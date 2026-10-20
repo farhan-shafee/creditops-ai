@@ -1,3 +1,4 @@
+import { ObservabilityView } from '../src/views/observability';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
@@ -334,4 +335,18 @@ test('showcase_selection_without_matching_recording_never_renders_live_details',
           : /not loaded/,
     );
   }
+});
+
+test('observability_window_keeps_the_full_selected_identifier_and_title_readable', () => {
+  const html = renderToStaticMarkup(
+    <ObservabilityView
+      incident={incident}
+      incidents={[incident]}
+      onIncident={() => {}}
+      metrics={[]}
+      onEvidence={() => {}}
+    />,
+  );
+  assert.match(html, /aria-describedby="selected-window-title"/);
+  assert.match(html, /id="selected-window-title"[^>]*>INC-DEMO-001 · Current animation title/);
 });

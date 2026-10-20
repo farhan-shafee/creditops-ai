@@ -114,6 +114,7 @@ export function ObservabilityView({
         <label htmlFor="incident-window">Incident time window</label>
         <select
           id="incident-window"
+          aria-describedby="selected-window-title"
           value={incidentId ?? ''}
           disabled={selectionDisabled}
           onChange={(event) => {
@@ -132,6 +133,13 @@ export function ObservabilityView({
           ))}
         </select>
         <span className="tiny-label">PERSISTED TELEMETRY</span>
+        <p
+          id="selected-window-title"
+          className="selected-window-title"
+          data-testid="selected-window-title"
+        >
+          {incident ? `${incident.id} · ${incident.title}` : 'Current synthetic environment'}
+        </p>
       </div>
       {error && (
         <p className="error-banner" role="alert">

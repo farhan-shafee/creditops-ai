@@ -2471,12 +2471,49 @@ test.describe('scenario controls: 200 percent reflow', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(720);
     }
     await page.getByLabel('Incident scenario').scrollIntoViewIfNeeded();
+    await test.info().attach('controls-200-percent-reflow', {
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    });
+    expect(await page.evaluate(() => devicePixelRatio)).toBe(2);
+  });
+});
+
+test('responsive companion: observability window keeps the full selected ID and title readable', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.goto('/observability');
+  const select = page.getByLabel('Incident time window');
+  await expect(select).toHaveValue('INC-DEMO-001');
+  const label = await select.locator('option:checked').textContent();
+  expect(label).toContain('INC-DEMO-001');
+  for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByTestId('selected-window-title')).toHaveText(label!);
+    const geometry = await select.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      return {
+        width: b.width,
+        height: b.height,
+        left: b.left,
+        right: b.right,
+        fontSize: parseFloat(getComputedStyle(el).fontSize),
+      };
+    });
+    expect(geometry.fontSize).toBeGreaterThanOrEqual(14);
+    expect(geometry.height).toBeGreaterThanOrEqual(44);
+    expect(geometry.width).toBeGreaterThanOrEqual(Math.min(width - 60, 280));
+    expect(geometry.left).toBeGreaterThanOrEqual(0);
+    expect(geometry.right).toBeLessThanOrEqual(width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await select.focus();
+    await expect(select).toBeFocused();
     await test
       .info()
-      .attach('controls-200-percent-reflow', {
+      .attach(`window-control-${width}`, {
         body: await page.screenshot(),
         contentType: 'image/png',
       });
-    expect(await page.evaluate(() => devicePixelRatio)).toBe(2);
-  });
+  }
 });

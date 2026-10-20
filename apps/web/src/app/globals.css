@@ -1256,7 +1256,8 @@ main {
   font-size: 14px;
   white-space: normal;
 }
-.selected-scenario-title {
+.selected-scenario-title,
+.selected-window-title {
   margin: 6px 0 0;
   font-size: 14px;
   line-height: 1.5;
@@ -1751,6 +1752,7 @@ main {
 }
 .window-selector {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 11px;
   background: var(--panel);
@@ -1766,9 +1768,16 @@ main {
   flex-shrink: 0;
 }
 .window-selector select {
-  flex: 1;
+  flex: 1 1 280px;
+  min-width: min(100%, 280px);
+  min-height: 44px;
   max-width: 530px;
-  font-size: 10px;
+  font-size: 14px;
+}
+.window-selector .selected-window-title {
+  flex: 1 0 100%;
+  order: 4;
+  margin: 0;
 }
 .window-selector > span {
   margin-left: auto;
