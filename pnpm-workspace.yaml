@@ -6,7 +6,8 @@ packages:
 # preserves that API without the unpatched braces chain (GHSA-vfj7-8cjw-p6xm).
 overrides:
   'tsx@4.21.0': 4.23.15
-  '@next/eslint-plugin-next@16.4.0>fast-glob': npm:tinyglobby@0.2.17
+  '@next/eslint-plugin-next@16.4.1>fast-glob': npm:tinyglobby@0.2.17
+  zod: 4.6.7
 
 allowBuilds:
   sharp: true
@@ -14,4 +15,4 @@ allowBuilds:
   unrs-resolver: false
 
 patchedDependencies:
-  '@next/eslint-plugin-next@16.4.0': patches/@next__eslint-plugin-next@16.4.0.patch
+  '@next/eslint-plugin-next@16.4.1': patches/@next__eslint-plugin-next@16.4.1.patch
