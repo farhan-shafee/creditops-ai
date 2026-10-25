@@ -1,5 +1,7 @@
 # CreditOps AI design
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](../../DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 The supplied project brief is the binding specification. The user explicitly authorized continuous implementation, validation, commit, and push, so the workflow's additional design approval pauses are superseded.
 
 ## Intent

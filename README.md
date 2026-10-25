@@ -8,6 +8,8 @@ Open three recorded model-assisted investigations of pricing backlog, FIX sessio
 
 ![CreditOps AI keyless recorded showcase](docs/screenshots/showcase-entry.png)
 
+[Live showcase](https://creditops.farhan-shafee.com) · [Production deployment and recovery](docs/DEPLOYMENT.md) · [Public source](https://github.com/farhan-shafee/creditops-ai)
+
 ## Open the keyless showcase
 
 After the one-time dependency setup below, run `pnpm showcase` and open [the console](http://127.0.0.1:3000).
@@ -26,21 +28,21 @@ Replay preserves original proposals, validation outcomes, final assessments, evi
 
 Follow the [30-second introduction and two-minute click-through](docs/DEMO_SCRIPT.md) or the [five-minute technical walkthrough](docs/INTERVIEW_WALKTHROUGH.md). The [short showcase playback video](docs/screenshots/showcase-playback.webm) records local playback with no new model calls. Inspect the [original proposal and validation](docs/screenshots/showcase-proposal-validation.png), [final advisory output](docs/screenshots/showcase-final-advisory.png), [evidence drawer](docs/screenshots/showcase-impact-evidence.png) and [three-example results](docs/screenshots/showcase-results.png). The existing [deterministic video](docs/screenshots/demo.webm) remains a historical recording of the separate deterministic experience.
 
-| Selected recorded synthetic example | Original generation duration | Advisory outcome |
-|---|---:|---|
-| Pricing backlog · INC-DEMO-001 | 25.191 s | Supported condition; initiating cause unknown |
-| FIX session instability · INC-DEMO-002 | 19.019 s | Supported condition; execution and initiating cause unresolved |
-| Database pool exhaustion · INC-DEMO-003 | 16.138 s | Supported condition; initiating cause unknown |
+| Selected recorded synthetic example     | Original generation duration | Advisory outcome                                               |
+| --------------------------------------- | ---------------------------: | -------------------------------------------------------------- |
+| Pricing backlog · INC-DEMO-001          |                     25.191 s | Supported condition; initiating cause unknown                  |
+| FIX session instability · INC-DEMO-002  |                     19.019 s | Supported condition; execution and initiating cause unresolved |
+| Database pool exhaustion · INC-DEMO-003 |                     16.138 s | Supported condition; initiating cause unknown                  |
 
 Valid citation IDs do not guarantee truthful prose: the original proposals overstate some causal, trend, exclusion and temporal claims. Project review notes identify these limitations; they are not an independent audit. Recorded latency is not measured human time saved.
 
 ## The incidents
 
-| Scenario | Independent observations | Probable failure domain |
-|---|---|---|
-| RFQ latency | Pricing consumer backlog, stale prices, quote age and upstream latency; healthy negative controls | Pricing service / Kafka consumer backlog |
-| Acknowledgement delays | FIX heartbeat failures, reconnects, sequence gaps, uncertain synthetic orders; healthy DB/Kafka | FIX session instability |
-| Request timeouts | Saturated connection pool, waiters and pool timeout logs, normal CPU | Connection pool exhaustion; a relevant preceding release is only a candidate trigger |
+| Scenario               | Independent observations                                                                          | Probable failure domain                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| RFQ latency            | Pricing consumer backlog, stale prices, quote age and upstream latency; healthy negative controls | Pricing service / Kafka consumer backlog                                             |
+| Acknowledgement delays | FIX heartbeat failures, reconnects, sequence gaps, uncertain synthetic orders; healthy DB/Kafka   | FIX session instability                                                              |
+| Request timeouts       | Saturated connection pool, waiters and pool timeout logs, normal CPU                              | Connection pool exhaustion; a relevant preceding release is only a candidate trigger |
 
 Twelve further labeled cases include stale market data, risk dependency timeouts, CPU pressure and three deliberately insufficient-evidence cases. Evaluation labels never enter diagnostic tools or model context.
 
@@ -93,35 +95,35 @@ docker compose -f infra/docker/compose.yml up --build -d
 docker compose -f infra/docker/compose.yml ps
 ```
 
-| Component | Isolated local URL |
-|---|---|
-| Web | http://localhost:13000 |
-| API / OpenAPI | http://localhost:18000/docs |
-| PostgreSQL / pgvector | localhost:15432 |
-| Redpanda Kafka | localhost:19092 |
-| Prometheus | http://localhost:19090 |
-| Grafana | http://localhost:13001 |
+| Component             | Isolated local URL          |
+| --------------------- | --------------------------- |
+| Web                   | http://localhost:13000      |
+| API / OpenAPI         | http://localhost:18000/docs |
+| PostgreSQL / pgvector | localhost:15432             |
+| Redpanda Kafka        | localhost:19092             |
+| Prometheus            | http://localhost:19090      |
+| Grafana               | http://localhost:13001      |
 
 All host ports bind to loopback. Disposable local credentials in Compose are intentionally fictional and must be replaced for hosting. `docker compose ... down` stops the stack while preserving its named volumes. No real FIX connection is created.
 
 ## Developer commands
 
-| Command | Purpose |
-|---|---|
-| `pnpm dev` / `make dev` | Start API and console |
-| `pnpm showcase` | Start isolated keyless public showcase using three recorded model-assisted runs |
-| `pnpm test` / `make test` | Python and frontend unit tests |
-| `pnpm lint` / `make lint` | Python and frontend lint |
-| `pnpm typecheck` | Strict frontend TypeScript |
-| `pnpm test:dependencies` | Scoped lint dependency compatibility and active rule checks |
-| `pnpm test:lifecycle` | Real Playwright/Linux launcher shutdown and descendant cleanup; explicit Unix-proof skip on Windows |
-| `pnpm e2e` | Playwright all-scenario and responsive checks |
-| `pnpm e2e:showcase` | Keyless three-recording playback and public boundary browser checks |
-| `pnpm test:showcase-startup` | Offline inherited-credential and isolated-storage launcher checks |
-| `make seed` | Idempotent seed |
-| `make eval` | Generate the unchanged 15-case benchmark and versioned replay artifacts |
-| `python scripts/robustness.py` | Separate 13-case synthetic robustness/regression report |
-| `make reset-demo` | Reset a selected local demo session |
+| Command                        | Purpose                                                                                             |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `pnpm dev` / `make dev`        | Start API and console                                                                               |
+| `pnpm showcase`                | Start isolated keyless public showcase using three recorded model-assisted runs                     |
+| `pnpm test` / `make test`      | Python and frontend unit tests                                                                      |
+| `pnpm lint` / `make lint`      | Python and frontend lint                                                                            |
+| `pnpm typecheck`               | Strict frontend TypeScript                                                                          |
+| `pnpm test:dependencies`       | Scoped lint dependency compatibility and active rule checks                                         |
+| `pnpm test:lifecycle`          | Real Playwright/Linux launcher shutdown and descendant cleanup; explicit Unix-proof skip on Windows |
+| `pnpm e2e`                     | Playwright all-scenario and responsive checks                                                       |
+| `pnpm e2e:showcase`            | Keyless three-recording playback and public boundary browser checks                                 |
+| `pnpm test:showcase-startup`   | Offline inherited-credential and isolated-storage launcher checks                                   |
+| `make seed`                    | Idempotent seed                                                                                     |
+| `make eval`                    | Generate the unchanged 15-case benchmark and versioned replay artifacts                             |
+| `python scripts/robustness.py` | Separate 13-case synthetic robustness/regression report                                             |
+| `make reset-demo`              | Reset a selected local demo session                                                                 |
 
 Python packages are pinned in `requirements.lock`; pnpm dependencies are pinned in `pnpm-lock.yaml`. CI runs tests, lint, typecheck, E2E, dependency audits, Bandit and secret scanning.
 
@@ -166,25 +168,25 @@ The [MCP README](apps/mcp/README.md) includes compatible-client configuration. T
 
 The [version-controlled investigator prompt](apps/api/creditops/prompts/investigator.md) and [security document](docs/SECURITY.md) explain the threat model. The current single-instance in-memory rate limiter needs a shared store before multi-replica hosting. An admin key is a minimal demonstration mechanism, not institutional identity management.
 
-| Variable | Role |
-|---|---|
-| `DATABASE_URL` | SQLite or asynchronous PostgreSQL URL |
-| `API_BASE_URL` | Server-side Next.js proxy destination |
-| `TELEMETRY_MODE`, `KAFKA_BOOTSTRAP_SERVERS` | Persisted demo or local Kafka adapter |
-| `PUBLIC_DEMO` | Defaults true; denies paid live investigations and embedding queries |
-| `REPLAY_DIR` | Showcase uses `data/showcase`; ordinary development preserves legacy `data/replay` |
-| `CREDITOPS_ENV_FILE` | Defaults to project `.env`; explicitly empty disables dotenv for isolated public startup |
-| `EMBEDDINGS_ENABLED`, `EMBEDDING_MODEL` | Optional private pgvector retrieval; explicit offline indexing setup |
-| `AI_PROVIDER` | `openai` or `anthropic` for protected live mode |
-| `OPENAI_MODEL`, `ANTHROPIC_MODEL` | Explicit model choice, no business-logic hardcoding |
-| Provider API keys | Server-side only |
-| `ADMIN_API_KEY` | Protect expensive live investigation |
-| Investigation budget/deadline settings | Bound demo requests and costs |
-| Provider pricing variables | Optional user-configured cost estimate |
+| Variable                                    | Role                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                              | SQLite or asynchronous PostgreSQL URL                                                    |
+| `API_BASE_URL`                              | Server-side Next.js proxy destination                                                    |
+| `TELEMETRY_MODE`, `KAFKA_BOOTSTRAP_SERVERS` | Persisted demo or local Kafka adapter                                                    |
+| `PUBLIC_DEMO`                               | Defaults true; denies paid live investigations and embedding queries                     |
+| `REPLAY_DIR`                                | Showcase uses `data/showcase`; ordinary development preserves legacy `data/replay`       |
+| `CREDITOPS_ENV_FILE`                        | Defaults to project `.env`; explicitly empty disables dotenv for isolated public startup |
+| `EMBEDDINGS_ENABLED`, `EMBEDDING_MODEL`     | Optional private pgvector retrieval; explicit offline indexing setup                     |
+| `AI_PROVIDER`                               | `openai` or `anthropic` for protected live mode                                          |
+| `OPENAI_MODEL`, `ANTHROPIC_MODEL`           | Explicit model choice, no business-logic hardcoding                                      |
+| Provider API keys                           | Server-side only                                                                         |
+| `ADMIN_API_KEY`                             | Protect expensive live investigation                                                     |
+| Investigation budget/deadline settings      | Bound demo requests and costs                                                            |
+| Provider pricing variables                  | Optional user-configured cost estimate                                                   |
 
 ## Deployment
 
-Target: dedicated Vercel frontend, container-hosted FastAPI and Neon PostgreSQL. The API image includes `data/showcase` at `/app/data/showcase`; original local receipts/approvals are excluded. No cloud deployment or public URL exists from this milestone. The next owner decision is the dedicated hosting accounts/resources and approved plan/cost limits in the [deployment handoff](docs/DEPLOYMENT.md). Current hosting pricing has not been verified. Repository access remains private and is optional for understanding the demo; source links require authorized GitHub access.
+The canonical public showcase, FastAPI API and PostgreSQL database run on Railway, with TLS, a restricted application database role, private off-volume pgBackRest backups and a verified restore. Both application services follow public `main`; the current Railway trigger does not wait for CI, so release review must check CI separately. Cloudflare supplies DNS. Vercel and the frozen Neon source remain retained for controlled rollback. See the [current deployment, architecture and recovery runbook](docs/DEPLOYMENT.md) for actual configuration, local/hosted boundaries and remaining cleanup.
 
 ## Interview materials
 

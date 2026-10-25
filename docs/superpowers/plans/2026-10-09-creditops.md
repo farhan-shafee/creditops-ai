@@ -1,5 +1,7 @@
 # CreditOps AI implementation plan
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](../../DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 > For agentic workers: use focused parallel implementation with integration and a fresh whole-repository review. The user authorized automatic execution.
 
 **Goal:** Deliver a working, tested, documented synthetic operations platform to the existing private repository.

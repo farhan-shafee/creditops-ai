@@ -1,5 +1,7 @@
 # CreditOps AI second-pass report
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 Verification date: 2026-10-09. This targeted pass extends the existing application. All securities, clients, RFQs, orders, FIX activity and incident telemetry are fictional. No paid model/embedding calls, cloud deployment, external provisioning or recruiter messages were performed.
 
 ## Baseline and source review

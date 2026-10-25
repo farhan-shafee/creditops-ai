@@ -1,84 +1,83 @@
-# Deployment handoff — approval required, no deployment performed
+# CreditOps AI production deployment
 
-The intended topology remains a dedicated Next.js frontend on Vercel, a dedicated FastAPI container service on Render/Railway/Fly and a dedicated Neon PostgreSQL database. All data is synthetic. This handoff packages the three reviewed recordings in `data/showcase`; it does not create hosting resources, deploy, change DNS or claim a public URL.
+Verified topology: October 24–25, 2026. [Live showcase](https://creditops.farhan-shafee.com) · [Public source](https://github.com/farhan-shafee/creditops-ai).
 
-The next owner decision is **which dedicated hosting accounts, resources and plans to approve, with explicit cost limits**. Required access is the private-repository integration for the selected hosts, API-host credentials and a dedicated database connection secret. No current hosting prices, free-tier availability, sleeping-service behavior or plan capacity have been verified in this milestone. The Render blueprint deliberately omits a plan selection; review the current plan and operating costs before creating anything. Original estimated model usage is not hosting cost or confirmed billing.
+The Next.js frontend, FastAPI API, PostgreSQL database and private off-volume backup storage run on Railway. Cloudflare supplies DNS. Vercel and the frozen pre-cutover Neon copy are retained for controlled rollback; neither is the active application database or canonical frontend.
 
-## Reviewed package and local smoke check
-
-Run from the repository root after installing dependencies as described in `README.md`:
-
-```sh
-pnpm showcase
+```mermaid
+flowchart TD
+  Visitor["Browser"] --> Web["Railway Next.js console"]
+  Web --> API["Railway FastAPI"]
+  API --> DB["Railway PostgreSQL over TLS"]
+  DB --> Backup["Private pgBackRest backup storage"]
 ```
 
-Open `http://127.0.0.1:3000`. The launcher uses the existing development process cleanup, selects `data/showcase`, initializes `artifacts/runtime/showcase.db`, sets persisted telemetry, disables dotenv with `CREDITOPS_ENV_FILE=''`, removes inherited provider/admin keys and forces the public profile. It neither reads the original local receipt directory nor regenerates any assessment.
+## Public and local boundaries
 
-The committed files are `data/showcase/INC-DEMO-001.json`, `INC-DEMO-002.json`, `INC-DEMO-003.json` and `manifest.json`. The manifest records the allowlisted original receipt, source SHA-256, source commit, export version/time and documented redactions for each derivative. Receipt hashes are provenance/integrity values, not credential fingerprints. Original proposals, validation, assessments, evidence IDs and observation times stay separate and intact.
+The public showcase plays three recorded model-assisted investigations with synthetic pricing/Kafka, FIX and database-pool evidence. Playback makes no new model or MCP diagnostic calls. Fresh read-only MCP diagnostics are a separate mode; recordings do not demonstrate model-selected diagnostic follow-ups. Initiating causes remain unconfirmed and every advisory requires human review.
 
-The owner-only exporter is `python scripts/export_showcase.py`; its defaults are `--source-directory artifacts/live-verification --output-directory data/showcase`. Visitors and deployed services need only the packaged derivatives. Do not run `scripts/evaluate.py` to regenerate these recordings: that command produces the separate deterministic benchmark/replay series.
+The API persists synthetic sessions and application state with a restricted application role. MCP tools expose fixed read-only diagnostic callbacks, not operational mutation. Optional embeddings and paid live investigations are disabled in public mode. Local Compose additionally runs Redpanda, Prometheus and Grafana; those local components are not separate production services.
 
-## Dedicated API image
+## Source and release configuration
 
-Build from the repository root:
+Both production application services follow this public repository's `main` branch, without a commit pin. The October 24 release used `e511cb40338be086afafdcac51f8377b21aae858`; [all four quality CI jobs passed](https://github.com/farhan-shafee/creditops-ai/actions/runs/40140532920). CI is separate from the Railway trigger: the observed source configuration has `checkSuites=false`, so do not claim Railway waits for CI. Inspect the reviewed source and CI before publishing a release.
 
-```sh
-docker build -f infra/docker/api.Dockerfile -t creditops-ai-api:showcase .
-```
+| Service            | Build and runtime                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Frontend           | Railway Railpack, repository-root context, frozen pnpm install, `@creditops/web` build and standalone asset copy |
+| Frontend start     | `node apps/web/.next/standalone/apps/web/server.js`; health `/`                                                  |
+| API                | `infra/docker/api.Dockerfile`, repository-root context; health `/health`                                         |
+| API startup        | Existing Alembic-head check followed by Uvicorn on `0.0.0.0:$PORT`                                               |
+| Database           | Private Railway PostgreSQL 17.11; pinned compatible image, 1,000 MB volume; no public TCP proxy                  |
+| Operations monitor | Railway Function every 15 minutes; expected to complete between executions                                       |
 
-The image copies committed `data`, including the exact showcase directory at `/app/data/showcase`, plus historical evaluation/robustness artifacts. It excludes local raw receipts and approvals, test outputs, runtime databases and dotenv files. The image defaults to `REPLAY_DIR=/app/data/showcase`, `PUBLIC_DEMO=true`, `EMBEDDINGS_ENABLED=false`, `TELEMETRY_MODE=persisted` and `CREDITOPS_ENV_FILE=''`.
+The frontend's standalone output must include its `.next/static` and `public` assets. Do not substitute a different start layout without checking those paths.
 
-The container's exact start command is:
+## Configuration and database authority
 
-```sh
-python -m alembic upgrade head && exec python -m uvicorn creditops.main:app --host 0.0.0.0 --port ${PORT:-8000}
-```
+Keep values in Railway's project-scoped configuration. Do not upload workstation dotenv files or expose secrets through `NEXT_PUBLIC_*`.
 
-App startup initializes the existing synthetic fixtures. Migrations and startup must target only the dedicated CreditOps database. Use `infra/render.yaml` or the existing `infra/railway.toml` as reviewed configuration after the resource/plan decision; verify the chosen host actually selects `infra/docker/api.Dockerfile` with repository-root build context and `/health` as the health path.
+| Variable               | Purpose                                                                |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `API_BASE_URL`         | Server-only HTTPS API destination for the frontend                     |
+| `DATABASE_URL`         | Private PostgreSQL connection using `creditops_app`; resolve privately |
+| `DATABASE_REQUIRE_SSL` | `true`                                                                 |
+| `PUBLIC_DEMO`          | `true`                                                                 |
+| `REPLAY_DIR`           | `/app/data/showcase`                                                   |
+| `EMBEDDINGS_ENABLED`   | `false`                                                                |
+| `TELEMETRY_MODE`       | `persisted`                                                            |
+| `CREDITOPS_ENV_FILE`   | Explicitly empty in the hosted public profile                          |
+| `CORS_ORIGINS`         | Exact approved frontend origins                                        |
+| Model/admin keys       | Not required by public recorded playback                               |
 
-| API configuration | Required value / handling |
-|---|---|
-| `DATABASE_URL` | Secret async PostgreSQL URL for the dedicated database; provide through the host's secret UI |
-| `DATABASE_REQUIRE_SSL` | `true` for the hosted dedicated PostgreSQL connection |
-| `REPLAY_DIR` | `/app/data/showcase` |
-| `PUBLIC_DEMO` | `true`; API denies paid `LIVE_AI` and query embeddings even if an accidental credential is present |
-| `EMBEDDINGS_ENABLED` | `false` |
-| `TELEMETRY_MODE` | `persisted`; cloud Kafka/Grafana are unnecessary for replay |
-| `CREDITOPS_ENV_FILE` | Explicitly empty; never upload the owner's `.env` |
-| `CORS_ORIGINS` | Only the eventual dedicated frontend HTTPS origin |
-| `PORT` | Host-supplied port, default `8000` |
-| Provider API keys / `ADMIN_API_KEY` | Absent from the public showcase |
+The API writer role and database operations/admin role are separate. Review new migrations with the appropriate administrative authority before a release; the already-reviewed startup command is not authorization to grant broad runtime privileges. Never seed, reset or migrate another project's database. The current single-process limiter needs shared coordination before multi-replica hosting.
 
-The database must be a dedicated CreditOps schema/database, with a dedicated application login and TLS. The existing local PostgreSQL initializer includes pgvector; paid embedding queries remain disabled. No public MCP endpoint or remote shell capability is needed. The API has a read-only diagnostic allowlist, request limits and UUID-scoped synthetic sessions. Its in-memory rate limiter needs a shared store and durable job design before multiple replicas.
+## Backups and recovery
 
-## Dedicated frontend
+The production PostgreSQL image uses pgBackRest with continuous WAL archiving, a 60-second archive timeout, weekly full backups, daily differential backups, and retention of four full/fourteen differential sets in private off-volume storage. These settings are not Railway managed volume snapshots.
 
-Use a separate Vercel project connected to the existing **private** repository, with project root `apps/web` and the workspace lockfile available. Build/install commands run from the repository root:
+The October 24 full backup containing the migrated data was independently downloaded and restored into an isolated fresh volume. All twelve recorded data/schema comparison groups passed. No production restore was performed. A configured cadence and one successful drill do not establish every future backup, retention cycle, chosen-time recovery or RPO/RTO guarantee.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm --filter @creditops/web build
-```
+The 15-minute monitor checks public health and backup catalog integrity/freshness. Review failed attempts, archive gaps, capacity and stale/missing results even if an older full backup remains fresh. Catalog checks do not validate every referenced object or establish an alert-delivery guarantee.
 
-Set only server-side `API_BASE_URL=https://YOUR-DEDICATED-BACKEND` for the intended environment. Never put a database, model or admin secret in `NEXT_PUBLIC_*`. The ordinary Node start command is `pnpm --filter @creditops/web start`; the existing standalone frontend image starts with `node apps/web/server.js`. The API and frontend must both be reachable for the demo to work.
+For a recovery drill, use a fresh isolated volume and the compatible pinned image, disable archiving in the recovery instance, expose no public SQL port, wait for recovery to finish, then validate the selected backup's data/schema and access controls. A production replacement needs its own archive destination; do not let two active clusters archive into the same repository history.
 
-Private GitHub source access is optional for a visitor to understand the eventual hosted demo. Label any repository link **Private source — access required**. Do not present it as a publicly readable code link or change repository visibility.
+## Release acceptance and rollback
 
-## Post-deployment smoke checks, after separate owner approval
+After an authorized release:
 
-Record the deployment commit, actual API/frontend URLs and observed checks; a local build does not establish cloud success.
+1. Verify Railway reaches terminal SUCCESS at the reviewed commit for both application services.
+2. Check the canonical website, frontend health/overview proxies and direct API health.
+3. Inspect all three recorded investigations, their evidence/provenance, original proposals and validation; check desktop/mobile and session isolation.
+4. Confirm public live-model requests remain denied, no fresh provider calls are made during playback, and secret values never appear in logs or browser output.
+5. Review running/crashed replicas, bounded errors, HTTP 5xx, resource use and backup/archive progress. Record timestamps; do not treat a past receipt as current uptime proof.
 
-```sh
-curl -fsS https://YOUR-DEDICATED-BACKEND/health
-curl -fsS https://YOUR-DEDICATED-BACKEND/api/scenarios
-```
+Use a compatible retained application deployment for an application rollback while retaining the current Railway database. Neon is a frozen pre-cutover copy, not a synchronized standby. After Railway has accepted writes, changing the API back to stale Neon would lose those writes: stop writers and reconcile/reverse-migrate under a separate recovery plan, or roll forward.
 
-Then verify all three **View recorded investigation** choices in a fresh browser session:
+Vercel, paused rehearsals and older pilot resources remain retained. Their retirement is a separate, explicitly approved cleanup step.
 
-1. Pricing backlog, FIX session instability and database pool exhaustion load their matching source/provenance, complete playback and keep their original proposal, validation and assessment distinct.
-2. Evidence links open the recorded object with the original timestamp; the complete recorded snapshot and sample coverage are visible. Samples ending at 14:02:24 UTC do not establish health at the 15:00 UTC cutoff.
-3. Refresh, completion and reset work; two independent sessions do not overwrite one another. Desktop and mobile views keep the main action, business state and review notes usable.
-4. Direct `POST /api/investigations` requests using `mode=LIVE_AI` are denied under `PUBLIC_DEMO=true`, including a fake credential canary; query embeddings are disabled. Confirm playback does not construct a model client or invoke fresh MCP diagnostics.
-5. Missing/malformed showcase artifacts fail visibly and do not substitute a deterministic recording. Confirm synthetic/recorded/human-review labels, original versus playback durations and separate model/rule scores.
+## Local development and historical evidence
 
-Keep the existing 15-case benchmark and 13-case developer-authored robustness outputs separate from these selected recordings. Institutional use would require enterprise identity and entitlements, tenant-aware diagnostics, durable jobs, shared budgets/rate limits, audit monitoring, retention and independently held-out evaluation. No provider or cloud mutation is authorized by this handoff.
+[README](../README.md) and [local infrastructure](../infra/README.md) retain the lightweight SQLite and full Compose paths. Build the API locally with `docker build -f infra/docker/api.Dockerfile -t creditops-ai-api .`.
+
+The [original final report](FINAL_REPORT.md), [second-pass report](SECOND_PASS_REPORT.md) and [recorded-model verification](LIVE_VERIFICATION_REPORT.md) describe their named milestones and source revisions. Their earlier no-hosting/private-source statements are historical; this runbook describes the current deployment. Render configuration is an unused alternative, not the active production host.

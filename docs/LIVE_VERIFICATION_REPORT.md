@@ -1,5 +1,7 @@
 # Live verification and offline investigation repairs
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 **Current status: three selected completed synthetic live-model recordings are packaged for keyless replay. No new model experiment, embedding request or cloud mutation is part of this milestone.**
 
 The sections below preserve the chronological development record, including earlier failures, abstention and then-pending approvals. Their historical “not run” statements describe those earlier passes. The current completed 001/002/003 results and showcase scope appear in the final section. Domain acceptance is not general accuracy, autonomous investigation or independent verification of the model's narrative.

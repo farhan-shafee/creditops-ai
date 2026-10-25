@@ -1,5 +1,7 @@
 # CreditOps AI final verification report
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 Historical first-pass report. The targeted follow-up, current source/CI receipts and revised evaluation results are in [SECOND_PASS_REPORT.md](SECOND_PASS_REPORT.md). Original evaluation artifacts are preserved in `artifacts/eval/baseline-v1`; the results below describe the earlier implementation.
 
 Verified locally and through GitHub Actions on 2026-10-09. All trading systems, clients, incidents and telemetry are synthetic.

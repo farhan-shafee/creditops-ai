@@ -8,15 +8,15 @@ docker compose -f infra/docker/compose.yml ps
 docker compose -f infra/docker/compose.yml logs api
 ```
 
-| Component | Local endpoint | Purpose |
-| --- | --- | --- |
-| Next.js | http://127.0.0.1:13000 | Operations UI, proxied API |
-| FastAPI | http://127.0.0.1:18000/docs | OpenAPI and diagnostic application |
-| PostgreSQL | 127.0.0.1:15432 | Synthetic evidence, runs and pgvector extension |
-| Redpanda Kafka | 127.0.0.1:19092 | Real local synthetic publication and consumption |
-| Redpanda metrics | http://127.0.0.1:19644/public_metrics | Real broker measurements |
-| Prometheus | http://127.0.0.1:19090 | API and Redpanda scrape targets |
-| Grafana | http://127.0.0.1:13001 | Provisioned synthetic operations dashboard |
+| Component        | Local endpoint                        | Purpose                                          |
+| ---------------- | ------------------------------------- | ------------------------------------------------ |
+| Next.js          | http://127.0.0.1:13000                | Operations UI, proxied API                       |
+| FastAPI          | http://127.0.0.1:18000/docs           | OpenAPI and diagnostic application               |
+| PostgreSQL       | 127.0.0.1:15432                       | Synthetic evidence, runs and pgvector extension  |
+| Redpanda Kafka   | 127.0.0.1:19092                       | Real local synthetic publication and consumption |
+| Redpanda metrics | http://127.0.0.1:19644/public_metrics | Real broker measurements                         |
+| Prometheus       | http://127.0.0.1:19090                | API and Redpanda scrape targets                  |
+| Grafana          | http://127.0.0.1:13001                | Provisioned synthetic operations dashboard       |
 
 The API receives `TELEMETRY_MODE=kafka` and the internal `redpanda:9092` address. The public demo instead uses persisted synthetic telemetry with `TELEMETRY_MODE=persisted`; no paid Kafka service is required. Incident metrics represent the explicit simulated clock. API process, HTTP request and broker metrics measure the real local processes. The Grafana panel labels distinguish those measurements.
 
@@ -28,6 +28,10 @@ The PostgreSQL initializer enables `vector` and provisions `creditops_diagnostic
 
 Docker is optional. The root `pnpm showcase` launcher starts the API and Next.js on ports 8000/3000 with keyless public replay from `data/showcase` and a separate `artifacts/runtime/showcase.db`. It bypasses the owner's dotenv file and removes inherited provider/admin credentials in its child process. `pnpm dev` remains the general development launcher. You can also run only the base services in Compose and point a host API at PostgreSQL/Redpanda with environment variables.
 
-Deployment configuration is supplied as `infra/render.yaml` (Render blueprint) and `infra/railway.toml` (Railway configuration). Both use `infra/docker/api.Dockerfile`; it binds to the host's `PORT` environment variable and defaults to `REPLAY_DIR=/app/data/showcase`. The container copies only historical evaluation/robustness artifacts and committed data; private live receipts and approvals are excluded. The frontend is a separate Vercel monorepo project rooted at `apps/web`. Configure its server-only `API_BASE_URL` to the dedicated API HTTPS URL. Neon uses an async PostgreSQL `DATABASE_URL`. Leave provider credentials and the admin key absent for the public showcase.
+The active API uses Railway with `infra/docker/api.Dockerfile`, repository-root build context, host-provided PORT and packaged `/app/data/showcase`. The active standalone Next.js frontend is also on Railway; its server-only `API_BASE_URL` targets the approved HTTPS API. PostgreSQL runs privately on Railway with required TLS and a restricted application role. Keep model/admin credentials absent for public playback. `infra/render.yaml` is an unused alternative, while Vercel and frozen Neon are retained historical rollback resources. See [current deployment and recovery](../docs/DEPLOYMENT.md).
 
 Deploying any template is a separate authorized external action and may incur provider charges. No cloud resource is created by these configuration files or local startup commands. See the root deployment documentation for the credential boundary and exact deployment steps.
+
+## Current hosted topology
+
+Production uses Railway Next.js, FastAPI and PostgreSQL with required TLS, a restricted application role, pgBackRest/WAL backups and a tested production-backup restore. The repository is public. Redpanda, Prometheus and Grafana above belong to the local Compose stack. Render is an unused deployment alternative; Vercel and frozen Neon are retained rollback resources. Use [the current deployment runbook](../docs/DEPLOYMENT.md), not an old provider template, for operating guidance.

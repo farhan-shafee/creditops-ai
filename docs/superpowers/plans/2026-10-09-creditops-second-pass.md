@@ -1,5 +1,7 @@
 # CreditOps AI focused second pass
 
+> **Historical deployment context** - This record retains its original milestone, source revisions, measured results and approval boundaries. Earlier hosting/source-visibility/pending-release statements are dated history. Use [the current production documentation](../../DEPLOYMENT.md) for the October 24-25 Railway topology, release state and remaining closeout.
+
 Baseline: clean `main` at `d8699a1ed7c07e683b3895a77894f1aca6e00ba3`, existing private origin verified on 2026-10-09. Preserve history, the original 15 cases and their historical artifacts. No cloud resources, paid provider/embedding requests or unrelated infrastructure work.
 
 Source review confirms all six starting observations: the collector constructs `DiagnosticTools`; providers plan before those results; MCP exists separately; the database domain name asserts an application change without requiring relevant preceding evidence; recorded evaluations are deterministic; operational contracts lack an explicit instrument/RFQ/order event lifecycle.
