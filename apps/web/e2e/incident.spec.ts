@@ -1,4 +1,5 @@
 import { test, expect } from './acceptance';
+import { withResetRouteOwner } from './reset-route-owner';
 
 test('overview describes synthetic operations and the safety boundary', async ({ page }) => {
   await page.goto('/');
@@ -344,4 +345,65 @@ test('reload resumes a saved running investigation without starting another inve
     /pricing-service.*Kafka consumer backlog/i,
   );
   expect(newRuns).toBe(0);
+});
+
+
+test('mobile topbar keeps pending and ready connection labels inside every viewport', async ({
+  page,
+}) => {
+  let release!: () => void;
+  const responseGate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let entered = false;
+  await withResetRouteOwner(
+    page,
+    {
+      releaseBarrier: () => release(),
+      releaseProbe: () => Promise.resolve(),
+      closeOther: () => Promise.resolve(),
+    },
+    async (owner) => {
+      await owner.route('/api/overview', async (route) => {
+        entered = true;
+        await responseGate;
+        await route.continue();
+      });
+      await page.setViewportSize({ width: 320, height: 900 });
+      await page.goto('/investigator');
+      await expect.poll(() => entered).toBe(true);
+      const topbar = page.locator('.topbar');
+      await expect(topbar.getByText('Connecting to API', { exact: true })).toBeVisible();
+      const fits = async (state: string) => {
+        for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+          await page.setViewportSize({ width, height: 900 });
+          const measured = await topbar.evaluate((element) => ({
+            viewport: innerWidth,
+            pageWidth: document.documentElement.scrollWidth,
+            labelFontSize: parseFloat(getComputedStyle(element.querySelector('.badge')!).fontSize),
+            children: [...element.children].map((child) => {
+              const rect = child.getBoundingClientRect();
+              return { left: rect.left, right: rect.right };
+            }),
+          }));
+          await test
+            .info()
+            .attach(`topbar-${state}-${width}`, {
+              body: JSON.stringify(measured),
+              contentType: 'application/json',
+            });
+          expect(measured.labelFontSize).toBeGreaterThanOrEqual(12);
+          expect(measured.pageWidth, `${state} page at ${width}`).toBe(width);
+          for (const bounds of measured.children) {
+            expect(bounds.left).toBeGreaterThanOrEqual(0);
+            expect(bounds.right).toBeLessThanOrEqual(width);
+          }
+        }
+      };
+      await fits('pending');
+      release();
+      await expect(topbar.getByText('API connected', { exact: true })).toBeVisible();
+      await fits('ready');
+    },
+  );
 });

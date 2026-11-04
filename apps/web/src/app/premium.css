@@ -1304,3 +1304,27 @@ td {
     padding: 14px;
   }
 }
+/* Connection state is operational text, including while the profile is loading. */
+.topbar .badge {
+  font-size: 12px;
+}
+@media (max-width: 540px) {
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding-block: 8px;
+    row-gap: 8px;
+  }
+  .topbar > div:first-child {
+    min-width: 0;
+    max-width: 100%;
+    flex-basis: 100%;
+  }
+  .breadcrumb {
+    min-width: 0;
+  }
+  .topbar-right {
+    margin-left: auto;
+    max-width: 100%;
+  }
+}
