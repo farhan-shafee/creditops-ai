@@ -1275,8 +1275,8 @@ td {
 /* Reference explanations and safety qualifications are reading text, not fine print. */
 .prose,
 .prose li,
-.architecture-list,
-.architecture-list li {
+.prose-list,
+.prose-list li {
   font-size: 15px;
   line-height: 1.85;
 }

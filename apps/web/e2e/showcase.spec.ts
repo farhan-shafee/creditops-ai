@@ -2778,3 +2778,15 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     }
   });
 }
+
+test('V3 architecture: explanatory lists are readable at every required width', async ({ page }) => {
+  await page.goto('/architecture');
+  const items = page.locator('.prose-list li');
+  await expect(items).toHaveCount(14);
+  for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({width, height: 1000});
+    const sizes = await items.evaluateAll(elements => elements.map(el => parseFloat(getComputedStyle(el).fontSize)));
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(15);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+});
