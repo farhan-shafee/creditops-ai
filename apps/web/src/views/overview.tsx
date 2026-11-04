@@ -44,6 +44,9 @@ export function OverviewView({
   const incidents = overview?.active_incidents ?? [];
   const healthy = services.filter((service) => service.status === 'healthy').length;
   const showcase = Boolean(evaluation?.selected_recordings?.length);
+  const selectedRecord = evaluation?.selected_recordings?.find(
+    (row) => row.scenario_id === selectedScenario,
+  );
   return (
     <>
       <section className="hero" data-testid={showcase ? 'recorded-entry' : undefined}>
@@ -54,10 +57,10 @@ export function OverviewView({
           <span className="hero-id mono">ENV-DEMO-001</span>
         </div>
         <p className="hero-product">CreditOps AI</p>
-        <h1>
-          AI-assisted incident intelligence
-          <br className="desktop-break" /> for electronic trading systems.
-        </h1>
+        <h2 className="hero-headline">
+          AI-assisted incident intelligence.
+          <br /> Inspect every conclusion.
+        </h2>
         <p className="hero-description">
           {showcase
             ? 'Inspect three completed development examples: application-selected MCP evidence collection, a real model proposal, separate local validation, and a conservative advisory outcome.'
@@ -85,18 +88,52 @@ export function OverviewView({
             <Badge tone="amber">Human review required</Badge>
           </div>
         )}
-        <div className="hero-grid-decoration" aria-hidden>
-          <div />
-          <div />
-          <div />
-          <span>
-            OBSERVE
-            <br />
-            CORRELATE
-            <br />
-            VERIFY
-          </span>
-        </div>
+        <aside className="hero-workflow" aria-label="Recorded evidence workflow">
+          <span className="eyebrow">An inspectable artifact path</span>
+          <ol>
+            <li>
+              <span className="workflow-order">01</span>
+              <div>
+                <strong>Controlled evidence</strong>
+                <p>
+                  {selectedRecord
+                    ? `${selectedRecord.application_selected_diagnostic_count} application-selected diagnostic checks`
+                    : 'Bounded, read-only diagnostic access'}
+                </p>
+              </div>
+            </li>
+            <li>
+              <span className="workflow-order">02</span>
+              <div>
+                <strong>Original model proposal</strong>
+                <p>
+                  {selectedRecord
+                    ? `${selectedRecord.model_assessment_count} recorded model assessment`
+                    : 'A structured advisory proposal'}
+                </p>
+              </div>
+            </li>
+            <li>
+              <span className="workflow-order">03</span>
+              <div>
+                <strong>Separate rule validation</strong>
+                <p>Recorded acceptance, changes and limitations</p>
+              </div>
+            </li>
+            <li>
+              <span className="workflow-order">04</span>
+              <div>
+                <strong>Human review & handoff</strong>
+                <p>Sources remain available for inspection</p>
+              </div>
+            </li>
+          </ol>
+          <p className="workflow-footnote">
+            {showcase
+              ? 'Recorded artifacts · no new model calls during playback'
+              : 'Synthetic environment · operational authority stays with people'}
+          </p>
+        </aside>
       </section>
       {!showcase && (
         <div className="stats-grid">

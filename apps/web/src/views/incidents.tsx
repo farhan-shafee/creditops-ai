@@ -1,3 +1,4 @@
+import { ScenarioPreview } from '@/components/scenario-preview';
 import { useMemo } from 'react';
 import { projectRecording } from '@/lib/recorded-evidence';
 import {
@@ -114,6 +115,7 @@ export function IncidentView({
   onlyInvestigator = false,
   showcaseProfile = false,
   selectedScenarioTitle = 'Selected scenario',
+  selectedScenarioMetadata,
   restoringRecording = false,
   loadingProfile = false,
 }: {
@@ -134,6 +136,7 @@ export function IncidentView({
   onlyInvestigator?: boolean;
   showcaseProfile?: boolean;
   selectedScenarioTitle?: string;
+  selectedScenarioMetadata?: Scenario;
   restoringRecording?: boolean;
   loadingProfile?: boolean;
 }) {
@@ -157,19 +160,13 @@ export function IncidentView({
     return (
       <Panel title={selectedScenarioTitle} eyebrow="Selected recorded scenario">
         <div data-testid="scenario-selection-state" role="status" aria-live="polite">
-          <Empty
-            title={
-              running || investigating
-                ? 'Loading selected recording…'
-                : restoringRecording
-                  ? 'Restoring selected recording…'
-                  : 'Selected recording is not loaded'
+          <ScenarioPreview
+            scenario={selectedScenarioMetadata}
+            fallbackTitle={selectedScenarioTitle}
+            state={
+              running || investigating ? 'loading' : restoringRecording ? 'restoring' : 'unloaded'
             }
-          >
-            {running || investigating || restoringRecording
-              ? 'Waiting for the matching recorded investigation. Current simulation evidence is not substituted.'
-              : 'Choose View recorded investigation to load this scenario. Changing the selection does not start an investigation.'}
-          </Empty>
+          />
         </div>
       </Panel>
     );

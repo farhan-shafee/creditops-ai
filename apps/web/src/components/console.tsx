@@ -601,6 +601,9 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
   const incidentProps = {
     workspaceSessionId,
     onSourceControls: receiveSourceControls,
+    selectedScenarioMetadata: scenarios.find(
+      (item) => item.id === selectedScenario && (!selectedId || item.incident_id === selectedId),
+    ),
     selectedScenarioTitle:
       selectedId && !active
         ? `Requested incident ${selectedId}`
@@ -668,19 +671,22 @@ export function Console({ view = 'overview', incidentId }: { view?: string; inci
         <span className="nav-label">OPERATIONS CONSOLE</span>
         <nav>
           {navigation.map(({ id, href, label, icon: Icon }, index) => (
-            <Link
-              href={href}
-              key={id}
-              className={`nav-link ${view === id ? 'nav-active' : ''} ${index === 8 ? 'nav-separated' : ''}`}
-              aria-current={view === id ? 'page' : undefined}
-              onClick={() => setMobileNav(false)}
-            >
-              <Icon size={17} strokeWidth={1.7} />
-              <span>{label}</span>
-              {id === 'incidents' && incidents.length > 0 && (
-                <span className="nav-count">{incidents.length}</span>
-              )}
-            </Link>
+            <div className="nav-item" key={id}>
+              {index === 4 && <span className="nav-label nav-group">Evidence & knowledge</span>}
+              {index === 8 && <span className="nav-label nav-group">Project & assurance</span>}
+              <Link
+                href={href}
+                className={`nav-link ${view === id ? 'nav-active' : ''}`}
+                aria-current={view === id ? 'page' : undefined}
+                onClick={() => setMobileNav(false)}
+              >
+                <Icon size={17} strokeWidth={1.7} />
+                <span>{label}</span>
+                {id === 'incidents' && incidents.length > 0 && (
+                  <span className="nav-count">{incidents.length}</span>
+                )}
+              </Link>
+            </div>
           ))}
         </nav>
         <div className="sidebar-foot">

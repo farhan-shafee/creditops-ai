@@ -111,7 +111,7 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
           </Empty>
         </Panel>
       ) : (
-        <>
+        <section className="legacy-benchmark" aria-label="Legacy synthetic benchmark">
           <div className="evaluation-provenance">
             <strong>Legacy synthetic benchmark</strong>
             <Badge tone="teal">Generated artifact</Badge>
@@ -235,7 +235,7 @@ export function EvaluationsView({ evaluation }: { evaluation: Evaluation | null 
               <pre>{JSON.stringify(evaluation?.cases ?? evaluation, null, 2)}</pre>
             </details>
           </Panel>
-        </>
+        </section>
       )}
       <div className="safety-note">
         <Info size={18} />
