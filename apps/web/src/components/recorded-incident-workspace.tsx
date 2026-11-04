@@ -1,4 +1,6 @@
 import { IncidentHandoff } from './incident-handoff';
+import { EvidenceConclusionExplorer } from './evidence-conclusion-explorer';
+import { GuidedRecordingReplay, type GuidedRecordingStage } from './guided-recording-replay';
 import { RecordedAssessmentReview } from './recorded-assessment-review';
 import { projectRecordedReview } from '@/lib/recorded-review';
 import { PersonalWorkspacePanel, useWorkspaceNotes } from './personal-workspace-panel';
@@ -141,6 +143,35 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
     if (recording.sources.has(id)) setSelectedSourceId(id);
     onEvidence(id);
   };
+  const guideStep = (stage: GuidedRecordingStage | null) => {
+    if (stage === null) return;
+    const targets: Record<GuidedRecordingStage, { section: number; id: string }> = {
+      signal: { section: 0, id: 'guided-region-signal' },
+      evidence: { section: 1, id: 'recorded-panel-1' },
+      proposal: { section: 2, id: 'guided-region-proposal' },
+      validation: { section: 2, id: 'guided-region-validation' },
+      handoff: { section: 3, id: 'recorded-panel-3' },
+    };
+    const target = targets[stage];
+    setSection(target.section);
+    setFocus(target.section);
+    if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+    // Focus follows an explicit guide action only, never restoration or refresh.
+    focusFrame.current = requestAnimationFrame(() => {
+      focusFrame.current = null;
+      const element = document.getElementById(target.id);
+      if (!element) return;
+      element.focus({ preventScroll: true });
+      element.scrollIntoView({ block: 'center', behavior: 'instant' });
+      const header = document.getElementById('guided-region-signal');
+      const top =
+        header && header !== element && getComputedStyle(header).position === 'sticky'
+          ? header.getBoundingClientRect().bottom + 12
+          : 12;
+      const bounds = element.getBoundingClientRect();
+      if (bounds.top < top) window.scrollBy({ top: bounds.top - top, behavior: 'instant' });
+    });
+  };
   const investigation = recording.investigation;
   const metadata = investigation.provenance?.showcase;
   const coverage = recording.coverage;
@@ -189,7 +220,7 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         });
       }}
     >
-      <header className="recorded-workspace-header">
+      <header className="recorded-workspace-header" id="guided-region-signal" tabIndex={-1}>
         <Badge tone="amber">Synthetic · Recorded · Human review required</Badge>
         <p className="mono">{recording.incident.id}</p>
         <h2>{metadata?.title ?? recording.incident.summary}</h2>
@@ -236,6 +267,7 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
           Discrete events do not establish continuous health, causality, fills, loss or recovery.
         </p>
       </header>
+      <GuidedRecordingReplay onStep={guideStep} />
       <div className="recorded-tabs" role="tablist" aria-label="Recorded workspace sections">
         {sections.map((name, index) => (
           <button
@@ -346,11 +378,18 @@ function WorkspaceBody({ recording, sessionId, onEvidence, onSourceControls }: P
         hidden={section !== 2}
         tabIndex={0}
       >
-        <RecordedAssessmentReview
-          review={projectRecordedReview(investigation)}
+        <EvidenceConclusionExplorer
+          investigation={investigation}
           sources={recording.sources}
           onEvidence={select}
         />
+        <div className="guided-region" id="guided-region-validation" tabIndex={-1}>
+          <RecordedAssessmentReview
+            review={projectRecordedReview(investigation)}
+            sources={recording.sources}
+            onEvidence={select}
+          />
+        </div>
       </div>
       <div
         id="recorded-panel-3"
