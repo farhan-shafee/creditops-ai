@@ -59,3 +59,13 @@ For a longer architecture discussion, show REST/SSE session isolation, the typed
 **Can a recruiter inspect this without GitHub access?** Yes: the [hosted showcase](https://creditops.farhan-shafee.com) contains the recorded evidence, original proposal, validation, review notes and results. The [source repository](https://github.com/farhan-shafee/creditops-ai) is now public. Railway runs the web, API and PostgreSQL services; see the [current deployment runbook](DEPLOYMENT.md).
 
 **What did you independently build?** The application, synthetic scenarios, evidence contracts, diagnostic facade, provider orchestration, separate validation, replay packaging, evaluation harness and operations experience. No proprietary infrastructure, customer incidents or institutional adoption are claimed.
+
+## Premium V3 workstation branch
+
+The V3 presentation keeps the same packaged recordings, four workspace tabs and original evidence. Select one of the three recorded scenarios, inspect its metadata preview, then choose **View recorded investigation**. Selection alone does not start a run.
+
+Use **Start guided replay** for an optional, manually advanced Signal → Evidence → Model proposal → Validation → Handoff walkthrough. Next/Previous move to existing recorded artifacts; Exit returns to ordinary navigation. There is no autoplay, new evidence collection or model call.
+
+In **Review → Evidence to conclusion**, choose a claim independently for the original model proposal and recorded advisory. Only explicitly recorded per-claim references become source links, and only when the source was returned in that recording. Assessment-wide references remain separate. Missing links, null/unconfirmed causes and recorded limitations are not filled from current simulation data. Continue to the complete field comparison for recorded rule reasons and separately labeled project review notes. A citation establishes a recorded reference, not that the prose is true.
+
+In **Handoff**, prepare the technical or stakeholder draft from the full recording. Preview, Markdown copy and print use that same captured draft with its preparation time, source references and limitations. Notes/pins remain personal, unverified and tab/recording scoped. Preserve the Synthetic / Recorded / Human review required labels when demonstrating the workstation.

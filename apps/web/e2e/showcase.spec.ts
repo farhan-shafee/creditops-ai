@@ -2517,3 +2517,264 @@ test('responsive companion: observability window keeps the full selected ID and 
       });
   }
 });
+
+// V3 additions: real packaged recordings and native controls, no replacement data.
+test('V3 explorer: independent claim selection resolves only explicit returned references and resets per recording', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  await page.getByLabel('Incident scenario').selectOption('db-pool-exhaustion');
+  await page
+    .locator('.scenario-controls')
+    .getByRole('button', { name: 'View recorded investigation', exact: true })
+    .click();
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[2][2]);
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[0][2]);
+  const forbidden: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      path.startsWith('/api/') &&
+      (request.method() !== 'GET' || path.startsWith('/api/diagnostics/'))
+    )
+      forbidden.push(request.method() + ' ' + path);
+  });
+  await page.getByRole('tab', { name: 'Review', exact: true }).click();
+  const explorer = page.getByRole('region', {
+    name: 'Evidence to conclusion explorer',
+    exact: true,
+  });
+  const original = explorer.getByLabel('Original model proposal claim', { exact: true });
+  const advisory = explorer.getByLabel('Recorded advisory claim', { exact: true });
+  const fixture = loadAcceptanceRecording('INC-DEMO-001');
+  const proposal = fixture.provider_proposal as {
+    observations: { statement: string; evidence_ids: string[] }[];
+    possible_triggers: { statement: string; evidence_ids: string[] }[];
+  };
+  const originalArticle = explorer.getByRole('article', {
+    name: 'Original model proposal selected claim',
+    exact: true,
+  });
+  const advisoryArticle = explorer.getByRole('article', {
+    name: 'Recorded advisory selected claim',
+    exact: true,
+  });
+  await expect(original).toHaveValue('observations[0]');
+  await expect(advisory).toHaveValue('observations[0]');
+  await expect(originalArticle.locator('.recorded-verbatim').first()).toHaveText(
+    proposal.observations[0].statement,
+  );
+  const returned = new Set(fixture.evidence.map((source) => source.id));
+  const directIds = proposal.observations[0].evidence_ids.filter((id) => returned.has(id));
+  expect(await originalArticle.getByRole('button').allTextContents()).toEqual(directIds);
+  expect(directIds.length).toBeGreaterThan(0);
+  const exactSource = fixture.evidence.find((source) => source.id === directIds[0])!;
+  await originalArticle.getByRole('button', { name: exactSource.id, exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Evidence details' });
+  await expect(dialog.getByRole('heading', { name: exactSource.id, exact: true })).toBeVisible();
+  await expect(dialog.locator('.json-source')).toHaveText(
+    JSON.stringify(exactSource.data, null, 2),
+  );
+  await page.keyboard.press('Escape');
+  await original.selectOption('observations[1]');
+  await expect(originalArticle.locator('.recorded-verbatim').first()).toHaveText(
+    proposal.observations[1].statement,
+  );
+  await expect(advisory).toHaveValue('observations[0]');
+  await advisory.selectOption('observations[1]');
+  await expect(advisoryArticle.locator('.recorded-verbatim').first()).toHaveText(
+    fixture.assessment!.observations![1].statement,
+  );
+  await expect(original).toHaveValue('observations[1]');
+  // This candidate has no explicit references. Whole-assessment support must not
+  // silently become individual support or a validator-reason relationship.
+  expect(proposal.possible_triggers[0].evidence_ids).toEqual([]);
+  await original.selectOption('possible_triggers[0]');
+  await expect(originalArticle).toContainText('Candidate trigger — unconfirmed');
+  await expect(originalArticle).toContainText(proposal.possible_triggers[0].statement);
+  await expect(originalArticle.getByRole('button')).toHaveCount(0);
+  await expect(originalArticle).toContainText('No explicit source references recorded.');
+  await expect(explorer.locator('.conclusion-explorer-context').getByRole('button')).toHaveCount(0);
+  for (const [scenario, domain] of [
+    [examples[2][0], examples[2][2]],
+    [examples[0][0], examples[0][2]],
+  ] as const) {
+    await page.getByLabel('Incident scenario').selectOption(scenario);
+    await expect(page.getByTestId('failure-domain')).toHaveText(domain);
+    await page.getByRole('tab', { name: 'Review', exact: true }).click();
+    await expect(original).toHaveValue('observations[0]');
+    await expect(advisory).toHaveValue('observations[0]');
+  }
+  expect(forbidden).toEqual([]);
+});
+
+test('V3 guide: keyboard actions traverse five existing sections without execution and exit restores focus', async ({
+  page,
+}) => {
+  await openWorkspace(page);
+  const forbidden: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      path.startsWith('/api/') &&
+      (request.method() !== 'GET' || path.startsWith('/api/diagnostics/'))
+    )
+      forbidden.push(request.method() + ' ' + path);
+  });
+  const guide = page.getByRole('region', { name: 'Optional guided recording replay', exact: true });
+  const keyboardActivate = async (button: import('@playwright/test').Locator) => {
+    await button.focus();
+    await page.keyboard.press('Enter');
+  };
+  await expect(guide.locator('[aria-current="step"]')).toHaveCount(0);
+  await keyboardActivate(guide.getByRole('button', { name: 'Start guided replay', exact: true }));
+  await expect(page.locator('#guided-region-signal')).toBeFocused();
+  await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(guide.getByRole('button', { name: 'Previous', exact: true })).toBeDisabled();
+  for (const [tab, focusId, label] of [
+    ['Evidence', 'recorded-panel-1', 'Evidence'],
+    ['Review', 'guided-region-proposal', 'Model proposal'],
+    ['Review', 'guided-region-validation', 'Validation'],
+    ['Handoff', 'recorded-panel-3', 'Handoff'],
+  ]) {
+    await keyboardActivate(guide.getByRole('button', { name: 'Next', exact: true }));
+    await expect(page.getByRole('tab', { name: tab, exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.locator('#' + focusId)).toBeFocused();
+    await expect(guide.locator('[aria-current="step"]')).toHaveText(label);
+  }
+  await expect(guide.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await keyboardActivate(guide.getByRole('button', { name: 'Previous', exact: true }));
+  await expect(page.locator('#guided-region-validation')).toBeFocused();
+  // The original four manual tabs retain roving focus and explicit activation.
+  const review = page.getByRole('tab', { name: 'Review', exact: true });
+  await review.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByRole('tab', { name: 'Evidence', exact: true })).toBeFocused();
+  await expect(review).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('tab', { name: 'Evidence', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await keyboardActivate(guide.getByRole('button', { name: 'Exit guided replay', exact: true }));
+  await expect(
+    guide.getByRole('button', { name: 'Start guided replay', exact: true }),
+  ).toBeFocused();
+  await expect(guide.locator('[aria-current="step"]')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId('recorded-workspace')).toBeVisible();
+  await expect(
+    guide.getByRole('button', { name: 'Start guided replay', exact: true }),
+  ).toBeVisible();
+  await expect(guide.locator('[aria-current="step"]')).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Overview', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  expect(forbidden).toEqual([]);
+});
+
+test('V3 unloaded preview: database selection preserves exact public metadata without loading or substituting evidence', async ({
+  page,
+}) => {
+  const scenarioResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === '/api/scenarios' && response.ok(),
+  );
+  await openWorkspace(page);
+  const scenarios = (await (await scenarioResponse).json()) as {
+    id: string;
+    title: string;
+    description: string;
+    incident_id: string;
+  }[];
+  const database = scenarios.find((scenario) => scenario.id === 'db-pool-exhaustion')!;
+  expect(database.incident_id).toBe('INC-DEMO-003');
+  const mutations: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() !== 'GET' && new URL(request.url()).pathname.startsWith('/api/'))
+      mutations.push(request.url());
+  });
+  await page.getByLabel('Incident scenario').selectOption(database.id);
+  const preview = page.getByTestId('scenario-preview');
+  await expect(preview.getByRole('heading', { level: 3 })).toHaveText(database.title);
+  await expect(preview.getByText(database.description, { exact: true })).toBeVisible();
+  await expect(preview.locator('dd').first()).toHaveText(database.incident_id);
+  await expect(preview).toContainText('Selected recording is not loaded');
+  await expect(page.getByTestId('recorded-workspace')).toHaveCount(0);
+  await expect(page.getByTestId('incident-detail')).toHaveCount(0);
+  await page.getByLabel('Incident scenario').selectOption('fix-connectivity');
+  const fix = scenarios.find((scenario) => scenario.id === 'fix-connectivity')!;
+  await expect(preview.getByRole('heading', { level: 3 })).toHaveText(fix.title);
+  await expect(preview.getByText(fix.description, { exact: true })).toBeVisible();
+  await expect(preview.locator('dd').first()).toHaveText(fix.incident_id);
+  await page.getByLabel('Incident scenario').selectOption('kafka-pricing-lag');
+  await expect(page.getByTestId('failure-domain')).toHaveText(examples[0][2]);
+  await expect(preview).toHaveCount(0);
+  expect(mutations).toEqual([]);
+});
+
+test('V3 navigation: keyboard reaches every desktop destination at a compact viewport height', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 768 });
+  await page.goto('/');
+  const links = page.locator('.sidebar nav .nav-link');
+  await expect(links).toHaveCount(11);
+  await links.first().focus();
+  for (let index = 1; index < 11; index++) await page.keyboard.press('Tab');
+  await expect(links.last()).toBeFocused();
+  await expect(links.last()).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/about$/);
+});
+
+for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+  test(`V3 readable workstation at ${width}px preserves all recorded sections and reduced motion`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const fits = async () => {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      expect(
+        await page.locator('body').evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      ).toBeGreaterThanOrEqual(15);
+      expect(
+        await page
+          .locator('.button')
+          .first()
+          .evaluate((el) => getComputedStyle(el).transitionDuration),
+      ).toBe('0s');
+    };
+    await page.goto('/');
+    await expect(page.getByTestId('recorded-example')).toHaveCount(3);
+    await fits();
+    await page.getByTestId('view-recorded-investigation').click();
+    await expect(page.getByTestId('assessment')).toBeVisible();
+    for (const tab of ['Overview', 'Evidence', 'Review', 'Handoff']) {
+      await page.getByRole('tab', { name: tab, exact: true }).click();
+      await fits();
+      if (tab === 'Review') {
+        await expect(
+          page.getByLabel('Original model proposal claim', { exact: true }),
+        ).toBeVisible();
+        await expect(page.getByLabel('Recorded advisory claim', { exact: true })).toBeVisible();
+      }
+    }
+    for (const route of ['evaluations', 'architecture']) {
+      await page.goto('/' + route);
+      await expect(page.locator('main h1')).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      expect(
+        await page.locator('body').evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      ).toBeGreaterThanOrEqual(15);
+    }
+  });
+}
