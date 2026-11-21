@@ -1,6 +1,6 @@
 # CreditOps AI production deployment
 
-Verified topology: October 24–25, 2026. [Live showcase](https://creditops.farhan-shafee.com) · [Public source](https://github.com/farhan-shafee/creditops-ai).
+Topology originally verified October 24–25, 2026. Production application source pins were independently read back November 21, 2026 (see below). [Live showcase](https://creditops.farhan-shafee.com) · [Public source](https://github.com/farhan-shafee/creditops-ai).
 
 The Next.js frontend, FastAPI API, PostgreSQL database and private off-volume backup storage run on Railway. Cloudflare supplies DNS. Vercel and the frozen pre-cutover Neon copy are retained for controlled rollback; neither is the active application database or canonical frontend.
 
