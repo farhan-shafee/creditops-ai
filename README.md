@@ -186,7 +186,7 @@ The [version-controlled investigator prompt](apps/api/creditops/prompts/investig
 
 ## Deployment
 
-The canonical public showcase, FastAPI API and PostgreSQL database run on Railway, with TLS, a restricted application database role, private off-volume pgBackRest backups and a verified restore. Both application services follow public `main`; the current Railway trigger does not wait for CI, so release review must check CI separately. Cloudflare supplies DNS. Vercel and the frozen Neon source remain retained for controlled rollback. See the [current deployment, architecture and recovery runbook](docs/DEPLOYMENT.md) for actual configuration, local/hosted boundaries and remaining cleanup.
+The canonical public showcase, FastAPI API and PostgreSQL database run on Railway, with TLS, a restricted application database role, private off-volume pgBackRest backups and a verified restore. A November 21 Railway read confirmed both application services specify source branch `main` but are pinned to deployed commit `eb9943a` (older than current repository `main`); merging documentation does not establish a new hosted release. The earlier Railway configuration review recorded CI waiting disabled, so check release gates again before any future deployment. Cloudflare supplies DNS. Vercel and the frozen Neon source remain retained for controlled rollback. See the [current deployment, architecture and recovery runbook](docs/DEPLOYMENT.md) for actual configuration, local/hosted boundaries and remaining cleanup.
 
 ## Interview materials
 

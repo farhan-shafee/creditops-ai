@@ -1,6 +1,6 @@
 # CreditOps AI production deployment
 
-Verified topology: October 24–25, 2026. [Live showcase](https://creditops.farhan-shafee.com) · [Public source](https://github.com/farhan-shafee/creditops-ai).
+Topology originally verified October 24–25, 2026. Production application source pins were independently read back November 21, 2026 (see below). [Live showcase](https://creditops.farhan-shafee.com) · [Public source](https://github.com/farhan-shafee/creditops-ai).
 
 The Next.js frontend, FastAPI API, PostgreSQL database and private off-volume backup storage run on Railway. Cloudflare supplies DNS. Vercel and the frozen pre-cutover Neon copy are retained for controlled rollback; neither is the active application database or canonical frontend.
 
@@ -20,7 +20,7 @@ The API persists synthetic sessions and application state with a restricted appl
 
 ## Source and release configuration
 
-Both production application services follow this public repository's `main` branch, without a commit pin. The October 24 release used `e511cb40338be086afafdcac51f8377b21aae858`; [all four quality CI jobs passed](https://github.com/farhan-shafee/creditops-ai/actions/runs/40140532920). CI is separate from the Railway trigger: the observed source configuration has `checkSuites=false`, so do not claim Railway waits for CI. Inspect the reviewed source and CI before publishing a release.
+**November 21, 2026 provider readback:** both Railway production application services identify the public repository and source branch `main`, but explicitly retain commit pin `eb9943ac9011dc74c3683c2bbd1ece6f34b59428`; the recorded web/API deployments remain `SUCCESS`. GitHub `main` is separately at `a0226be31290d11db93d5cbfd5fbb0fcfce04748`. Do not describe newer repository changes as deployed, and do not unpin or redeploy during documentation maintenance. The October 24 release at `e511cb40338be086afafdcac51f8377b21aae858` and its [four passing quality jobs](https://github.com/farhan-shafee/creditops-ai/actions/runs/40140532920) remain historical evidence. The October 24–25 review observed `checkSuites=false` (no automatic CI wait); that release-trigger field was not independently reverified in the November 21 read. Check the current trigger and CI before authorizing any future release.
 
 | Service            | Build and runtime                                                                                                |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
